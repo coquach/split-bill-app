@@ -7,21 +7,54 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6A30C14A3056F264009DF2B2 /* Amount.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A30C13E3056F264009DF2B2 /* Amount.swift */; };
 		6A30C14C3056F7A2009DF2B2 /* SplitPayApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A30C14B3056F3D7009DF2B2 /* SplitPayApp.swift */; };
+		6A30C1733058496F009DF2B2 /* Swinject in Frameworks */ = {isa = PBXBuildFile; productRef = 6A30C1723058496F009DF2B2 /* Swinject */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		6A30C1123056F0A6009DF2B2 /* SplitPay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SplitPay.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		6A30C13E3056F264009DF2B2 /* Amount.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Amount.swift; sourceTree = "<group>"; };
 		6A30C14B3056F3D7009DF2B2 /* SplitPayApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplitPayApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		6A30C15C3058438B009DF2B2 /* DI */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = DI;
+			sourceTree = "<group>";
+		};
+		6A30C15D30584397009DF2B2 /* Navigation */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Navigation;
+			sourceTree = "<group>";
+		};
+		6A30C15E305843A7009DF2B2 /* Services */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Services;
+			sourceTree = "<group>";
+		};
+		6A30C15F305843B4009DF2B2 /* UI */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = UI;
+			sourceTree = "<group>";
+		};
+		6A30C160305843C1009DF2B2 /* Models */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Models;
+			sourceTree = "<group>";
+		};
+		6A30C16E30584803009DF2B2 /* Session */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Session;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		6A30C10F3056F0A6009DF2B2 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6A30C1733058496F009DF2B2 /* Swinject in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -54,50 +87,15 @@
 			path = App;
 			sourceTree = "<group>";
 		};
-		6A30C13D3056F264009DF2B2 /* DI */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = DI;
-			sourceTree = "<group>";
-		};
-		6A30C13F3056F264009DF2B2 /* Models */ = {
-			isa = PBXGroup;
-			children = (
-				6A30C13E3056F264009DF2B2 /* Amount.swift */,
-			);
-			path = Models;
-			sourceTree = "<group>";
-		};
-		6A30C1403056F264009DF2B2 /* Navigation */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Navigation;
-			sourceTree = "<group>";
-		};
-		6A30C1413056F264009DF2B2 /* Services */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Services;
-			sourceTree = "<group>";
-		};
-		6A30C1423056F264009DF2B2 /* UI */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = UI;
-			sourceTree = "<group>";
-		};
 		6A30C1433056F264009DF2B2 /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				6A30C13D3056F264009DF2B2 /* DI */,
-				6A30C13F3056F264009DF2B2 /* Models */,
-				6A30C1403056F264009DF2B2 /* Navigation */,
-				6A30C1413056F264009DF2B2 /* Services */,
-				6A30C1423056F264009DF2B2 /* UI */,
+				6A30C16E30584803009DF2B2 /* Session */,
+				6A30C160305843C1009DF2B2 /* Models */,
+				6A30C15F305843B4009DF2B2 /* UI */,
+				6A30C15E305843A7009DF2B2 /* Services */,
+				6A30C15D30584397009DF2B2 /* Navigation */,
+				6A30C15C3058438B009DF2B2 /* DI */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -164,8 +162,17 @@
 			);
 			dependencies = (
 			);
+			fileSystemSynchronizedGroups = (
+				6A30C15C3058438B009DF2B2 /* DI */,
+				6A30C15D30584397009DF2B2 /* Navigation */,
+				6A30C15E305843A7009DF2B2 /* Services */,
+				6A30C15F305843B4009DF2B2 /* UI */,
+				6A30C160305843C1009DF2B2 /* Models */,
+				6A30C16E30584803009DF2B2 /* Session */,
+			);
 			name = SplitPay;
 			packageProductDependencies = (
+				6A30C1723058496F009DF2B2 /* Swinject */,
 			);
 			productName = SplitPay;
 			productReference = 6A30C1123056F0A6009DF2B2 /* SplitPay.app */;
@@ -195,6 +202,9 @@
 			);
 			mainGroup = 6A30C1093056F0A5009DF2B2;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				6A30C1713058496F009DF2B2 /* XCRemoteSwiftPackageReference "Swinject" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6A30C1133056F0A6009DF2B2 /* Products */;
 			projectDirPath = "";
@@ -220,7 +230,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6A30C14A3056F264009DF2B2 /* Amount.swift in Sources */,
 				6A30C14C3056F7A2009DF2B2 /* SplitPayApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -435,6 +444,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		6A30C1713058496F009DF2B2 /* XCRemoteSwiftPackageReference "Swinject" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Swinject/Swinject.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.10.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		6A30C1723058496F009DF2B2 /* Swinject */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6A30C1713058496F009DF2B2 /* XCRemoteSwiftPackageReference "Swinject" */;
+			productName = Swinject;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 6A30C10A3056F0A5009DF2B2 /* Project object */;
 }
