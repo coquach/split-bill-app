@@ -21,6 +21,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Transfer/Dependency/TransferDependency.swift,
+				Transfer/ViewModel/TransferFlowViewModel.swift,
 			);
 			target = 6A30C1113056F0A6009DF2B2 /* SplitPay */;
 		};

@@ -35,4 +35,11 @@ final class AppDependencyContainer {
             SessionStore(balanceProvider: resolver.resolve(WalletBalanceProviding.self)!)
         }.inObjectScope(.container)
     }
+    
+    func makeTransferDependency() -> TransferDependency {
+        TransferDependency(
+            accountResolver: container.resolve(AccountResolving.self)!,
+            sessionStore: sessionStore
+        )
+    }
 }

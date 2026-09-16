@@ -9,7 +9,7 @@ import Foundation
 import Combine
 
 public class SessionStore: ObservableObject {
-    @Published private var availableBalance: Amount = .zero
+    @Published private(set) var availableBalance: Amount = .zero
     
     private let balanceProvider: WalletBalanceProviding
     
