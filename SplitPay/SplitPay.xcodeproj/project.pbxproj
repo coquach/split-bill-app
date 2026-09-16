@@ -16,6 +16,16 @@
 		6A30C14B3056F3D7009DF2B2 /* SplitPayApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplitPayApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		6A30C17D3059AA7B009DF2B2 /* Exceptions for "Module" folder in "SplitPay" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Transfer/Dependency/TransferDependency.swift,
+			);
+			target = 6A30C1113056F0A6009DF2B2 /* SplitPay */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		6A30C15C3058438B009DF2B2 /* DI */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -47,6 +57,14 @@
 			path = Session;
 			sourceTree = "<group>";
 		};
+		6A30C1783059AA4E009DF2B2 /* Module */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				6A30C17D3059AA7B009DF2B2 /* Exceptions for "Module" folder in "SplitPay" target */,
+			);
+			path = Module;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,9 +82,9 @@
 		6A30C1093056F0A5009DF2B2 = {
 			isa = PBXGroup;
 			children = (
+				6A30C1783059AA4E009DF2B2 /* Module */,
 				6A30C13C3056F264009DF2B2 /* App */,
 				6A30C1433056F264009DF2B2 /* Core */,
-				6A30C1493056F264009DF2B2 /* Modules */,
 				6A30C1133056F0A6009DF2B2 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -98,53 +116,6 @@
 				6A30C15C3058438B009DF2B2 /* DI */,
 			);
 			path = Core;
-			sourceTree = "<group>";
-		};
-		6A30C1443056F264009DF2B2 /* Coordinator */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Coordinator;
-			sourceTree = "<group>";
-		};
-		6A30C1453056F264009DF2B2 /* Dependency */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Dependency;
-			sourceTree = "<group>";
-		};
-		6A30C1463056F264009DF2B2 /* View */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = View;
-			sourceTree = "<group>";
-		};
-		6A30C1473056F264009DF2B2 /* ViewModel */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = ViewModel;
-			sourceTree = "<group>";
-		};
-		6A30C1483056F264009DF2B2 /* Transfer */ = {
-			isa = PBXGroup;
-			children = (
-				6A30C1443056F264009DF2B2 /* Coordinator */,
-				6A30C1453056F264009DF2B2 /* Dependency */,
-				6A30C1463056F264009DF2B2 /* View */,
-				6A30C1473056F264009DF2B2 /* ViewModel */,
-			);
-			path = Transfer;
-			sourceTree = "<group>";
-		};
-		6A30C1493056F264009DF2B2 /* Modules */ = {
-			isa = PBXGroup;
-			children = (
-				6A30C1483056F264009DF2B2 /* Transfer */,
-			);
-			path = Modules;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
