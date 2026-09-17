@@ -1,7 +1,7 @@
 import XCTest
-@testable import Design
+@testable import Router
 
-final class DesignTests: XCTestCase {
+final class RouterTests: XCTestCase {
     func testExample() throws {
         // XCTest Documentation
         // https://developer.apple.com/documentation/xctest

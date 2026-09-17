@@ -10,16 +10,19 @@ let package = Package(
         .library(
             name: "SupabaseKit",
             targets: ["SupabaseKit"]
-        ),
+        )
     ],
     dependencies: [
-        .package(url: "https://github.com/supabase/supabase-swift", from: "2.55.2"),
+        .package(
+            url: "https://github.com/supabase/supabase-swift.git",
+            from: "2.55.2"
+        )
     ],
     targets: [
         .target(
             name: "SupabaseKit",
             dependencies: [
-                .product(name: "Supabase", package: "supabase-swift"),
+                .product(name: "Supabase", package: "supabase-swift")
             ]
         ),
         .testTarget(
