@@ -2,10 +2,8 @@
 //  SplitPayApp.swift
 //  SplitPay
 //
-//  Created by Dinh Long on 13/9/26.
+//  Created by Long Nguyen on 17/9/26.
 //
-
-import Foundation
 
 import SwiftUI
 
@@ -13,7 +11,7 @@ import SwiftUI
 struct SplitPayApp: App {
     var body: some Scene {
         WindowGroup {
-            Text("SplitPay")
+            ContentView()
         }
     }
 }
