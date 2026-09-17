@@ -1,0 +1,9 @@
+//
+//  Debug.xcconfig
+//  SplitPay
+//
+//  Created by Co Quach on 17/9/26.
+//
+#include "Secrets.xcconfig"
+
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG
