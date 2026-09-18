@@ -1,18 +1,23 @@
-//
-//  AppContainer.swift
-//  SplitPay
-//
-//  Created by Co Quach on 17/9/26.
-//
-
 import Swinject
 
-final class AppContainer {
-    
-    let container: Container
-    
+final class AppContainer: @unchecked Sendable {
+    private let container: Container
+
     init() {
-        let container = Container()
-        self.container = container
+        container = Container()
+        Assembler(
+            [
+                SupabaseAssembly(),
+                AuthAssembly(),
+            ],
+            container: container
+        )
+    }
+
+    func resolve<T>(_ serviceType: T.Type) -> T {
+        guard let service = container.resolve(serviceType) else {
+            fatalError("Dependency not registered: \(serviceType)")
+        }
+        return service
     }
 }
