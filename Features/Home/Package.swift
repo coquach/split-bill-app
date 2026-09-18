@@ -4,28 +4,27 @@
 import PackageDescription
 
 let package = Package(
-    name: "Authentication",
+    name: "Home",
     platforms: [
-          .iOS(.v17)
-      ],
+        .iOS(.v17)
+    ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
-            name: "Authentication",
-            targets: ["Authentication"]
-        ),
+            name: "Home",
+            targets: ["Home"]
+        )
     ],
     dependencies: [
         .package(path: "../../Foundation/Domains"),
         .package(path: "../../Foundation/Router"),
         .package(path: "../../Foundation/SystemDesign"),
-        .package(path: "../../Core/CommonUi")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "Authentication",
+            name: "Home",
             dependencies: [
                 .product(
                     name: "Domains",
@@ -39,16 +38,11 @@ let package = Package(
                     name: "SystemDesign",
                     package: "SystemDesign"
                 ),
-                .product(
-                    name: "CommonUi",
-                    package: "CommonUi"
-                )
             ]
         ),
-
         .testTarget(
-            name: "AuthenticationTests",
-            dependencies: ["Authentication"]
+            name: "HomeTests",
+            dependencies: ["Home"]
         ),
     ]
 )

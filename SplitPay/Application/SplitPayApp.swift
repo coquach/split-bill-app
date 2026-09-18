@@ -1,27 +1,29 @@
 import Authentication
 import Domains
+import Home
 import SwiftUI
 
 @main
 struct SplitPayApp: App {
     private let container: AppContainer
-        private let coordinator: AppCoordinator
+    private let coordinator: AppCoordinator
 
-        init() {
-            let container = AppContainer()
+    init() {
+        let container = AppContainer()
 
-            self.container = container
-            self.coordinator = AppCoordinator(
-                authRepository: container.resolve(IAuthRepository.self)
-            )
+        self.container = container
+        self.coordinator = AppCoordinator(
+            authRepository: container.resolve(IAuthRepository.self)
+        )
+        
+    }
+
+    var body: some Scene {
+        WindowGroup {
+            AppRootView()
+                .environment(coordinator)
         }
-
-        var body: some Scene {
-            WindowGroup {
-                AppRootView()
-                    .environment(coordinator)
-            }
-        }
+    }
 }
 
 private struct AppRootView: View {
@@ -39,7 +41,12 @@ private struct AppRootView: View {
             )
 
         case .home(let user):
-            Text("Home — \(user.email)")
+            HomeView(
+                viewModel: HomeViewModel(
+                    user: user,
+                    authRepository: coordinator.authRepository
+                )
+            )
         }
     }
 }
