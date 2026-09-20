@@ -4,6 +4,16 @@
 //
 //  Created by Co Quach on 18/9/26.
 //
+public enum AuthError: Error, Sendable, Equatable {
+    case invalidCredentials
+    case emailNotConfirmed
+    case emailAlreadyRegistered
+    case weakPassword
+    case rateLimited
+    case network
+    case signUpDisabled
+    case unknown
+}
 
 public enum AuthState: Sendable {
     case authenticated(User)

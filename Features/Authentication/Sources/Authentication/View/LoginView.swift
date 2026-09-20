@@ -133,49 +133,38 @@ extension LoginView {
     fileprivate func handleStateChange(
         _ state: LoginViewModel.State
     ) {
-        guard case .error(let error) = state else {
-            return
-        }
+        guard case .auth(let error) = state else {
+                return
+            }
 
-        switch error {
-        case .invalidCredentials:
-            alert = AppAlert(
-                title: "Unable to sign in",
-                message: "The email or password is incorrect."
-            )
+            switch error {
+            case .emailAlreadyRegistered:
+                alert = AppAlert(
+                    title: "Email already registered",
+                    message: "An account with this email already exists."
+                )
 
-        case .emailNotConfirmed:
-            alert = AppAlert(
-                title: "Email not verified",
-                message: "Please check your email and verify your account."
-            )
+            case .network:
+                alert = AppAlert(
+                    title: "Connection error",
+                    message: "Please check your connection and try again."
+                )
 
-        case .network:
-            alert = AppAlert(
-                title: "Connection error",
-                message: "Please check your connection and try again."
-            )
-
-        case .unknown:
-            alert = AppAlert(
-                title: "Something went wrong",
-                message: "Please try again later."
-            )
-
-        case .emptyEmail,
-            .invalidEmail,
-            .emptyPassword:
-            break
-        }
+            default:
+                alert = AppAlert(
+                    title: "Something went wrong",
+                    message: "Please try again later."
+                )
+            }
     }
 }
 
 extension LoginView {
 
     fileprivate var emailError: String? {
-        guard case .error(let error) = viewModel.state else {
-            return nil
-        }
+        guard case .validation(let error) = viewModel.state else {
+                return nil
+            }
 
         switch error {
         case .emptyEmail:
@@ -190,9 +179,9 @@ extension LoginView {
     }
 
     fileprivate var passwordError: String? {
-        guard case .error(let error) = viewModel.state else {
-            return nil
-        }
+        guard case .validation(let error) = viewModel.state else {
+                return nil
+            }
 
         switch error {
         case .emptyPassword:

@@ -50,15 +50,9 @@ public struct RegisterView: View {
         .onChange(of: viewModel.state) { _, newState in
             handleStateChange(newState)
         }
-        .sheet(
-            isPresented: $showSuccessSheet
-        ) {
+        .sheet(isPresented: $showSuccessSheet) {
             RegisterSuccessSheet(
-                email: viewModel.email,
-                onContinue: {
-                    showSuccessSheet = false
-                    onNavigateToLogin()
-                }
+                email: viewModel.email
             )
         }
     }
@@ -108,13 +102,15 @@ extension RegisterView {
                 title: "Password",
                 placeholder: "Create a password",
                 text: $viewModel.password,
+                errorMessage: passwordError
 
             )
 
             AppSecureField(
                 title: "Confirm password",
                 placeholder: "Repeat your password",
-                text: $viewModel.confirmPassword
+                text: $viewModel.confirmPassword,
+                errorMessage: confirmPasswordError
             )
 
             AppButton(
@@ -167,14 +163,11 @@ extension RegisterView {
     fileprivate func handleStateChange(
         _ state: RegisterViewModel.State
     ) {
-        switch state {
+        guard case .auth(let error) = state else {
+                return
+            }
 
-        case .success:
-            showSuccessSheet = true
-
-        case .error(let error):
             switch error {
-
             case .emailAlreadyRegistered:
                 alert = AppAlert(
                     title: "Email already registered",
@@ -187,28 +180,21 @@ extension RegisterView {
                     message: "Please check your connection and try again."
                 )
 
-            case .unknown:
+            default:
                 alert = AppAlert(
                     title: "Something went wrong",
                     message: "Please try again later."
                 )
-
-            default:
-                break
             }
-
-        default:
-            break
-        }
     }
 }
 
 extension RegisterView {
 
     fileprivate var emailError: String? {
-        guard case .error(let error) = viewModel.state else {
-            return nil
-        }
+        guard case .validation(let error) = viewModel.state else {
+                return nil
+            }
 
         switch error {
         case .emptyEmail:
@@ -223,7 +209,7 @@ extension RegisterView {
     }
 
     fileprivate var passwordError: String? {
-        guard case .error(let error) = viewModel.state else {
+        guard case .validation(let error) = viewModel.state else {
             return nil
         }
 
@@ -240,9 +226,9 @@ extension RegisterView {
     }
 
     fileprivate var confirmPasswordError: String? {
-        guard case .error(let error) = viewModel.state else {
-            return nil
-        }
+        guard case .validation(let error) = viewModel.state else {
+                return nil
+            }
 
         switch error {
         case .passwordMismatch:

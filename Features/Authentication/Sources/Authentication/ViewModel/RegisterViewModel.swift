@@ -5,22 +5,20 @@ import Observation
 @Observable
 public final class RegisterViewModel {
 
-    public enum State: Equatable {
-        case idle
-        case loading
-        case success
-        case error(RegisterError)
-    }
-
-    public enum RegisterError: Equatable {
+    public enum ValidationError: Equatable {
         case emptyEmail
         case invalidEmail
         case emptyPassword
         case weakPassword
         case passwordMismatch
-        case emailAlreadyRegistered
-        case network
-        case unknown
+    }
+
+    public enum State: Equatable {
+        case idle
+        case loading
+        case success
+        case validation(ValidationError)
+        case auth(AuthError)
     }
 
     public var email = ""
@@ -36,7 +34,6 @@ public final class RegisterViewModel {
     }
 
     public func signUp() async {
-
         guard state != .loading else {
             return
         }
@@ -46,27 +43,27 @@ public final class RegisterViewModel {
         )
 
         guard !email.isEmpty else {
-            state = .error(.emptyEmail)
+            state = .validation(.emptyEmail)
             return
         }
 
         guard EmailValidator.validate(email) else {
-            state = .error(.invalidEmail)
+            state = .validation(.invalidEmail)
             return
         }
 
         guard !password.isEmpty else {
-            state = .error(.emptyPassword)
+            state = .validation(.emptyPassword)
             return
         }
 
         guard PasswordValidator.validate(password) else {
-            state = .error(.weakPassword)
+            state = .validation(.weakPassword)
             return
         }
 
         guard password == confirmPassword else {
-            state = .error(.passwordMismatch)
+            state = .validation(.passwordMismatch)
             return
         }
 
@@ -80,16 +77,11 @@ public final class RegisterViewModel {
 
             state = .success
 
-        } catch {
-            state = .error(
-                Self.map(error)
-            )
-        }
-    }
+        } catch let error as AuthError {
+            state = .auth(error)
 
-    private static func map(
-        _ error: Error
-    ) -> RegisterError {
-        .unknown
+        } catch {
+            state = .auth(.unknown)
+        }
     }
 }

@@ -3,26 +3,24 @@ import Observation
 
 @MainActor
 @Observable
-final class LoginViewModel {
+public final class LoginViewModel {
+
+    public enum ValidationError: Equatable {
+        case emptyEmail
+        case invalidEmail
+        case emptyPassword
+    }
 
     public enum State: Equatable {
         case idle
         case loading
-        case error(LoginError)
-    }
-
-    public enum LoginError: Equatable {
-        case emptyEmail
-        case invalidEmail
-        case emptyPassword
-        case invalidCredentials
-        case emailNotConfirmed
-        case network
-        case unknown
+        case validation(ValidationError)
+        case auth(AuthError)
     }
 
     public var email = ""
     public var password = ""
+
     public private(set) var state: State = .idle
 
     private let authRepository: IAuthRepository
@@ -32,7 +30,6 @@ final class LoginViewModel {
     }
 
     public func signIn() async {
-
         guard state != .loading else {
             return
         }
@@ -42,17 +39,17 @@ final class LoginViewModel {
         )
 
         guard !email.isEmpty else {
-            state = .error(.emptyEmail)
+            state = .validation(.emptyEmail)
             return
         }
 
         guard EmailValidator.validate(email) else {
-            state = .error(.invalidEmail)
+            state = .validation(.invalidEmail)
             return
         }
 
         guard !password.isEmpty else {
-            state = .error(.emptyPassword)
+            state = .validation(.emptyPassword)
             return
         }
 
@@ -66,17 +63,11 @@ final class LoginViewModel {
 
             state = .idle
 
+        } catch let error as AuthError {
+            state = .auth(error)
+
         } catch {
-            state = .error(
-                Self.map(error)
-            )
+            state = .auth(.unknown)
         }
     }
-
-    private static func map(_ error: Error) -> LoginError {
-        // map domain/backend errors
-        .unknown
-    }
 }
-
-

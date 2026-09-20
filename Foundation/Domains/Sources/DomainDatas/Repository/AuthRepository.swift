@@ -18,21 +18,31 @@ public final class AuthRepository: IAuthRepository {
     public func signIn(email: String, password: String) async throws
         -> Domains.User
     {
-        let session = try await client.auth.signIn(
-            email: email,
-            password: password
-        )
-        return map(session.user)
+        do {
+            let session = try await client.auth.signIn(
+                email: email,
+                password: password
+            )
+
+            return map(session.user)
+        } catch {
+            throw mapError(error)
+        }
     }
 
     public func signUp(email: String, password: String) async throws
         -> Domains.User
     {
-        let response = try await client.auth.signUp(
-            email: email,
-            password: password
-        )
-        return map(response.user)
+        do {
+            let response = try await client.auth.signUp(
+                email: email,
+                password: password
+            )
+
+            return map(response.user)
+        } catch {
+            throw mapError(error)
+        }
     }
 
     public func signOut() async throws {
@@ -71,6 +81,53 @@ public final class AuthRepository: IAuthRepository {
             }
             continuation.onTermination = { _ in task.cancel() }
         }
+    }
+
+    private func mapError(
+        _ error: Error
+    ) -> Domains.AuthError {
+
+        if let authError = error as? Supabase.AuthError {
+            switch authError.errorCode {
+
+            case .emailExists,
+                .userAlreadyExists:
+                return .emailAlreadyRegistered
+
+            case .invalidCredentials:
+                return .invalidCredentials
+
+            case .emailNotConfirmed:
+                return .emailNotConfirmed
+
+            case .weakPassword:
+                return .weakPassword
+
+            case .overRequestRateLimit,
+                .overEmailSendRateLimit:
+                return .rateLimited
+
+            case .signupDisabled:
+                return .signUpDisabled
+
+            default:
+                return .unknown
+            }
+        }
+
+        if let urlError = error as? URLError {
+            switch urlError.code {
+            case .notConnectedToInternet,
+                .networkConnectionLost,
+                .timedOut:
+                return .network
+
+            default:
+                return .network
+            }
+        }
+
+        return .unknown
     }
 
     private func map(_ user: Supabase.User) -> Domains.User {

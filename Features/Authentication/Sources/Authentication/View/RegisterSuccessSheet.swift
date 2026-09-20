@@ -9,16 +9,16 @@ import SwiftUI
 import SystemDesign
 
 public struct RegisterSuccessSheet: View {
+    
+    @Environment(\.dismiss)
+       private var dismiss
 
     private let email: String?
-    private let onContinue: () -> Void
 
     public init(
         email: String? = nil,
-        onContinue: @escaping () -> Void
     ) {
         self.email = email
-        self.onContinue = onContinue
     }
 
     public var body: some View {
@@ -40,10 +40,11 @@ public struct RegisterSuccessSheet: View {
             }
 
             AppButton(
-                title: "Continue",
+                title: "OK",
                 style: .accent,
-                action: onContinue
-            )
+            ) {
+                dismiss()
+            }
         }
         .padding(.horizontal, AppSpacing.xl)
         .padding(.vertical, AppSpacing.xxl)
