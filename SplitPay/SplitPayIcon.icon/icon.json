@@ -1,19 +1,19 @@
 {
-  "fill" : {
-    "automatic-gradient" : "extended-srgb:0.00000,0.53333,1.00000,1.00000"
+  "fill": {
+    "automatic-gradient": "extended-srgb:0.30196,0.41961,1.00000,1.00000"
   },
-  "groups" : [
+  "groups": [
     {
-      "layers" : [
+      "layers": [
         {
-          "image-name" : "SplitPayIcon.png",
-          "name" : "SplitPayIcon",
-          "position-specializations" : [
+          "image-name": "SplitPayIcon.png",
+          "name": "SplitPayIcon",
+          "position-specializations": [
             {
-              "idiom" : "square",
-              "value" : {
-                "scale" : 1.3,
-                "translation-in-points" : [
+              "idiom": "square",
+              "value": {
+                "scale": 1.3,
+                "translation-in-points": [
                   0,
                   0
                 ]
@@ -22,20 +22,20 @@
           ]
         }
       ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
       },
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.5
+      "translucency": {
+        "enabled": true,
+        "value": 0.5
       }
     }
   ],
-  "supported-platforms" : {
-    "circles" : [
+  "supported-platforms": {
+    "circles": [
       "watchOS"
     ],
-    "squares" : "shared"
+    "squares": "shared"
   }
 }
