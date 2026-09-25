@@ -8,11 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		28A044F18533967C325B14C2 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 6DD963D890A117190990341E /* Supabase */; };
-		85D293A336A7E41854AEBE3D /* Domains in Frameworks */ = {isa = PBXBuildFile; productRef = 078A52AD0BA73455419E3FA8 /* Domains */; };
 		8FBF665DA704543D14C06CB3 /* Authentication in Frameworks */ = {isa = PBXBuildFile; productRef = 12C4F10794A44EEEA3EB7EF7 /* Authentication */; };
 		B9C7AA436FA80A4A4437DF9B /* Swinject in Frameworks */ = {isa = PBXBuildFile; productRef = 8365A70EE796F9CBD61E9A48 /* Swinject */; };
-		B9D41AC7750D742ABE3A4E7C /* DomainDatas in Frameworks */ = {isa = PBXBuildFile; productRef = AC22E0EE708E6A497CDD4943 /* DomainDatas */; };
 		F502A887C035B317C72114F7 /* Home in Frameworks */ = {isa = PBXBuildFile; productRef = A190C03D57BC162228379A41 /* Home */; };
+		C6025CDB8BC1C74E0A701D1F /* Domains in Frameworks */ = {isa = PBXBuildFile; productRef = 1D70B04CFCF6109EB72DAE74 /* Domains */; };
+		49B6F73202F3F0E9974219FE /* DomainDatas in Frameworks */ = {isa = PBXBuildFile; productRef = 1D6DCBA62023BEB803E4F315 /* DomainDatas */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -64,12 +64,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				85D293A336A7E41854AEBE3D /* Domains in Frameworks */,
-				B9D41AC7750D742ABE3A4E7C /* DomainDatas in Frameworks */,
 				8FBF665DA704543D14C06CB3 /* Authentication in Frameworks */,
 				F502A887C035B317C72114F7 /* Home in Frameworks */,
 				B9C7AA436FA80A4A4437DF9B /* Swinject in Frameworks */,
 				28A044F18533967C325B14C2 /* Supabase in Frameworks */,
+				C6025CDB8BC1C74E0A701D1F /* Domains in Frameworks */,
+				49B6F73202F3F0E9974219FE /* DomainDatas in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -128,12 +128,12 @@
 			);
 			name = SplitPay;
 			packageProductDependencies = (
-				078A52AD0BA73455419E3FA8 /* Domains */,
-				AC22E0EE708E6A497CDD4943 /* DomainDatas */,
 				12C4F10794A44EEEA3EB7EF7 /* Authentication */,
 				A190C03D57BC162228379A41 /* Home */,
 				8365A70EE796F9CBD61E9A48 /* Swinject */,
 				6DD963D890A117190990341E /* Supabase */,
+				1D70B04CFCF6109EB72DAE74 /* Domains */,
+				1D6DCBA62023BEB803E4F315 /* DomainDatas */,
 			);
 			productName = SplitPay;
 			productReference = 6A67E95B3062C6FD005289DA /* SplitPay.app */;
@@ -213,9 +213,10 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				6A67E9B630642DB1005289DA /* XCLocalSwiftPackageReference "Core/CommonUi" */,
-				A2A7A8D405F14DFF525FDFBF /* XCLocalSwiftPackageReference "Foundation/Domains" */,
 				AE2EF6B5734DC2123D6FF15F /* XCLocalSwiftPackageReference "Features/Authentication" */,
 				7F9188783472FC449C2CFCE0 /* XCLocalSwiftPackageReference "Features/Home" */,
+				27A469A312C421BE649D9E64 /* XCLocalSwiftPackageReference "Foundation/Network" */,
+				4BBE510D6FC71260F2515FD0 /* XCLocalSwiftPackageReference "Foundation/Domains" */,
 				00DB6970191D9A9B4181E5F6 /* XCRemoteSwiftPackageReference "Swinject" */,
 				7E82B32F2E5E65F174560AD5 /* XCRemoteSwiftPackageReference "supabase-swift" */,
 			);
@@ -619,13 +620,17 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Features/Home;
 		};
-		A2A7A8D405F14DFF525FDFBF /* XCLocalSwiftPackageReference "Foundation/Domains" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = Foundation/Domains;
-		};
 		AE2EF6B5734DC2123D6FF15F /* XCLocalSwiftPackageReference "Features/Authentication" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Features/Authentication;
+		};
+		27A469A312C421BE649D9E64 /* XCLocalSwiftPackageReference "Foundation/Network" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Foundation/Network;
+		};
+		4BBE510D6FC71260F2515FD0 /* XCLocalSwiftPackageReference "Foundation/Domains" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Foundation/Domains;
 		};
 /* End XCLocalSwiftPackageReference section */
 
@@ -649,11 +654,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		078A52AD0BA73455419E3FA8 /* Domains */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = A2A7A8D405F14DFF525FDFBF /* XCLocalSwiftPackageReference "Foundation/Domains" */;
-			productName = Domains;
-		};
 		12C4F10794A44EEEA3EB7EF7 /* Authentication */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = AE2EF6B5734DC2123D6FF15F /* XCLocalSwiftPackageReference "Features/Authentication" */;
@@ -674,9 +674,14 @@
 			package = 7F9188783472FC449C2CFCE0 /* XCLocalSwiftPackageReference "Features/Home" */;
 			productName = Home;
 		};
-		AC22E0EE708E6A497CDD4943 /* DomainDatas */ = {
+		1D70B04CFCF6109EB72DAE74 /* Domains */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A2A7A8D405F14DFF525FDFBF /* XCLocalSwiftPackageReference "Foundation/Domains" */;
+			package = 4BBE510D6FC71260F2515FD0 /* XCLocalSwiftPackageReference "Foundation/Domains" */;
+			productName = Domains;
+		};
+		1D6DCBA62023BEB803E4F315 /* DomainDatas */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4BBE510D6FC71260F2515FD0 /* XCLocalSwiftPackageReference "Foundation/Domains" */;
 			productName = DomainDatas;
 		};
 /* End XCSwiftPackageProductDependency section */
