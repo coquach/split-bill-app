@@ -1,14 +1,13 @@
 //
-//  AppTextField 2.swift
+//  AppIconTextField.swift
 //  SystemDesign
 //
 //  Created by Dinh Long on 26/9/26.
 //
 
-
 import SwiftUI
 
-public struct AppTextField: View {
+public struct AppIconTextField: View {
     private let icon: String?
     private let placeholder: String
 
