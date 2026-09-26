@@ -12,6 +12,7 @@ public struct AppButton: View {
         case primary
         case accent
         case secondary
+        case translucent   // for buttons sitting on a colorful/gradient background
     }
 
     private let title: String
@@ -53,6 +54,12 @@ public struct AppButton: View {
                 style: .continuous
             )
         )
+        .overlay {
+            if style == .translucent {
+                RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.4), lineWidth: 1)
+            }
+        }
     }
 
     private var backgroundColor: Color {
@@ -65,6 +72,9 @@ public struct AppButton: View {
 
         case .secondary:
             return .appSurface
+        
+        case .translucent:
+            return .white.opacity(0.2)
         }
     }
 
@@ -78,6 +88,9 @@ public struct AppButton: View {
 
         case .secondary:
             return .appOnSurface
+        
+        case .translucent:
+                return .white
         }
     }
 }
