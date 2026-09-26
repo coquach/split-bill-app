@@ -8,11 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		28A044F18533967C325B14C2 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 6DD963D890A117190990341E /* Supabase */; };
+		49B6F73202F3F0E9974219FE /* DomainDatas in Frameworks */ = {isa = PBXBuildFile; productRef = 1D6DCBA62023BEB803E4F315 /* DomainDatas */; };
 		8FBF665DA704543D14C06CB3 /* Authentication in Frameworks */ = {isa = PBXBuildFile; productRef = 12C4F10794A44EEEA3EB7EF7 /* Authentication */; };
 		B9C7AA436FA80A4A4437DF9B /* Swinject in Frameworks */ = {isa = PBXBuildFile; productRef = 8365A70EE796F9CBD61E9A48 /* Swinject */; };
-		F502A887C035B317C72114F7 /* Home in Frameworks */ = {isa = PBXBuildFile; productRef = A190C03D57BC162228379A41 /* Home */; };
 		C6025CDB8BC1C74E0A701D1F /* Domains in Frameworks */ = {isa = PBXBuildFile; productRef = 1D70B04CFCF6109EB72DAE74 /* Domains */; };
-		49B6F73202F3F0E9974219FE /* DomainDatas in Frameworks */ = {isa = PBXBuildFile; productRef = 1D6DCBA62023BEB803E4F315 /* DomainDatas */; };
+		F502A887C035B317C72114F7 /* Home in Frameworks */ = {isa = PBXBuildFile; productRef = A190C03D57BC162228379A41 /* Home */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -217,6 +217,7 @@
 				7F9188783472FC449C2CFCE0 /* XCLocalSwiftPackageReference "Features/Home" */,
 				27A469A312C421BE649D9E64 /* XCLocalSwiftPackageReference "Foundation/Network" */,
 				4BBE510D6FC71260F2515FD0 /* XCLocalSwiftPackageReference "Foundation/Domains" */,
+				BEE559A04E946679DFD7A126 /* XCLocalSwiftPackageReference "Features/Transfer" */,
 				00DB6970191D9A9B4181E5F6 /* XCRemoteSwiftPackageReference "Swinject" */,
 				7E82B32F2E5E65F174560AD5 /* XCRemoteSwiftPackageReference "supabase-swift" */,
 			);
@@ -612,6 +613,18 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
+		27A469A312C421BE649D9E64 /* XCLocalSwiftPackageReference "Foundation/Network" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Foundation/Network;
+		};
+		4BBE510D6FC71260F2515FD0 /* XCLocalSwiftPackageReference "Foundation/Domains" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Foundation/Domains;
+		};
+		BEE559A04E946679DFD7A126 /* XCLocalSwiftPackageReference "Features/Transfer" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Features/Transfer;
+		};
 		6A67E9B630642DB1005289DA /* XCLocalSwiftPackageReference "Core/CommonUi" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Core/CommonUi;
@@ -623,14 +636,6 @@
 		AE2EF6B5734DC2123D6FF15F /* XCLocalSwiftPackageReference "Features/Authentication" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Features/Authentication;
-		};
-		27A469A312C421BE649D9E64 /* XCLocalSwiftPackageReference "Foundation/Network" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = Foundation/Network;
-		};
-		4BBE510D6FC71260F2515FD0 /* XCLocalSwiftPackageReference "Foundation/Domains" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = Foundation/Domains;
 		};
 /* End XCLocalSwiftPackageReference section */
 
@@ -659,6 +664,16 @@
 			package = AE2EF6B5734DC2123D6FF15F /* XCLocalSwiftPackageReference "Features/Authentication" */;
 			productName = Authentication;
 		};
+		1D6DCBA62023BEB803E4F315 /* DomainDatas */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4BBE510D6FC71260F2515FD0 /* XCLocalSwiftPackageReference "Foundation/Domains" */;
+			productName = DomainDatas;
+		};
+		1D70B04CFCF6109EB72DAE74 /* Domains */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4BBE510D6FC71260F2515FD0 /* XCLocalSwiftPackageReference "Foundation/Domains" */;
+			productName = Domains;
+		};
 		6DD963D890A117190990341E /* Supabase */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 7E82B32F2E5E65F174560AD5 /* XCRemoteSwiftPackageReference "supabase-swift" */;
@@ -673,16 +688,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 7F9188783472FC449C2CFCE0 /* XCLocalSwiftPackageReference "Features/Home" */;
 			productName = Home;
-		};
-		1D70B04CFCF6109EB72DAE74 /* Domains */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 4BBE510D6FC71260F2515FD0 /* XCLocalSwiftPackageReference "Foundation/Domains" */;
-			productName = Domains;
-		};
-		1D6DCBA62023BEB803E4F315 /* DomainDatas */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 4BBE510D6FC71260F2515FD0 /* XCLocalSwiftPackageReference "Foundation/Domains" */;
-			productName = DomainDatas;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
