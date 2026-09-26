@@ -8,18 +8,12 @@ import CommonUi
 import SwiftUI
 import SystemDesign
 
-public struct RegisterView: View {
+struct RegisterView: View {
 
     @State
     private var viewModel: RegisterViewModel
 
     private let onNavigateToLogin: () -> Void
-
-    @State
-    private var alert: AppAlert?
-
-    @State
-    private var showSuccessSheet = false
 
     public init(
         viewModel: RegisterViewModel,
@@ -31,92 +25,129 @@ public struct RegisterView: View {
         self.onNavigateToLogin = onNavigateToLogin
     }
 
-    public var body: some View {
-        ScrollView {
-            VStack(
-                alignment: .leading,
-                spacing: AppSpacing.lg
-            ) {
-                header
-                form
-                footer
+    var body: some View {
+        ZStack {
+            AuthBackground()
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: 0) {
+                    AuthHeader(
+                        icon: "person.badge.plus",
+                        title: "Create your account",
+                        subtitle:
+                            "Join friends and start splitting bills effortlessly",
+                        iconSize: 20
+                    )
+
+                    form
+                        .padding(.top, 28)
+
+                    footer
+                        .padding(.top, 24)
+                        .padding(.bottom, 24)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 24)
+                .padding(.top, 8)
             }
-            .padding(.horizontal, AppSpacing.lg)
-            .padding(.vertical, AppSpacing.xxl)
+            .scrollIndicators(.hidden)
+            .scrollDismissesKeyboard(.interactively)
         }
-        .scrollDismissesKeyboard(.interactively)
-        .background(Color.appBackground)
-        .appAlert(item: $alert)
-        .onChange(of: viewModel.state) { _, newState in
-            handleStateChange(newState)
-        }
-        .sheet(isPresented: $showSuccessSheet) {
-            RegisterSuccessSheet(
-                email: viewModel.email
+        .alert(
+            "Unable to create account",
+            isPresented: Binding(
+                get: {
+                    if case .failure = viewModel.state {
+                        return true
+                    }
+                    return false
+                },
+                set: { newValue in
+                    if !newValue {
+                        viewModel.dismissError()
+                    }
+                }
             )
-        }
-    }
-}
-
-// MARK: - Header
-
-extension RegisterView {
-
-    fileprivate var header: some View {
-        VStack(
-            alignment: .leading,
-            spacing: AppSpacing.sm
         ) {
-            Text("Create your account")
-                .font(AppTypography.display)
-                .foregroundStyle(Color.appOnSurface)
-
-            Text(
-                "Start managing your shared expenses with SplitPay."
+            Button("OK") {
+                viewModel.dismissError()
+            }
+        } message: {
+            if case .failure(let error) = viewModel.state {
+                Text(error.message)
+            }
+        }
+        .alert(
+            "Check your email",
+            isPresented: Binding(
+                get: {
+                    if case .success = viewModel.state {
+                        return true
+                    }
+                    return false
+                },
+                set: { isPresented in
+                    if !isPresented {
+                        viewModel.dismissEmailConfirmation()
+                    }
+                }
             )
-            .font(AppTypography.body)
-            .foregroundStyle(Color.appSecondary)
-            .fixedSize(
-                horizontal: false,
-                vertical: true
+        ) {
+            Button("OK") {
+                viewModel.dismissEmailConfirmation()
+            }
+        } message: {
+            Text(
+                "We've sent a confirmation link to \(viewModel.email). " +
+                "Please verify your email before signing in."
             )
         }
     }
-}
+    private var form: some View {
 
-// MARK: - Form
+        VStack(spacing: 16) {
 
-extension RegisterView {
-
-    fileprivate var form: some View {
-        VStack(spacing: AppSpacing.md) {
+            AppTextField(
+                title: "Full name",
+                placeholder: "Your full name",
+                text: $viewModel.fullName,
+                errorMessage: viewModel.fullNameError
+            )
+            AppTextField(
+                title: "Phone number",
+                placeholder: "0123456789",
+                text: $viewModel.phone,
+                errorMessage: viewModel.phoneError
+            ).textInputAutocapitalization(.never)
+                .keyboardType(.namePhonePad)
+                .autocorrectionDisabled()
 
             AppTextField(
                 title: "Email",
-                placeholder: "you@example.com",
+                placeholder: "name@example.com",
                 text: $viewModel.email,
-                errorMessage: emailError
-            )
+                errorMessage: viewModel.emailError
+            ).textInputAutocapitalization(.never)
+                .keyboardType(.emailAddress)
+                .autocorrectionDisabled()
 
             AppSecureField(
                 title: "Password",
-                placeholder: "Create a password",
+                placeholder: "••••••••••••",
                 text: $viewModel.password,
-                errorMessage: passwordError
-
+                errorMessage: viewModel.passwordError
             )
-
             AppSecureField(
-                title: "Confirm password",
-                placeholder: "Repeat your password",
+                title: "Confirm Password",
+                placeholder: "••••••••••••",
                 text: $viewModel.confirmPassword,
-                errorMessage: confirmPasswordError
+                errorMessage: viewModel.confirmPasswordError
             )
 
             AppButton(
-                title: "Create account",
-                style: .accent,
-                isLoading: isLoading
+                title: "Sign Up",
+                isLoading: viewModel.state == .submitting
             ) {
                 Task {
                     await viewModel.signUp()
@@ -125,117 +156,24 @@ extension RegisterView {
         }
     }
 
-    fileprivate var isLoading: Bool {
-        if case .loading = viewModel.state {
-            return true
-        }
+    private var footer: some View {
 
-        return false
-    }
-}
+        VStack(spacing: 16) {
+            Rectangle()
+                .fill(Color.appBorderDefault)
+                .frame(height: 1)
 
-// MARK: - Footer
+            HStack(spacing: 4) {
+                Text("Already have an account?")
+                    .foregroundStyle(Color.appTextSecondary)
 
-extension RegisterView {
-
-    fileprivate var footer: some View {
-        HStack(spacing: 4) {
-            Text("Already have an account?")
-                .foregroundStyle(Color.appSecondary)
-
-            Button(
-                "Sign in",
-                action: onNavigateToLogin
-            )
-            .font(AppTypography.label)
-            .foregroundStyle(Color.appPrimary)
-        }
-        .font(AppTypography.caption)
-        .frame(
-            maxWidth: .infinity,
-            alignment: .center
-        )
-    }
-}
-
-extension RegisterView {
-
-    fileprivate func handleStateChange(
-        _ state: RegisterViewModel.State
-    ) {
-        guard case .auth(let error) = state else {
-                return
+                Button("Sign In") {
+                    onNavigateToLogin()
+                }
+                .fontWeight(.bold)
+                .foregroundStyle(Color.appPrimary)
             }
-
-            switch error {
-            case .emailAlreadyRegistered:
-                alert = AppAlert(
-                    title: "Email already registered",
-                    message: "An account with this email already exists."
-                )
-
-            case .network:
-                alert = AppAlert(
-                    title: "Connection error",
-                    message: "Please check your connection and try again."
-                )
-
-            default:
-                alert = AppAlert(
-                    title: "Something went wrong",
-                    message: "Please try again later."
-                )
-            }
-    }
-}
-
-extension RegisterView {
-
-    fileprivate var emailError: String? {
-        guard case .validation(let error) = viewModel.state else {
-                return nil
-            }
-
-        switch error {
-        case .emptyEmail:
-            return "Email is required"
-
-        case .invalidEmail:
-            return "Please enter a valid email address"
-
-        default:
-            return nil
-        }
-    }
-
-    fileprivate var passwordError: String? {
-        guard case .validation(let error) = viewModel.state else {
-            return nil
-        }
-
-        switch error {
-        case .emptyPassword:
-            return "Password is required"
-
-        case .weakPassword:
-            return "Password must be at least 8 characters"
-
-        default:
-            return nil
-        }
-    }
-
-    fileprivate var confirmPasswordError: String? {
-        guard case .validation(let error) = viewModel.state else {
-                return nil
-            }
-
-        switch error {
-        case .passwordMismatch:
-            return "Passwords do not match"
-
-        default:
-            return nil
+            .font(.system(size: 14))
         }
     }
 }

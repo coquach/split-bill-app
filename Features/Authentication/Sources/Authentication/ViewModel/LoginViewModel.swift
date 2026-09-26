@@ -5,23 +5,20 @@ import Observation
 @Observable
 public final class LoginViewModel {
 
-    public enum ValidationError: Equatable {
-        case emptyEmail
-        case invalidEmail
-        case emptyPassword
-    }
-
-    public enum State: Equatable {
+    enum LoginState: Equatable {
         case idle
-        case loading
-        case validation(ValidationError)
-        case auth(AuthError)
+        case submitting
+        case success
+        case failure(AuthError)
     }
 
-    public var email = ""
-    public var password = ""
+    var email = ""
+    var password = ""
 
-    public private(set) var state: State = .idle
+    var emailError: String?
+    var passwordError: String?
+
+    private(set) var state: LoginState = .idle
 
     private let authRepository: IAuthRepository
 
@@ -30,44 +27,55 @@ public final class LoginViewModel {
     }
 
     public func signIn() async {
-        guard state != .loading else {
-            return
-        }
 
-        let email = email.trimmingCharacters(
-            in: .whitespacesAndNewlines
+        guard state != .submitting else {
+               return
+           }
+        
+        clearError()
+
+        let validation = LoginValidator.validate(
+            email: email,
+            password: password
         )
 
-        guard !email.isEmpty else {
-            state = .validation(.emptyEmail)
+        emailError = validation.emailError
+        passwordError = validation.passwordError
+
+        guard validation.isValid else {
             return
         }
 
-        guard EmailValidator.validate(email) else {
-            state = .validation(.invalidEmail)
-            return
-        }
-
-        guard !password.isEmpty else {
-            state = .validation(.emptyPassword)
-            return
-        }
-
-        state = .loading
+        state = .submitting
 
         do {
             _ = try await authRepository.signIn(
-                email: email,
+                email: email.trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                ),
                 password: password
             )
 
-            state = .idle
+            state = .success
 
         } catch let error as AuthError {
-            state = .auth(error)
+            state = .failure(error)
 
         } catch {
-            state = .auth(.unknown)
+            state = .failure(.unknown)
         }
+    }
+
+    private func clearError() {
+        emailError = nil
+        passwordError = nil
+    }
+
+    func dismissError() {
+        guard case .failure = state else {
+            return
+        }
+
+        state = .idle
     }
 }

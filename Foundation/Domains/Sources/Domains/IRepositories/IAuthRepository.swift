@@ -4,16 +4,6 @@
 //
 //  Created by Co Quach on 18/9/26.
 //
-public enum AuthError: Error, Sendable, Equatable {
-    case invalidCredentials
-    case emailNotConfirmed
-    case emailAlreadyRegistered
-    case weakPassword
-    case rateLimited
-    case network
-    case signUpDisabled
-    case unknown
-}
 
 public enum AuthState: Sendable {
     case authenticated(User)
@@ -22,7 +12,13 @@ public enum AuthState: Sendable {
 
 public protocol IAuthRepository: Sendable {
     func signIn(email: String, password: String) async throws -> User
-    func signUp(email: String, password: String) async throws -> User
+    func signUp(
+        email: String,
+        password: String,
+        fullName: String,
+        phone: String
+    ) async throws -> User
     func signOut() async throws
-    var authStateChanges: AsyncStream<AuthState> { get }
+    func validateSession() async -> Bool
+    var authState: AsyncStream<AuthState> { get }
 }

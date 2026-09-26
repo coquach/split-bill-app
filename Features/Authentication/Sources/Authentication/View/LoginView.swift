@@ -15,12 +15,6 @@ struct LoginView: View {
 
     private let onNavigateToRegister: () -> Void
 
-    @State
-    private var showingAlert = false
-
-    @State
-    private var alert: AppAlert?
-
     public init(
         viewModel: LoginViewModel,
         onNavigateToRegister: @escaping () -> Void
@@ -31,164 +25,109 @@ struct LoginView: View {
         self.onNavigateToRegister = onNavigateToRegister
     }
 
-    public var body: some View {
-        ScrollView {
-            VStack(
-                alignment: .leading,
-                spacing: AppSpacing.lg
-            ) {
-                header
+    var body: some View {
+        ZStack {
+            AuthBackground()
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                AuthHeader(
+                    icon: "arrow.left.arrow.right",
+                    title: "Welcome back",
+                    subtitle:
+                        "Sign in to continue splitting and managing bills"
+                )
 
                 form
+                    .padding(.top, 32)
+
+                Spacer(minLength: 24)
 
                 footer
+                    .padding(.top, 24)
             }
-            .padding(.horizontal, AppSpacing.lg)
-            .padding(.vertical, AppSpacing.xxl)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.horizontal, 24)
+            .padding(.top, 8)
+            .padding(.bottom, 24)
         }
+        .alert(
+            "Unable to sign in",
+            isPresented: Binding(
+                get: {
+                    if case .failure = viewModel.state {
+                        return true
+                    }
 
-        .background(Color.appBackground)
-        .scrollDismissesKeyboard(.interactively)
-        .appAlert(item: $alert)
-        .onChange(of: viewModel.state) { _, newState in
-            handleStateChange(newState)
-        }
-    }
-
-    private var header: some View {
-        VStack(
-            alignment: .leading,
-            spacing: AppSpacing.sm
+                    return false
+                },
+                set: { newValue in
+                    if !newValue {
+                        viewModel.dismissError()
+                    }
+                }
+            )
         ) {
-            Text("Welcome back")
-                .font(AppTypography.display)
-                .foregroundStyle(Color.appOnSurface)
-
-            Text("Sign in to continue managing your expenses.")
-                .font(AppTypography.body)
-                .foregroundStyle(Color.appSecondary)
-                .fixedSize(horizontal: false, vertical: true)
+            Button("OK") {
+                viewModel.dismissError()
+            }
+        } message: {
+            if case .failure(let error) = viewModel.state {
+                Text(error.message)
+            }
         }
     }
 
     private var form: some View {
-        VStack(spacing: AppSpacing.md) {
+
+        VStack(spacing: 16) {
 
             AppTextField(
                 title: "Email",
-                placeholder: "you@example.com",
+                placeholder: "name@example.com",
                 text: $viewModel.email,
-                errorMessage: emailError
-            )
+                errorMessage: viewModel.emailError
+            ).textInputAutocapitalization(.never)
+                .keyboardType(.emailAddress)
+                .autocorrectionDisabled()
 
             AppSecureField(
                 title: "Password",
-                placeholder: "Enter your password",
+                placeholder: "••••••••••••",
                 text: $viewModel.password,
-                errorMessage: passwordError
+                errorMessage: viewModel.passwordError
             )
 
             AppButton(
                 title: "Sign in",
-                style: .accent,
-                isLoading: isLoading
+                isLoading: viewModel.state == .submitting
             ) {
                 Task {
                     await viewModel.signIn()
                 }
             }
+
         }
     }
 
     private var footer: some View {
-        HStack(spacing: 4) {
-            Text("Don't have an account?")
-                .foregroundStyle(Color.appSecondary)
 
-            Button(
-                "Create account",
-                action: onNavigateToRegister
-            )
-            .font(AppTypography.label)
-            .foregroundStyle(Color.appPrimary)
-        }
-        .font(AppTypography.caption)
-        .frame(
-            maxWidth: .infinity,
-            alignment: .center
-        )
-    }
+        VStack(spacing: 24) {
+            Rectangle()
+                .fill(Color.appBorderDefault)
+                .frame(height: 1)
 
-    private var isLoading: Bool {
-        if case .loading = viewModel.state {
-            return true
-        }
+            HStack(spacing: 4) {
+                Text("Don't have an account?")
+                    .foregroundStyle(Color.appTextSecondary)
 
-        return false
-    }
-}
-
-extension LoginView {
-
-    fileprivate func handleStateChange(
-        _ state: LoginViewModel.State
-    ) {
-        guard case .auth(let error) = state else {
-                return
+                Button("Sign Up") {
+                    onNavigateToRegister()
+                }
+                .fontWeight(.bold)
+                .foregroundStyle(Color.appPrimary)
             }
-
-            switch error {
-            case .emailAlreadyRegistered:
-                alert = AppAlert(
-                    title: "Email already registered",
-                    message: "An account with this email already exists."
-                )
-
-            case .network:
-                alert = AppAlert(
-                    title: "Connection error",
-                    message: "Please check your connection and try again."
-                )
-
-            default:
-                alert = AppAlert(
-                    title: "Something went wrong",
-                    message: "Please try again later."
-                )
-            }
-    }
-}
-
-extension LoginView {
-
-    fileprivate var emailError: String? {
-        guard case .validation(let error) = viewModel.state else {
-                return nil
-            }
-
-        switch error {
-        case .emptyEmail:
-            return "Email is required"
-
-        case .invalidEmail:
-            return "Please enter a valid email address"
-
-        default:
-            return nil
-        }
-    }
-
-    fileprivate var passwordError: String? {
-        guard case .validation(let error) = viewModel.state else {
-                return nil
-            }
-
-        switch error {
-        case .emptyPassword:
-            return "Password is required"
-
-        default:
-            return nil
+            .font(.system(size: 14))
         }
     }
 }

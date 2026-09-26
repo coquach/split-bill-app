@@ -53,35 +53,35 @@ public struct AppButton: View {
                 style: .continuous
             )
         )
+        .disabled(isLoading)
     }
 
     private var backgroundColor: Color {
         switch style {
         case .primary:
-            return .appOnSurface
+            return .appPrimary
 
         case .accent:
-            return .appPrimaryContainer
+            return .appSubtle
 
         case .secondary:
-            return .appSurface
+            return .appSurfacePrimary
         }
     }
 
     private var foregroundColor: Color {
         switch style {
         case .primary:
-            return .appPrimaryContainer
+            return .appTextOnPrimary
 
         case .accent:
-            return .appOnSurface
+            return .appTextPrimary
 
         case .secondary:
-            return .appOnSurface
+            return .appPrimary
         }
     }
 }
-
 
 #Preview("Primary") {
     AppButton(

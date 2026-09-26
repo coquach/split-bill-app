@@ -11,8 +11,19 @@ import Supabase
 public final class AuthRepository: IAuthRepository {
     private let client: SupabaseClient
 
+    private let authStateContinuation: AsyncStream<AuthState>.Continuation
+
+    public let authState: AsyncStream<AuthState>
+
     public init(client: SupabaseClient) {
         self.client = client
+
+        let stream = AsyncStream<AuthState>.makeStream()
+
+        self.authState = stream.stream
+        self.authStateContinuation = stream.continuation
+
+        observeAuthState()
     }
 
     public func signIn(email: String, password: String) async throws
@@ -30,13 +41,22 @@ public final class AuthRepository: IAuthRepository {
         }
     }
 
-    public func signUp(email: String, password: String) async throws
+    public func signUp(
+        email: String,
+        password: String,
+        fullName: String,
+        phone: String
+    ) async throws
         -> Domains.User
     {
         do {
             let response = try await client.auth.signUp(
                 email: email,
-                password: password
+                password: password,
+                data: [
+                    "full_name": .string(fullName),
+                    "phone_number": .string(phone),
+                ]
             )
 
             return map(response.user)
@@ -49,45 +69,74 @@ public final class AuthRepository: IAuthRepository {
         try await client.auth.signOut()
     }
 
-    public var authStateChanges: AsyncStream<AuthState> {
-        AsyncStream { continuation in
-            let task = Task {
-                for await (event, session) in client.auth.authStateChanges {
-                    switch event {
-                    case .initialSession:
-                        guard let session else {
-                            continuation.yield(.unauthenticated)
-                            continue
-                        }
+    private func observeAuthState() {
 
-                        if session.isExpired {
-                            continuation.yield(.unauthenticated)
-                        } else {
-                            continuation.yield(
-                                .authenticated(map(session.user))
-                            )
-                        }
-                    case .signedIn:
-                        if let user = session?.user {
-                            continuation.yield(.authenticated(map(user)))
-                        }
-                    case .signedOut:
-                        continuation.yield(.unauthenticated)
-                    default:
-                        break
+        Task { [weak self] in
+
+            guard let self else { return }
+
+            for await (event, session) in client.auth.authStateChanges {
+
+                switch event {
+
+                case .initialSession:
+
+                    guard let session else {
+                        authStateContinuation.yield(.unauthenticated)
+                        continue
                     }
+
+                    guard !session.isExpired else {
+                        authStateContinuation.yield(.unauthenticated)
+                        continue
+                    }
+
+                    authStateContinuation.yield(
+                        .authenticated(map(session.user))
+                    )
+
+                case .signedIn:
+
+                    guard let user = session?.user else {
+                        authStateContinuation.yield(.unauthenticated)
+                        continue
+                    }
+
+                    authStateContinuation.yield(
+                        .authenticated(map(user))
+                    )
+
+                case .signedOut:
+
+                    authStateContinuation.yield(.unauthenticated)
+
+                default:
+                    break
                 }
-                continuation.finish()
             }
-            continuation.onTermination = { _ in task.cancel() }
         }
     }
 
-    private func mapError(
-        _ error: Error
-    ) -> Domains.AuthError {
+    public func validateSession() async -> Bool {
+        do {
+            let session = try await client.auth.session
+
+            guard !session.isExpired else {
+                return false
+            }
+
+            _ = try await client.auth.user()
+
+            return !session.isExpired
+        } catch {
+            return false
+        }
+    }
+
+    private func mapError(_ error: Error) -> Domains.AuthError {
 
         if let authError = error as? Supabase.AuthError {
+
             switch authError.errorCode {
 
             case .emailExists,
@@ -116,7 +165,9 @@ public final class AuthRepository: IAuthRepository {
         }
 
         if let urlError = error as? URLError {
+
             switch urlError.code {
+
             case .notConnectedToInternet,
                 .networkConnectionLost,
                 .timedOut:
@@ -129,7 +180,6 @@ public final class AuthRepository: IAuthRepository {
 
         return .unknown
     }
-
     private func map(_ user: Supabase.User) -> Domains.User {
         Domains.User(id: user.id.uuidString, email: user.email ?? "")
     }
