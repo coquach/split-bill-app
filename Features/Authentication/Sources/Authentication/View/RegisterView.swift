@@ -108,13 +108,14 @@ extension RegisterView {
                 title: "Password",
                 placeholder: "Create a password",
                 text: $viewModel.password,
-
+                errorMessage: passwordError
             )
 
             AppSecureField(
                 title: "Confirm password",
                 placeholder: "Repeat your password",
-                text: $viewModel.confirmPassword
+                text: $viewModel.confirmPassword,
+                errorMessage: confirmPasswordError
             )
 
             AppButton(

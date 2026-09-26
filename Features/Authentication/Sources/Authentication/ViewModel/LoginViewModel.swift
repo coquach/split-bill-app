@@ -67,6 +67,7 @@ final class LoginViewModel {
             state = .idle
 
         } catch {
+            print("[LoginViewModel] signIn failed: \(error)") // TODO: remove once map(_:) handles real errors
             state = .error(
                 Self.map(error)
             )

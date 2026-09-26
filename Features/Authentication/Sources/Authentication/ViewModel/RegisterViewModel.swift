@@ -81,6 +81,7 @@ public final class RegisterViewModel {
             state = .success
 
         } catch {
+            print("[RegisterViewModel] signUp failed: \(error)") // TODO: remove once map(_:) handles real errors
             state = .error(
                 Self.map(error)
             )
