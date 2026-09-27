@@ -12,7 +12,6 @@ public struct AppButton: View {
         case primary
         case accent
         case secondary
-        case translucent   // for buttons sitting on a colorful/gradient background
     }
 
     private let title: String
@@ -46,7 +45,6 @@ public struct AppButton: View {
             .frame(maxWidth: .infinity)
             .frame(height: 52)
         }
-        .buttonStyle(.plain) // opts out of iOS 26's automatic Liquid Glass button chrome, which otherwise fights with the manual background/foreground below
         .foregroundStyle(foregroundColor)
         .background(backgroundColor)
         .clipShape(
@@ -55,47 +53,35 @@ public struct AppButton: View {
                 style: .continuous
             )
         )
-        .overlay {
-            if style == .translucent {
-                RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.4), lineWidth: 1)
-            }
-        }
+        .disabled(isLoading)
     }
 
     private var backgroundColor: Color {
         switch style {
         case .primary:
-            return .appOnSurface
+            return .appPrimary
 
         case .accent:
-            return .appPrimaryContainer
+            return .appSubtle
 
         case .secondary:
-            return .appSurface
-        
-        case .translucent:
-            return .white.opacity(0.2)
+            return .appSurfacePrimary
         }
     }
 
     private var foregroundColor: Color {
         switch style {
         case .primary:
-            return .white
+            return .appTextOnPrimary
 
         case .accent:
-            return .appOnSurface
+            return .appTextPrimary
 
         case .secondary:
-            return .appOnSurface
-        
-        case .translucent:
-                return .white
+            return .appPrimary
         }
     }
 }
-
 
 #Preview("Primary") {
     AppButton(

@@ -1,5 +1,5 @@
 //
-//  TransferRepository.swift
+//  RepaymentRepository.swift
 //  Domains
 //
 //  Created by Co Quach on 27/9/26.
@@ -9,22 +9,22 @@ import Domains
 import Foundation
 import Supabase
 
-public final class TransferRepository: ITransferRepository {
+public final class RepaymentRepository: IRepaymentRepository {
     private let client: SupabaseClient
 
     public init(client: SupabaseClient) {
         self.client = client
     }
 
-    public func createTransfer(
-        _ command: CreateTransferCommand
-    ) async throws -> TransferTransaction {
+    public func createQRRepayment(
+        _ command: CreateQRRepaymentCommand
+    ) async throws -> Repayment {
         do {
-            let dto: TransferTransactionDTO =
+            let dto: RepaymentDTO =
                 try await client
                 .rpc(
-                    "create_transfer",
-                    params: CreateTransferRequest(command)
+                    "create_qr_repayment",
+                    params: CreateQRRepaymentRequest(command)
                 )
                 .execute()
                 .value
@@ -35,13 +35,16 @@ public final class TransferRepository: ITransferRepository {
         }
     }
 
-    public func getTransfers() async throws -> [TransferTransaction] {
+    public func getRepayments(
+        splitBillId: UUID
+    ) async throws -> [Repayment] {
         do {
-            let dtos: [TransferTransactionDTO] =
+            let dtos: [RepaymentDTO] =
                 try await client
-                .from("transfer_transactions")
+                .from("repayments")
                 .select()
-                .order("created_at", ascending: false)
+                .eq("split_bill_id", value: splitBillId.uuidString)
+                .order("paid_at", ascending: false)
                 .execute()
                 .value
 
@@ -51,18 +54,16 @@ public final class TransferRepository: ITransferRepository {
         }
     }
 
-    public func getTransfer(id: UUID) async throws -> TransferTransaction {
+    public func getMyRepaymentRecords() async throws -> [RepaymentRecord] {
         do {
-            let dto: TransferTransactionDTO =
+            let dtos: [RepaymentRecordDTO] =
                 try await client
-                .from("transfer_transactions")
+                .from("my_repayment_records")
                 .select()
-                .eq("id", value: id.uuidString)
-                .single()
                 .execute()
                 .value
 
-            return dto.toDomain()
+            return dtos.map { $0.toDomain() }
         } catch {
             throw RepositoryErrorMapper.map(error)
         }

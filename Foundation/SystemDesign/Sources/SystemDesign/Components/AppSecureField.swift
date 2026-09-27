@@ -11,6 +11,7 @@ public struct AppSecureField: View {
     private let title: String
     private let placeholder: String
     private let errorMessage: String?
+    private let leadingIcon: String?
 
     @Binding
     private var text: String
@@ -22,12 +23,14 @@ public struct AppSecureField: View {
         title: String,
         placeholder: String,
         text: Binding<String>,
-        errorMessage: String? = nil
+        errorMessage: String? = nil,
+        leadingIcon: String? = nil,
     ) {
         self.title = title
         self.placeholder = placeholder
         self._text = text
         self.errorMessage = errorMessage
+        self.leadingIcon = leadingIcon
     }
 
     public var body: some View {
@@ -35,12 +38,21 @@ public struct AppSecureField: View {
             alignment: .leading,
             spacing: AppSpacing.xs
         ) {
-
             Text(title)
                 .font(AppTypography.label)
-                .foregroundStyle(Color.appOnSurface)
+                .foregroundStyle(Color.appTextPrimary)
 
             HStack(spacing: AppSpacing.sm) {
+                if let leadingIcon {
+                       Image(systemName: leadingIcon)
+                           .font(.system(size: 16, weight: .medium))
+                           .foregroundStyle(Color.appTextSecondary)
+                           .frame(
+                               width: 20,
+                               height: 20
+                           )
+                   }
+
 
                 Group {
                     if isPasswordVisible {
@@ -56,7 +68,8 @@ public struct AppSecureField: View {
                     }
                 }
                 .font(AppTypography.body)
-                .foregroundStyle(Color.appOnSurface)
+                .foregroundStyle(Color.appTextPrimary)
+                .tint(Color.appPrimary)
                 .textInputAutocapitalization(.never)
                 .textContentType(.password)
 
@@ -68,8 +81,13 @@ public struct AppSecureField: View {
                             ? "eye.slash"
                             : "eye"
                     )
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(Color.appSecondary)
+                    .font(
+                        .system(
+                            size: 16,
+                            weight: .medium
+                        )
+                    )
+                    .foregroundStyle(Color.appTextSecondary)
                     .frame(
                         width: 36,
                         height: 36
@@ -91,7 +109,7 @@ public struct AppSecureField: View {
                     cornerRadius: AppRadius.lg,
                     style: .continuous
                 )
-                .fill(Color.appSurface)
+                .fill(Color.appSurfacePrimary)
             }
             .overlay {
                 RoundedRectangle(
@@ -113,8 +131,10 @@ public struct AppSecureField: View {
     }
 
     private var borderColor: Color {
-        errorMessage == nil
-            ? Color.appOnSurface.opacity(0.08)
-            : Color.appError
+        if errorMessage != nil {
+            return .appError
+        }
+
+        return .appBorderDefault
     }
 }

@@ -3,27 +3,22 @@ import Observation
 
 @MainActor
 @Observable
-final class LoginViewModel {
+public final class LoginViewModel {
 
-    public enum State: Equatable {
+    enum LoginState: Equatable {
         case idle
-        case loading
-        case error(LoginError)
+        case submitting
+        case success
+        case failure(AuthError)
     }
 
-    public enum LoginError: Equatable {
-        case emptyEmail
-        case invalidEmail
-        case emptyPassword
-        case invalidCredentials
-        case emailNotConfirmed
-        case network
-        case unknown
-    }
+    var email = ""
+    var password = ""
 
-    public var email = ""
-    public var password = ""
-    public private(set) var state: State = .idle
+    var emailError: String?
+    var passwordError: String?
+
+    private(set) var state: LoginState = .idle
 
     private let authRepository: IAuthRepository
 
@@ -33,51 +28,54 @@ final class LoginViewModel {
 
     public func signIn() async {
 
-        guard state != .loading else {
-            return
-        }
+        guard state != .submitting else {
+               return
+           }
+        
+        clearError()
 
-        let email = email.trimmingCharacters(
-            in: .whitespacesAndNewlines
+        let validation = LoginValidator.validate(
+            email: email,
+            password: password
         )
 
-        guard !email.isEmpty else {
-            state = .error(.emptyEmail)
+        emailError = validation.emailError
+        passwordError = validation.passwordError
+
+        guard validation.isValid else {
             return
         }
 
-        guard EmailValidator.validate(email) else {
-            state = .error(.invalidEmail)
-            return
-        }
-
-        guard !password.isEmpty else {
-            state = .error(.emptyPassword)
-            return
-        }
-
-        state = .loading
+        state = .submitting
 
         do {
             _ = try await authRepository.signIn(
-                email: email,
+                email: email.trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                ),
                 password: password
             )
 
-            state = .idle
+            state = .success
+
+        } catch let error as AuthError {
+            state = .failure(error)
 
         } catch {
-            print("[LoginViewModel] signIn failed: \(error)") // TODO: remove once map(_:) handles real errors
-            state = .error(
-                Self.map(error)
-            )
+            state = .failure(.unknown)
         }
     }
 
-    private static func map(_ error: Error) -> LoginError {
-        // map domain/backend errors
-        .unknown
+    private func clearError() {
+        emailError = nil
+        passwordError = nil
+    }
+
+    func dismissError() {
+        guard case .failure = state else {
+            return
+        }
+
+        state = .idle
     }
 }
-
-

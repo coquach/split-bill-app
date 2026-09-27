@@ -1,39 +1,22 @@
 // swift-tools-version: 6.2
-//
-//  Package.swift
-//
-//
-//  Created by Dinh Long on 25/9/26.
-//
+// The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
 let package = Package(
     name: "Transfer",
-    platforms: [
-        .iOS(.v17)
-    ],
     products: [
+        // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
             name: "Transfer",
             targets: ["Transfer"]
         ),
     ],
-    dependencies: [
-        .package(path: "../../Foundation/Domains"),
-        .package(path: "../../Foundation/Router"),
-        .package(path: "../../Foundation/SystemDesign"),
-        .package(path: "../../Core/CommonUi"),
-    ],
     targets: [
+        // Targets are the basic building blocks of a package, defining a module or a test suite.
+        // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "Transfer",
-            dependencies: [
-                .product(name: "Domains", package: "Domains"),
-                .product(name: "Router", package: "Router"),
-                .product(name: "SystemDesign", package: "SystemDesign"),
-                .product(name: "CommonUi", package: "CommonUi"),
-            ]
+            name: "Transfer"
         ),
         .testTarget(
             name: "TransferTests",

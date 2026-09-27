@@ -11,8 +11,8 @@ import SwiftUI
 
 enum AppRoot {
     case loading
-    case auth
-    case home(user: User)
+    case unauthenticated
+    case authenticated(Domains.User)
 }
 
 @Observable
@@ -43,16 +43,45 @@ final class AppCoordinator {
     func start() {
         guard authTask == nil else { return }
 
-        authTask = Task {
-            for await state in authRepository.authStateChanges {
-                switch state {
+        authTask = Task { [weak self] in
+            guard let self else {
+                return
+            }
+
+            for await authStateChanges in authRepository.authStateChanges {
+                switch authStateChanges {
                 case .authenticated(let user):
-                    root = .home(user: user)
+                    root = .authenticated(user)
 
                 case .unauthenticated:
-                    root = .auth
+                    root = .unauthenticated
                 }
             }
         }
+    }
+
+    func validateSession() {
+        Task { [weak self] in
+            guard let self else {
+                return
+            }
+
+            let isValid = await authRepository.validateSession()
+
+            guard !Task.isCancelled else {
+                return
+            }
+
+            guard !isValid else {
+                return
+            }
+
+            root = .unauthenticated
+        }
+    }
+
+    func stop() {
+        authTask?.cancel()
+        authTask = nil
     }
 }

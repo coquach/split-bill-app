@@ -1,17 +1,13 @@
 //
 //  WalletRepository.swift
-//  DomainDatas
+//  Domains
 //
-//  Created by Dinh Long on 26/9/26.
+//  Created by Co Quach on 27/9/26.
 //
 
 import Domains
 import Foundation
 import Supabase
-
-private struct WalletBalanceRow: Decodable {
-    let balance: Double
-}
 
 public final class WalletRepository: IWalletRepository {
     private let client: SupabaseClient
@@ -20,20 +16,55 @@ public final class WalletRepository: IWalletRepository {
         self.client = client
     }
 
-    public func fetchBalance() async throws -> Amount {
-        guard let userID = client.auth.currentUser?.id else {
-            throw AccountRepositoryError.unknown
+    public func getDefaultWallet() async throws -> Wallet {
+        do {
+            let dto: WalletDTO =
+                try await client
+                .from("wallets")
+                .select()
+                .eq("is_default", value: true)
+                .eq("status", value: WalletStatus.active.rawValue)
+                .single()
+                .execute()
+                .value
+
+            return dto.toDomain()
+        } catch {
+            throw RepositoryErrorMapper.map(error)
         }
+    }
 
-        let row: WalletBalanceRow = try await client
-            .from("wallets")
-            .select("balance")
-            .eq("user_id", value: userID)
-            .eq("is_default", value: true)
-            .single()
-            .execute()
-            .value
+    public func getWallets() async throws -> [Wallet] {
+        do {
+            let dtos: [WalletDTO] =
+                try await client
+                .from("wallets")
+                .select()
+                .eq("status", value: WalletStatus.active.rawValue)
+                .execute()
+                .value
 
-        return Amount(row.balance)
+            return dtos.map { $0.toDomain() }
+        } catch {
+            throw RepositoryErrorMapper.map(error)
+        }
+    }
+
+    public func resolveWallet(walletNumber: String) async throws
+        -> WalletRecipient
+    {
+        do {
+            let request = ResolveWalletRequest(walletNumber: walletNumber)
+
+            let response: WalletRecipientDTO =
+                try await client
+                .rpc("resolve_wallet_by_number", params: request)
+                .execute()
+                .value
+
+            return response.toDomain()
+        } catch {
+            throw RepositoryErrorMapper.map(error)
+        }
     }
 }
