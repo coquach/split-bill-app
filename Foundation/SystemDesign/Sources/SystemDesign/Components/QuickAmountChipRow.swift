@@ -4,10 +4,12 @@ import SwiftUI
 /// 100K, 500K) shown under the amount field on TransferInput.
 public struct QuickAmountChipRow: View {
     private let amounts: [Int]
+    private let selectedAmount: Int?
     private let onSelect: (Int) -> Void
 
-    public init(amounts: [Int], onSelect: @escaping (Int) -> Void) {
+    public init(amounts: [Int], selectedAmount: Int? = nil, onSelect: @escaping (Int) -> Void) {
         self.amounts = amounts
+        self.selectedAmount = selectedAmount
         self.onSelect = onSelect
     }
 
@@ -15,15 +17,17 @@ public struct QuickAmountChipRow: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: AppSpacing.sm) {
                 ForEach(amounts, id: \.self) { amount in
+                    let isSelected = amount == selectedAmount
+
                     Button {
                         onSelect(amount)
                     } label: {
                         Text(formatted(amount))
                             .font(AppTypography.label)
-                            .foregroundStyle(Color.appOnSurface)
+                            .foregroundStyle(isSelected ? Color.white : Color.appOnSurface)
                             .padding(.horizontal, AppSpacing.md)
                             .padding(.vertical, AppSpacing.xs)
-                            .background(Color.appSurface)
+                            .background(isSelected ? Color.appPrimary : Color.appSurface)
                             .clipShape(Capsule())
                     }
                 }

@@ -46,6 +46,7 @@ public struct AppButton: View {
             .frame(maxWidth: .infinity)
             .frame(height: 52)
         }
+        .buttonStyle(.plain) // opts out of iOS 26's automatic Liquid Glass button chrome, which otherwise fights with the manual background/foreground below
         .foregroundStyle(foregroundColor)
         .background(backgroundColor)
         .clipShape(

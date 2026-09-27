@@ -10,7 +10,7 @@ import SwiftUI
 
 public struct TransactionRow: View {
 
-    public enum Direction {
+    public enum Direction: Sendable {
         case incoming
         case outgoing
 
