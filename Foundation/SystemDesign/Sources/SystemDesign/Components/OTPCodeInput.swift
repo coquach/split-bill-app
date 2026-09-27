@@ -1,52 +1,83 @@
 import SwiftUI
 
-/// A row of boxed digits for entering an OTP code — used on the OTP
-/// verification step before confirming a transfer.
 public struct OTPCodeInput: View {
     private let length: Int
+    private let isKeyboardDriven: Bool
     @Binding private var code: String
     @FocusState private var isFocused: Bool
 
-    public init(length: Int = 6, code: Binding<String>) {
+    public init(length: Int = 6, code: Binding<String>, isKeyboardDriven: Bool = true) {
         self.length = length
         self._code = code
+        self.isKeyboardDriven = isKeyboardDriven
     }
 
     public var body: some View {
         ZStack {
             HStack(spacing: AppSpacing.sm) {
                 ForEach(0..<length, id: \.self) { index in
-                    let isActiveBox = isFocused && index == code.count
-
-                    Text(digit(at: index))
-                        .font(AppTypography.title)
-                        .foregroundStyle(Color.appOnSurface)
-                        .frame(width: 44, height: 52)
-                        .background(Color.appSurface)
-                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                                .strokeBorder(isActiveBox ? Color.appPrimaryContainer : Color.clear, lineWidth: 2)
-                        }
+                    box(at: index)
                 }
             }
 
-            // The boxes above are just a picture of the code. This invisible
-            // field is what actually receives keyboard input — a common
-            // trick since SwiftUI has no built-in "OTP box" input.
-            TextField("", text: $code)
-                .keyboardType(.numberPad)
-                .textContentType(.oneTimeCode) // lets iOS offer to autofill an SMS code
-                .foregroundStyle(.clear)
-                .tint(.clear)
-                .focused($isFocused)
-                .onChange(of: code) { _, newValue in
-                    if newValue.count > length {
-                        code = String(newValue.prefix(length))
+            if isKeyboardDriven {
+                TextField("", text: $code)
+                    .keyboardType(.numberPad)
+                    .textContentType(.oneTimeCode)
+                    .foregroundStyle(.clear)
+                    .tint(.clear)
+                    .focused($isFocused)
+                    .onChange(of: code) { _, newValue in
+                        if newValue.count > length {
+                            code = String(newValue.prefix(length))
+                        }
                     }
-                }
+            }
         }
-        .onTapGesture { isFocused = true }
+        .onTapGesture {
+            if isKeyboardDriven { isFocused = true }
+        }
+        .onAppear {
+            if isKeyboardDriven { isFocused = true }
+        }
+    }
+
+    @ViewBuilder
+    private func box(at index: Int) -> some View {
+        let isActiveBox = isKeyboardDriven
+            ? (isFocused && index == code.count)
+            : (index == code.count)
+        let hasDigit = index < code.count
+
+        ZStack {
+            if hasDigit {
+                Text(digit(at: index))
+                    .font(AppTypography.title)
+                    .foregroundStyle(Color.appOnSurface)
+            } else if isActiveBox {
+                Rectangle()
+                    .fill(Color.appOnSurface)
+                    .frame(width: 2)
+                    .padding(.vertical, AppSpacing.sm)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 66) 
+        .background(Color.appSurface)
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
+        .shadow(
+            color: isActiveBox ? Color.appOnSurface.opacity(0.35) : Color.black.opacity(0.06),
+            radius: isActiveBox ? 8 : 4,
+            x: 0,
+            y: isActiveBox ? 0 : 2
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                .strokeBorder(
+                    isActiveBox ? Color.appOnSurface : Color.appOnSurface.opacity(0.2),
+                    lineWidth: isActiveBox ? 2 : 1
+                )
+        }
     }
 
     private func digit(at index: Int) -> String {
