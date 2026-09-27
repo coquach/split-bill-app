@@ -7,14 +7,14 @@
 
 import Domains
 import DomainDatas
-import Network
+import Supabase
 import Swinject
 
 final class AccountAssembly: Assembly {
     func assemble(container: Container) {
         container.register(IAccountRepository.self) { resolver in
-            let apiClient = resolver.resolve(IAPIClientService.self)!
-            return AccountRepository(apiClient: apiClient)
+            let client = resolver.resolve(SupabaseClient.self)!
+            return AccountRepository(client: client)
         }
         .inObjectScope(.container)
     }
