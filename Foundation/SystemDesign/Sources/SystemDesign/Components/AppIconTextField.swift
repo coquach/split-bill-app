@@ -40,7 +40,7 @@ public struct AppIconTextField: View {
         .overlay {
             RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
                 .strokeBorder(
-                    isFocused ? Color.appPrimaryContainer : Color.clear,
+                    isFocused ? Color.appOnSurface : Color.clear,
                     lineWidth: 2
                 )
         }

@@ -82,7 +82,7 @@ public struct AppButton: View {
     private var foregroundColor: Color {
         switch style {
         case .primary:
-            return .appPrimaryContainer
+            return .white
 
         case .accent:
             return .appOnSurface

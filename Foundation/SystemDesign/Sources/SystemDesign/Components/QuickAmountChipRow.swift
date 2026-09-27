@@ -27,9 +27,11 @@ public struct QuickAmountChipRow: View {
                             .foregroundStyle(isSelected ? Color.white : Color.appOnSurface)
                             .padding(.horizontal, AppSpacing.md)
                             .padding(.vertical, AppSpacing.xs)
-                            .background(isSelected ? Color.appPrimary : Color.appSurface)
+                            .background(isSelected ? Color.appOnSurface : Color.appSurface)
                             .clipShape(Capsule())
+                            .shadow(color: .black.opacity(isSelected ? 0 : 0.05), radius: 4, x: 0, y: 2)
                     }
+                    .buttonStyle(.plain)
                 }
             }
         }

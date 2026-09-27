@@ -37,7 +37,7 @@ public struct AppMultilineTextField: View {
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
-                .strokeBorder(isFocused ? Color.appPrimaryContainer : Color.clear, lineWidth: 2)
+                .strokeBorder(isFocused ? Color.appOnSurface : Color.clear, lineWidth: 2)
         }
     }
 }
