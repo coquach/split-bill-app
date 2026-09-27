@@ -6,6 +6,7 @@
 //
 
 import Domains
+import Foundation
 import Observation
 
 @MainActor
@@ -31,7 +32,21 @@ public final class OTPVerificationViewModel {
     }
 
     public var isPinComplete: Bool {
-        pin.count == 6
+        pin.count == 4
+    }
+
+    // MARK: - Keypad input
+
+    // Input comes from the custom NumericKeypadTray, not the system
+    // keyboard - these are its only entry points into `pin`.
+    public func appendDigit(_ digit: Int) {
+        guard pin.count < 4 else { return }
+        pin.append(String(digit))
+    }
+
+    public func deleteLast() {
+        guard !pin.isEmpty else { return }
+        pin.removeLast()
     }
 
     public var errorMessage: String? {
@@ -52,21 +67,31 @@ public final class OTPVerificationViewModel {
         }
     }
 
-    // This is the one real network call in the whole flow — Input and
-    // Confirm only ever collect intent.
+    // This is meant to be the one real network call in the whole flow —
+    // Input and Confirm only ever collect intent. For now it's gated by
+    // TestPIN instead of actually calling transferRepository, since there's
+    // no real backend running yet to submit to. Remove the guard (and the
+    // synthesized receipt) once one exists.
     public func submit() async {
         guard isPinComplete, state != .verifying else { return }
 
         state = .verifying
 
-        do {
-            receipt = try await transferRepository.submitTransfer(draft, pin: pin)
-            state = .idle
-        } catch let error as TransferRepositoryError {
-            state = .failed(error)
-        } catch {
-            state = .failed(.unknown)
+        guard pin == TestPIN.value else {
+            state = .failed(.invalidPin)
+            return
         }
+
+        receipt = TransferReceipt(
+            id: UUID().uuidString,
+            receiverAccountNumber: draft.receiverAccountNumber,
+            receiverHolderName: draft.receiverHolderName,
+            amount: draft.amount,
+            description: draft.description,
+            createdAt: Date(),
+            status: "completed"
+        )
+        state = .idle
     }
 
     public func retry() {

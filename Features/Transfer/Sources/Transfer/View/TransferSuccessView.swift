@@ -64,5 +64,6 @@ public struct TransferSuccessView: View {
             .ignoresSafeArea()
         )
         .navigationBarBackButtonHidden(true)
+        .screenLifecycle("TransferSuccess")
     }
 }

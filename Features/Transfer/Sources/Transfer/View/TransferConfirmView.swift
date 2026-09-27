@@ -81,6 +81,7 @@ public struct TransferConfirmView: View {
         .background(Color.appBackground)
         .navigationTitle("Confirm Transfer")
         .navigationBarTitleDisplayMode(.inline)
+        .screenLifecycle("TransferConfirm")
     }
 
     @ViewBuilder

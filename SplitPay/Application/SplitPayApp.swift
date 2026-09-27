@@ -49,11 +49,15 @@ private struct AppRootView: View {
             HomeView(
                 viewModel: HomeViewModel(
                     user: user,
-                    authRepository: coordinator.authRepository,
-                    sessionStore: coordinator.sessionStore
-                ),
-                onTransferTapped: { isTransferPresented = true }
+                    authRepository: coordinator.authRepository
+                )
             )
+            // Temp test entry point, lives here (app target) rather than
+            // inside HomeView so it doesn't depend on Home's own UI.
+            .overlay(alignment: .bottomTrailing) {
+                Button("Test Transfer") { isTransferPresented = true }
+                    .padding()
+            }
             .fullScreenCover(isPresented: $isTransferPresented) {
                 TransferCoordinator(
                     dependencies: .init(

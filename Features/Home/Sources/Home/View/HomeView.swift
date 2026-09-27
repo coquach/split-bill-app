@@ -5,6 +5,7 @@
 //  Created by Co Quach on 18/9/26.
 //
 import SwiftUI
+import SystemDesign
 
 public struct HomeView: View {
 
@@ -40,5 +41,6 @@ public struct HomeView: View {
             }
         }
         .padding()
+        .screenLifecycle("Home")
     }
 }

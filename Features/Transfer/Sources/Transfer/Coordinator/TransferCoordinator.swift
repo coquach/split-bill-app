@@ -10,6 +10,7 @@ import Router
 import SwiftUI
 
 public enum TransferDestination: Hashable {
+    case input
     case confirm(TransferDraft)
     case otp(TransferDraft)
     case success(TransferReceipt)
@@ -27,17 +28,27 @@ public struct TransferCoordinator: View {
 
     public var body: some View {
         NavigationStack(path: $router.navPath) {
-            TransferInputView(
-                viewModel: TransferInputViewModel(
-                    accountRepository: dependencies.accountRepository,
-                    sessionStore: dependencies.sessionStore
-                ),
-                onContinue: { draft in
-                    router.navigate(to: TransferDestination.confirm(draft))
-                }
+            TransferPinGateView(
+                viewModel: PinGateViewModel(),
+                onVerified: {
+                    router.navigate(to: TransferDestination.input)
+                },
+                onCancel: onFinish
             )
             .navigationDestination(for: TransferDestination.self) { destination in
                 switch destination {
+                case .input:
+                    TransferInputView(
+                        viewModel: TransferInputViewModel(
+                            accountRepository: dependencies.accountRepository,
+                            sessionStore: dependencies.sessionStore
+                        ),
+                        onBack: { router.navigateBack() },
+                        onContinue: { draft in
+                            router.navigate(to: TransferDestination.confirm(draft))
+                        }
+                    )
+
                 case .confirm(let draft):
                     TransferConfirmView(
                         viewModel: TransferConfirmViewModel(draft: draft),
@@ -53,6 +64,7 @@ public struct TransferCoordinator: View {
                             draft: draft,
                             transferRepository: dependencies.transferRepository
                         ),
+                        onBack: { router.navigateBack() },
                         onSuccess: { receipt in
                             router.navigate(to: TransferDestination.success(receipt))
                         }
