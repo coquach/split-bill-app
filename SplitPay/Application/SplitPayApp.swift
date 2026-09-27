@@ -2,6 +2,7 @@ import Authentication
 import Domains
 import Home
 import SwiftUI
+import Transfer
 
 @main
 struct SplitPayApp: App {
@@ -13,9 +14,12 @@ struct SplitPayApp: App {
 
         self.container = container
         self.coordinator = AppCoordinator(
-            authRepository: container.resolve(IAuthRepository.self)
+            authRepository: container.resolve(IAuthRepository.self),
+            accountRepository: container.resolve(IAccountRepository.self),
+            sessionStore: container.resolve(SessionStore.self),
+            transferRepository: container.resolve(ITransferRepository.self)
         )
-        
+
     }
 
     var body: some Scene {
@@ -28,6 +32,7 @@ struct SplitPayApp: App {
 
 private struct AppRootView: View {
     @Environment(AppCoordinator.self) private var coordinator
+    @State private var isTransferPresented = false
 
     var body: some View {
         switch coordinator.root {
@@ -44,9 +49,21 @@ private struct AppRootView: View {
             HomeView(
                 viewModel: HomeViewModel(
                     user: user,
-                    authRepository: coordinator.authRepository
-                )
+                    authRepository: coordinator.authRepository,
+                    sessionStore: coordinator.sessionStore
+                ),
+                onTransferTapped: { isTransferPresented = true }
             )
+            .fullScreenCover(isPresented: $isTransferPresented) {
+                TransferCoordinator(
+                    dependencies: .init(
+                        accountRepository: coordinator.accountRepository,
+                        sessionStore: coordinator.sessionStore,
+                        transferRepository: coordinator.transferRepository
+                    ),
+                    onFinish: { isTransferPresented = false }
+                )
+            }
         }
     }
 }

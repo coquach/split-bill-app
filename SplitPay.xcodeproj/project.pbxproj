@@ -13,6 +13,7 @@
 		B9C7AA436FA80A4A4437DF9B /* Swinject in Frameworks */ = {isa = PBXBuildFile; productRef = 8365A70EE796F9CBD61E9A48 /* Swinject */; };
 		C6025CDB8BC1C74E0A701D1F /* Domains in Frameworks */ = {isa = PBXBuildFile; productRef = 1D70B04CFCF6109EB72DAE74 /* Domains */; };
 		F502A887C035B317C72114F7 /* Home in Frameworks */ = {isa = PBXBuildFile; productRef = A190C03D57BC162228379A41 /* Home */; };
+		D4D8B4743A46B6D731F6D484 /* Transfer in Frameworks */ = {isa = PBXBuildFile; productRef = C6678F0CE84F51BCD7CE4F1F /* Transfer */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,6 +71,7 @@
 				28A044F18533967C325B14C2 /* Supabase in Frameworks */,
 				C6025CDB8BC1C74E0A701D1F /* Domains in Frameworks */,
 				49B6F73202F3F0E9974219FE /* DomainDatas in Frameworks */,
+				D4D8B4743A46B6D731F6D484 /* Transfer in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -134,6 +136,7 @@
 				6DD963D890A117190990341E /* Supabase */,
 				1D70B04CFCF6109EB72DAE74 /* Domains */,
 				1D6DCBA62023BEB803E4F315 /* DomainDatas */,
+				C6678F0CE84F51BCD7CE4F1F /* Transfer */,
 			);
 			productName = SplitPay;
 			productReference = 6A67E95B3062C6FD005289DA /* SplitPay.app */;
@@ -621,10 +624,6 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Foundation/Domains;
 		};
-		BEE559A04E946679DFD7A126 /* XCLocalSwiftPackageReference "Features/Transfer" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = Features/Transfer;
-		};
 		6A67E9B630642DB1005289DA /* XCLocalSwiftPackageReference "Core/CommonUi" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Core/CommonUi;
@@ -636,6 +635,10 @@
 		AE2EF6B5734DC2123D6FF15F /* XCLocalSwiftPackageReference "Features/Authentication" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Features/Authentication;
+		};
+		BEE559A04E946679DFD7A126 /* XCLocalSwiftPackageReference "Features/Transfer" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Features/Transfer;
 		};
 /* End XCLocalSwiftPackageReference section */
 
@@ -688,6 +691,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 7F9188783472FC449C2CFCE0 /* XCLocalSwiftPackageReference "Features/Home" */;
 			productName = Home;
+		};
+		C6678F0CE84F51BCD7CE4F1F /* Transfer */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BEE559A04E946679DFD7A126 /* XCLocalSwiftPackageReference "Features/Transfer" */;
+			productName = Transfer;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

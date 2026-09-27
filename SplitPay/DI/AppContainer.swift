@@ -10,7 +10,10 @@ final class AppContainer: @unchecked Sendable {
                 SupabaseAssembly(),
                 NetworkAssembly(),
                 AuthAssembly(),
-                AccountAssembly()
+                AccountAssembly(),
+                WalletAssembly(),
+                TransferAssembly(),
+                SessionAssembly()
             ],
             container: container
         )
