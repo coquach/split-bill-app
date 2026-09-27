@@ -9,7 +9,7 @@ public struct AlertBanner: View {
 
         var background: Color {
             switch self {
-            case .warning: return Color.appPrimaryContainer.opacity(0.3)
+            case .warning: return Color.appError.opacity(0.12)
             case .error: return Color.appError.opacity(0.15)
             }
         }
