@@ -22,11 +22,20 @@ final class AppCoordinator {
     var root: AppRoot = .loading
 
     let authRepository: IAuthRepository
+    let walletRepository: IWalletRepository
+    let transferRepository: ITransferRepository
 
     private var authTask: Task<Void, Never>?
 
-    init(authRepository: IAuthRepository) {
+    init(
+        authRepository: IAuthRepository,
+        walletRepository: IWalletRepository,
+        transferRepository: ITransferRepository
+    ) {
         self.authRepository = authRepository
+        self.walletRepository = walletRepository
+        self.transferRepository = transferRepository
+
     }
 
     func start() {

@@ -13,7 +13,9 @@ struct SplitPayApp: App {
 
         self.container = container
         self.coordinator = AppCoordinator(
-            authRepository: container.resolve(IAuthRepository.self)
+            authRepository: container.resolve(IAuthRepository.self),
+            walletRepository: container.resolve(IWalletRepository.self),
+            transferRepository: container.resolve(ITransferRepository.self)
         )
 
     }
@@ -48,7 +50,9 @@ private struct AppRootView: View {
                 HomeView(
                     viewModel: HomeViewModel(
                         user: user,
-                        authRepository: coordinator.authRepository
+                        authRepository: coordinator.authRepository,
+                        walletRepository: coordinator.walletRepository,
+                        transferRepository: coordinator.transferRepository
                     )
                 )
             }
