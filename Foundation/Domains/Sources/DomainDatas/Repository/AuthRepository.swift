@@ -1,34 +1,55 @@
-import Domains
 //
 //  AuthRepository.swift
 //  Domains
 //
 //  Created by Co Quach on 18/9/26.
 //
+
+import Domains
 import Foundation
 import Supabase
 
 public final class AuthRepository: IAuthRepository {
+
+    // MARK: - Dependencies
+
     private let client: SupabaseClient
+
+    // MARK: - Auth State
 
     private let authStateContinuation: AsyncStream<AuthState>.Continuation
 
-    public let authState: AsyncStream<AuthState>
+    public let authStateChanges: AsyncStream<AuthState>
+
+    private var authObservationTask: Task<Void, Never>?
+
+    // MARK: - Init
 
     public init(client: SupabaseClient) {
         self.client = client
 
         let stream = AsyncStream<AuthState>.makeStream()
 
-        self.authState = stream.stream
+        self.authStateChanges = stream.stream
         self.authStateContinuation = stream.continuation
 
-        observeAuthState()
+        startAuthObservation()
     }
 
-    public func signIn(email: String, password: String) async throws
-        -> Domains.User
-    {
+    deinit {
+        authObservationTask?.cancel()
+        authObservationTask = nil
+
+        authStateContinuation.finish()
+    }
+
+    // MARK: - Sign In
+
+    public func signIn(
+        email: String,
+        password: String
+    ) async throws -> Domains.User {
+
         do {
             let session = try await client.auth.signIn(
                 email: email,
@@ -36,19 +57,21 @@ public final class AuthRepository: IAuthRepository {
             )
 
             return map(session.user)
+
         } catch {
             throw mapError(error)
         }
     }
+
+    // MARK: - Sign Up
 
     public func signUp(
         email: String,
         password: String,
         fullName: String,
         phone: String
-    ) async throws
-        -> Domains.User
-    {
+    ) async throws -> Domains.User {
+
         do {
             let response = try await client.auth.signUp(
                 email: email,
@@ -60,55 +83,55 @@ public final class AuthRepository: IAuthRepository {
             )
 
             return map(response.user)
+
         } catch {
             throw mapError(error)
         }
     }
 
+    // MARK: - Sign Out
+
     public func signOut() async throws {
-        try await client.auth.signOut()
+
+        do {
+            try await client.auth.signOut()
+
+        } catch {
+            throw mapError(error)
+        }
     }
 
-    private func observeAuthState() {
+    // MARK: - Auth Observation
 
-        Task { [weak self] in
+    private func startAuthObservation() {
 
-            guard let self else { return }
+        authObservationTask?.cancel()
 
-            for await (event, session) in client.auth.authStateChanges {
+        authObservationTask = Task { [weak self] in
+
+            guard let self else {
+                return
+            }
+
+            for await (event, session)
+                in client.auth.authStateChanges
+            {
+                guard !Task.isCancelled else {
+                    break
+                }
 
                 switch event {
 
                 case .initialSession:
-
-                    guard let session else {
-                        authStateContinuation.yield(.unauthenticated)
-                        continue
-                    }
-
-                    guard !session.isExpired else {
-                        authStateContinuation.yield(.unauthenticated)
-                        continue
-                    }
-
-                    authStateContinuation.yield(
-                        .authenticated(map(session.user))
-                    )
+                    handleInitialSession(session)
 
                 case .signedIn:
-
-                    guard let user = session?.user else {
-                        authStateContinuation.yield(.unauthenticated)
-                        continue
-                    }
-
-                    authStateContinuation.yield(
-                        .authenticated(map(user))
-                    )
+                    handleSignedIn(session)
 
                 case .signedOut:
-
-                    authStateContinuation.yield(.unauthenticated)
+                    authStateContinuation.yield(
+                        .unauthenticated
+                    )
 
                 default:
                     break
@@ -117,7 +140,53 @@ public final class AuthRepository: IAuthRepository {
         }
     }
 
+    private func handleInitialSession(
+        _ session: Session?
+    ) {
+
+        guard let session else {
+            authStateContinuation.yield(
+                .unauthenticated
+            )
+            return
+        }
+
+        guard !session.isExpired else {
+            authStateContinuation.yield(
+                .unauthenticated
+            )
+            return
+        }
+
+        authStateContinuation.yield(
+            .authenticated(
+                map(session.user)
+            )
+        )
+    }
+
+    private func handleSignedIn(
+        _ session: Session?
+    ) {
+
+        guard let user = session?.user else {
+            authStateContinuation.yield(
+                .unauthenticated
+            )
+            return
+        }
+
+        authStateContinuation.yield(
+            .authenticated(
+                map(user)
+            )
+        )
+    }
+
+    // MARK: - Session Validation
+
     public func validateSession() async -> Bool {
+
         do {
             let session = try await client.auth.session
 
@@ -127,13 +196,18 @@ public final class AuthRepository: IAuthRepository {
 
             _ = try await client.auth.user()
 
-            return !session.isExpired
+            return true
+
         } catch {
             return false
         }
     }
 
-    private func mapError(_ error: Error) -> Domains.AuthError {
+    // MARK: - Error Mapping
+
+    private func mapError(
+        _ error: Error
+    ) -> Domains.AuthError {
 
         if let authError = error as? Supabase.AuthError {
 
@@ -180,7 +254,16 @@ public final class AuthRepository: IAuthRepository {
 
         return .unknown
     }
-    private func map(_ user: Supabase.User) -> Domains.User {
-        Domains.User(id: user.id.uuidString, email: user.email ?? "")
+
+    // MARK: - Mapping
+
+    private func map(
+        _ user: Supabase.User
+    ) -> Domains.User {
+
+        Domains.User(
+            id: user.id,
+            email: user.email ?? ""
+        )
     }
 }

@@ -47,7 +47,8 @@ public enum AuthError: Error, Equatable {
             return "Sign up is currently unavailable."
 
         case .network:
-            return "Unable to connect. Please check your connection and try again."
+            return
+                "Unable to connect. Please check your connection and try again."
 
         case .sessionExpired:
             return "Your session has expired. Please sign in again."

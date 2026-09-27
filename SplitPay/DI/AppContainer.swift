@@ -8,7 +8,7 @@ final class AppContainer: @unchecked Sendable {
         Assembler(
             [
                 SupabaseAssembly(),
-                AuthAssembly(),
+                DomainDataAssembly(),
             ],
             container: container
         )

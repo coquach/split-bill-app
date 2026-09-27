@@ -37,8 +37,8 @@ final class AppCoordinator {
                 return
             }
 
-            for await authState in authRepository.authState {
-                switch authState {
+            for await authStateChanges in authRepository.authStateChanges {
+                switch authStateChanges {
                 case .authenticated(let user):
                     root = .authenticated(user)
 
@@ -48,23 +48,27 @@ final class AppCoordinator {
             }
         }
     }
-    
+
     func validateSession() {
-            Task { [weak self] in
-                guard let self else {
-                    return
-                }
-
-                let isValid = await authRepository.validateSession()
-
-                guard !isValid else {
-                    return
-                }
-
-                root = .unauthenticated
+        Task { [weak self] in
+            guard let self else {
+                return
             }
+
+            let isValid = await authRepository.validateSession()
+
+            guard !Task.isCancelled else {
+                return
+            }
+
+            guard !isValid else {
+                return
+            }
+
+            root = .unauthenticated
         }
-    
+    }
+
     func stop() {
         authTask?.cancel()
         authTask = nil
