@@ -61,6 +61,7 @@ public struct RegisterView: View {
                 }
             )
         }
+        .screenLifecycle("Register")
     }
 }
 

@@ -53,6 +53,7 @@ struct LoginView: View {
         .onChange(of: viewModel.state) { _, newState in
             handleStateChange(newState)
         }
+        .screenLifecycle("Login")
     }
 
     private var header: some View {

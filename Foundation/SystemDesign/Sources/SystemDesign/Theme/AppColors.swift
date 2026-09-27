@@ -8,8 +8,8 @@ import SwiftUI
 
 public extension Color {
 
-    /// App background
-    /// #F7F9FB
+    /// Page background
+    /// #EFEEEA
     static let appBackground =
         Color("Background", bundle: .module)
 
@@ -18,33 +18,41 @@ public extension Color {
     static let appSurface =
         Color("Surface", bundle: .module)
 
-    /// Primary text
-    /// #191C1E
+    /// Dark UI tone - primary text, icons, focus borders, dark button fills
+    /// #2E3138
     static let appOnSurface =
         Color("OnSurface", bundle: .module)
 
     /// Brand / primary
-    /// #506600
     static let appPrimary =
         Color("Primary", bundle: .module)
 
     /// Main accent / CTA
-    /// #CCFF00
     static let appPrimaryContainer =
         Color("PrimaryContainer", bundle: .module)
 
-    /// Secondary text / action
-    /// #565E74
+    /// Secondary / caption text
+    /// #9B9B9E
     static let appSecondary =
         Color("Secondary", bundle: .module)
 
     /// Positive / success accent
-    /// #006C49
+    /// #43A047
     static let appSuccess =
         Color("Success", bundle: .module)
 
     /// Error
-    /// #BA1A1A
     static let appError =
         Color("Error", bundle: .module)
+
+    /// Info pill background (e.g. "Available balance" callout) - a narrow,
+    /// deliberate exception to the neutral+mint palette, not a general accent.
+    /// #E6EEFC
+    static let appInfoContainer =
+        Color("InfoContainer", bundle: .module)
+
+    /// Info pill text - pairs with appInfoContainer only.
+    /// #1E3677
+    static let appInfo =
+        Color("Info", bundle: .module)
 }
