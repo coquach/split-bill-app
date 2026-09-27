@@ -10,9 +10,16 @@ public enum AuthState: Sendable {
     case unauthenticated
 }
 
+@MainActor
 public protocol IAuthRepository: Sendable {
     func signIn(email: String, password: String) async throws -> User
-    func signUp(email: String, password: String) async throws -> User
+    func signUp(
+        email: String,
+        password: String,
+        fullName: String,
+        phone: String
+    ) async throws -> User
     func signOut() async throws
+    func validateSession() async -> Bool
     var authStateChanges: AsyncStream<AuthState> { get }
 }

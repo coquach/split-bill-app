@@ -15,7 +15,7 @@ struct SplitPayApp: App {
         self.coordinator = AppCoordinator(
             authRepository: container.resolve(IAuthRepository.self)
         )
-        
+
     }
 
     var body: some Scene {
@@ -28,25 +28,39 @@ struct SplitPayApp: App {
 
 private struct AppRootView: View {
     @Environment(AppCoordinator.self) private var coordinator
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
-        switch coordinator.root {
-        case .loading:
-            ProgressView()
-                .task { coordinator.start() }
+        Group {
+            switch coordinator.root {
+            case .loading:
+                ProgressView()
+                    .task { coordinator.start() }
 
-        case .auth:
-            AuthCoordinator(
-                dependencies: .init(authRepository: coordinator.authRepository)
-            )
-
-        case .home(let user):
-            HomeView(
-                viewModel: HomeViewModel(
-                    user: user,
-                    authRepository: coordinator.authRepository
+            case .unauthenticated:
+                AuthCoordinator(
+                    dependencies: .init(
+                        authRepository: coordinator.authRepository
+                    )
                 )
-            )
+
+            case .authenticated(let user):
+                HomeView(
+                    viewModel: HomeViewModel(
+                        user: user,
+                        authRepository: coordinator.authRepository
+                    )
+                )
+            }
+        }.onAppear {
+            coordinator.start()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else {
+                return
+            }
+
+            coordinator.validateSession()
         }
     }
 }

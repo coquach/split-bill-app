@@ -5,29 +5,26 @@ import Observation
 @Observable
 public final class RegisterViewModel {
 
-    public enum State: Equatable {
+    enum RegisterState: Equatable {
         case idle
-        case loading
+        case submitting
         case success
-        case error(RegisterError)
+        case failure(AuthError)
     }
 
-    public enum RegisterError: Equatable {
-        case emptyEmail
-        case invalidEmail
-        case emptyPassword
-        case weakPassword
-        case passwordMismatch
-        case emailAlreadyRegistered
-        case network
-        case unknown
-    }
+    var fullName = ""
+    var phone = ""
+    var email = ""
+    var password = ""
+    var confirmPassword = ""
 
-    public var email = ""
-    public var password = ""
-    public var confirmPassword = ""
+    var fullNameError: String?
+    var phoneError: String?
+    var emailError: String?
+    var passwordError: String?
+    var confirmPasswordError: String?
 
-    public private(set) var state: State = .idle
+    private(set) var state: RegisterState = .idle
 
     private let authRepository: IAuthRepository
 
@@ -36,60 +33,74 @@ public final class RegisterViewModel {
     }
 
     public func signUp() async {
-
-        guard state != .loading else {
+        guard state != .submitting else {
             return
         }
+        clearErrors()
 
-        let email = email.trimmingCharacters(
-            in: .whitespacesAndNewlines
+        let validation = RegisterValidator.validate(
+            fullName: fullName,
+            phone: phone,
+            email: email,
+            password: password,
+            confirmPassword: confirmPassword
         )
 
-        guard !email.isEmpty else {
-            state = .error(.emptyEmail)
+        fullNameError = validation.fullNameError
+        phoneError = validation.phoneError
+        emailError = validation.emailError
+        passwordError = validation.passwordError
+        confirmPasswordError = validation.confirmPasswordError
+
+        guard validation.isValid else {
             return
         }
 
-        guard EmailValidator.validate(email) else {
-            state = .error(.invalidEmail)
-            return
-        }
-
-        guard !password.isEmpty else {
-            state = .error(.emptyPassword)
-            return
-        }
-
-        guard PasswordValidator.validate(password) else {
-            state = .error(.weakPassword)
-            return
-        }
-
-        guard password == confirmPassword else {
-            state = .error(.passwordMismatch)
-            return
-        }
-
-        state = .loading
+        state = .submitting
 
         do {
-            _ = try await authRepository.signUp(
-                email: email,
-                password: password
+            _ =  try await authRepository.signUp(
+                email: email.trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                ),
+                password: password,
+                fullName: fullName.trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                ),
+                phone: phone.trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                )
             )
 
             state = .success
 
+        } catch let error as AuthError {
+
+            state = .failure(error)
+
         } catch {
-            state = .error(
-                Self.map(error)
-            )
+
+            state = .failure(.unknown)
         }
     }
 
-    private static func map(
-        _ error: Error
-    ) -> RegisterError {
-        .unknown
+    private func clearErrors() {
+        fullNameError = nil
+        phoneError = nil
+        emailError = nil
+        passwordError = nil
+        confirmPasswordError = nil
+    }
+    
+    func dismissEmailConfirmation() {
+        state = .idle
+    }
+    
+    func dismissError() {
+        guard case .failure = state else {
+            return
+        }
+
+        state = .idle
     }
 }
