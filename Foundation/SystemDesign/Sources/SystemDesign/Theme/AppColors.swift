@@ -55,4 +55,14 @@ public extension Color {
     /// #1E3677
     static let appInfo =
         Color("Info", bundle: .module)
+
+    /// Icon badge circle background (e.g. the shield badge on PIN verification).
+    /// #EFEFEF
+    static let appIconBadge =
+        Color("IconBadge", bundle: .module)
+
+    /// Custom numeric keypad tray background - distinct from the page background.
+    /// #D1D3D9
+    static let appKeypadTray =
+        Color("KeypadTray", bundle: .module)
 }
