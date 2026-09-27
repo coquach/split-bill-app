@@ -7,27 +7,33 @@
 
 import Domains
 import Foundation
-import Network
+import Supabase
 
-extension APIEndpoints {
-    static func walletBalance() -> APIEndpoint {
-        APIEndpoint(
-            path: "/api/v1/wallet/balance",
-            httpMethod: .get
-        )
-    }
+private struct WalletBalanceRow: Decodable {
+    let balance: Double
 }
 
 public final class WalletRepository: IWalletRepository {
-    private let apiClient: IAPIClientService
+    private let client: SupabaseClient
 
-    public init(apiClient: IAPIClientService) {
-        self.apiClient = apiClient
+    public init(client: SupabaseClient) {
+        self.client = client
     }
 
     public func fetchBalance() async throws -> Amount {
-        let endpoint = APIEndpoints.walletBalance()
-        let response = try await apiClient.request(endpoint, for: WalletBalanceResponse.self)
-        return try WalletBalanceResponseMapper().map(response)
+        guard let userID = client.auth.currentUser?.id else {
+            throw AccountRepositoryError.unknown
+        }
+
+        let row: WalletBalanceRow = try await client
+            .from("wallets")
+            .select("balance")
+            .eq("user_id", value: userID)
+            .eq("is_default", value: true)
+            .single()
+            .execute()
+            .value
+
+        return Amount(row.balance)
     }
 }

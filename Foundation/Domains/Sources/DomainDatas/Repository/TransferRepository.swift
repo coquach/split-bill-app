@@ -9,7 +9,7 @@ import Domains
 import Foundation
 import Network
 
-extension APIEndpoints {
+private enum TransferAPIEndpoints {
     static func submitTransfer(_ request: TransferRequest) throws -> APIEndpoint {
         try APIEndpoint(
             path: "/api/v1/transfers",
@@ -35,7 +35,7 @@ public final class TransferRepository: ITransferRepository {
         )
 
         do {
-            let endpoint = try APIEndpoints.submitTransfer(request)
+            let endpoint = try TransferAPIEndpoints.submitTransfer(request)
             let response = try await apiClient.request(
                 endpoint,
                 for: TransferReceiptResponse.self,

@@ -13,19 +13,13 @@ import Observation
 @Observable
 public final class TransferInputViewModel {
 
-    // MARK: - Form fields
-
     public var accountNumber: String = "" {
         didSet { scheduleAccountLookup() }
     }
     public var amountText: String = ""
     public var descriptionText: String = ""
 
-    // MARK: - Lookup state
-
     public private(set) var lookupState: AccountLookupState = .idle
-
-    // MARK: - Dependencies
 
     private let accountRepository: IAccountRepository
     private let sessionStore: SessionStore
@@ -36,8 +30,6 @@ public final class TransferInputViewModel {
         self.accountRepository = accountRepository
         self.sessionStore = sessionStore
     }
-
-    // MARK: - Derived state
 
     public var amount: Amount {
         Amount(Double(amountText) ?? 0)
@@ -58,10 +50,14 @@ public final class TransferInputViewModel {
         return true
     }
 
-    // MARK: - Actions
-
     public func selectQuickAmount(_ value: Int) {
         amountText = String(value)
+    }
+
+    // Called on view disappear so a stale lookup doesn't resolve after
+    // the user has already navigated away.
+    public func cancelPendingLookup() {
+        lookupTask?.cancel()
     }
 
     public func makeDraft() -> TransferDraft? {
@@ -74,11 +70,6 @@ public final class TransferInputViewModel {
         )
     }
 
-    // MARK: - Account lookup
-
-    // Debounces the lookup so we don't fire a request on every keystroke:
-    // cancel whatever's in flight, wait a beat, then only proceed if
-    // nothing newer has come in since.
     private func scheduleAccountLookup() {
         lookupTask?.cancel()
 
@@ -99,7 +90,6 @@ public final class TransferInputViewModel {
                 guard !Task.isCancelled else { return }
                 lookupState = .found(account)
             } catch is CancellationError {
-                // Superseded by a newer keystroke - nothing to show.
             } catch AccountRepositoryError.notFound {
                 guard !Task.isCancelled else { return }
                 lookupState = .notFound
