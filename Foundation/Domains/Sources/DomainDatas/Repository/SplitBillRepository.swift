@@ -4,79 +4,125 @@ import Supabase
 
 public final class SplitBillRepository: ISplitBillRepository {
     private let client: SupabaseClient
-    public init(client: SupabaseClient) { self.client = client }
 
-    public func createSplitBill(_ command: CreateSplitBillCommand) async throws
-        -> SplitBill
-    {
-        let dtos: [SplitBillDTO] = try await client.rpc(
-            "create_split_bill",
-            params: CreateSplitBillRequest(command)
-        ).execute().value
-        guard let dto = dtos.first else {
-            throw DomainError.unknown(
-                code: "SPLIT_BILL_NOT_CREATED",
-                message: "Split Bill was not returned."
-            )
-        }
-        return dto.toDomain()
+    public init(client: SupabaseClient) {
+        self.client = client
     }
-    public func getSplitBills() async throws -> [SplitBill] {
-        let dtos: [SplitBillDTO] = try await client.from("split_bills").select()
-            .order("created_at", ascending: false).execute().value
-        return dtos.map { $0.toDomain() }
-    }
-    public func getSplitBill(id: UUID) async throws -> SplitBill {
-        let dto: SplitBillDTO = try await client.from("split_bills").select()
-            .eq("id", value: id.uuidString).single().execute().value
-        return dto.toDomain()
-    }
-    public func getSplitBillDetail(id: UUID) async throws -> SplitBillDetail {
+
+    public func createSplitBill(
+        _ command: CreateSplitBillCommand
+    ) async throws -> SplitBill {
         do {
-            let dto: SplitBillDetailDTO = try await client.rpc(
-                "get_split_bill_detail",
-                params: ["p_split_bill_id": id]
-            ).execute().value
+            let dto: SplitBillDTO = try await client
+                .rpc(
+                    "create_split_bill",
+                    params: CreateSplitBillRequest(command)
+                )
+                .execute()
+                .value
+
             return dto.toDomain()
         } catch {
             throw RepositoryErrorMapper.map(error)
         }
     }
 
-    public func updateSplitBill(_ command: UpdateSplitBillCommand) async throws
-        -> SplitBill
-    {
-        let dto: SplitBillDTO = try await client.rpc(
-            "update_split_bill",
-            params: UpdateSplitBillRequest(command)
-        ).execute().value
-        return dto.toDomain()
+    public func getSplitBills(
+        role: SplitBillRoleFilter = .created,
+        status: SplitBillStatusFilter = .all,
+        page: Int = 1,
+        pageSize: Int = 20
+    ) async throws -> SplitBillPage {
+        do {
+            let dtos: [SplitBillListItemDTO] = try await client
+                .rpc(
+                    "get_split_bills",
+                    params: GetSplitBillsRequest(
+                        role: role,
+                        status: status,
+                        page: page,
+                        pageSize: pageSize
+                    )
+                )
+                .execute()
+                .value
+
+            return SplitBillPage(
+                items: dtos.map { $0.toDomain() },
+                totalCount: dtos.first?.totalCount ?? 0,
+                page: page,
+                pageSize: pageSize
+            )
+        } catch {
+            throw RepositoryErrorMapper.map(error)
+        }
     }
+
+    public func getSplitBill(id: UUID) async throws -> SplitBill {
+        do {
+            let dto: SplitBillDetailDTO = try await client
+                .rpc(
+                    "get_split_bill_detail",
+                    params: GetSplitBillDetailRequest(splitBillId: id)
+                )
+                .execute()
+                .value
+
+            return dto.toDomain().splitBill
+        } catch {
+            throw RepositoryErrorMapper.map(error)
+        }
+    }
+
+    public func getSplitBillDetail(
+        id: UUID
+    ) async throws -> SplitBillDetail {
+        do {
+            let dto: SplitBillDetailDTO = try await client
+                .rpc(
+                    "get_split_bill_detail",
+                    params: GetSplitBillDetailRequest(splitBillId: id)
+                )
+                .execute()
+                .value
+
+            return dto.toDomain()
+        } catch {
+            throw RepositoryErrorMapper.map(error)
+        }
+    }
+
+    public func updateSplitBill(
+        _ command: UpdateSplitBillCommand
+    ) async throws -> SplitBill {
+        do {
+            let dto: SplitBillDTO = try await client
+                .rpc(
+                    "update_split_bill",
+                    params: UpdateSplitBillRequest(command)
+                )
+                .execute()
+                .value
+
+            return dto.toDomain()
+        } catch {
+            throw RepositoryErrorMapper.map(error)
+        }
+    }
+
     public func closeSplitBill(id: UUID) async throws -> SplitBill {
-        let dto: SplitBillDTO = try await client.rpc(
-            "close_split_bill",
-            params: ["p_split_bill_id": id]
-        ).execute().value
-        return dto.toDomain()
-    }
-    public func cancelSplitBill(id: UUID) async throws -> SplitBill {
-        let dto: SplitBillDTO = try await client.rpc(
-            "cancel_split_bill",
-            params: ["p_split_bill_id": id]
-        ).execute().value
-        return dto.toDomain()
-    }
-    public func getDashboard(id: UUID) async throws -> SplitBillDashboard {
-        let dto: SplitBillDashboardDTO = try await client.rpc(
-            "get_split_bill_dashboard",
-            params: ["p_split_bill_id": id]
-        ).execute().value
-        return dto.toDomain()
-    }
-    public func getMySplitBillRecords() async throws -> [SplitBillRecord] {
-        let dtos: [SplitBillRecordDTO] = try await client.from(
-            "my_split_bill_records"
-        ).select().execute().value
-        return dtos.map { $0.toDomain() }
+        do {
+            let dto: SplitBillDTO = try await client
+                .rpc(
+                    "close_split_bill",
+                    params: CloseSplitBillRequest(splitBillId: id)
+                )
+                .execute()
+                .value
+
+            return dto.toDomain()
+        } catch {
+            throw RepositoryErrorMapper.map(error)
+        }
     }
 }

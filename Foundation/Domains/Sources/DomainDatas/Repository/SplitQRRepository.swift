@@ -16,30 +16,6 @@ public final class SplitQRRepository: ISplitQRRepository {
         self.client = client
     }
 
-    public func generateQR(
-        _ command: GenerateSplitQRCommand
-    ) async throws -> SplitQRCode {
-        do {
-            let dtos: [SplitQRCodeDTO] =
-                try await client
-                .rpc(
-                    "generate_split_qr",
-                    params: GenerateSplitQRRequest(command)
-                )
-                .execute()
-                .value
-            guard let dto = dtos.first else {
-                throw DomainError.unknown(
-                    code: "QR_NOT_FOUND",
-                    message: "Generated Split Bill QR not found."
-                )
-            }
-            return dto.toDomain()
-        } catch {
-            throw RepositoryErrorMapper.map(error)
-        }
-    }
-
     public func getQR(splitBillId: UUID) async throws -> SplitQRCode {
         do {
             let dtos: [SplitQRCodeDTO] =

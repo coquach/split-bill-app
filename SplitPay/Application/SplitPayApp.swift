@@ -13,7 +13,14 @@ struct SplitPayApp: App {
 
         self.container = container
         self.coordinator = AppCoordinator(
-            authRepository: container.resolve(IAuthRepository.self)
+            authRepository: container.resolve(IAuthRepository.self),
+            walletRepository: container.resolve(IWalletRepository.self),
+            transferRepository: container.resolve(ITransferRepository.self),
+            profileRepository: container.resolve(IProfileRepository.self),
+            pinRepository: container.resolve(IPinRepository.self),
+            repaymentRepository: container.resolve(IRepaymentRepository.self),
+            splitBillRepository: container.resolve(ISplitBillRepository.self),
+            splitQRRepository: container.resolve(ISplitQRRepository.self)
         )
 
     }
@@ -45,12 +52,7 @@ private struct AppRootView: View {
                 )
 
             case .authenticated(let user):
-                HomeView(
-                    viewModel: HomeViewModel(
-                        user: user,
-                        authRepository: coordinator.authRepository
-                    )
-                )
+                AppTabView()
             }
         }.onAppear {
             coordinator.start()

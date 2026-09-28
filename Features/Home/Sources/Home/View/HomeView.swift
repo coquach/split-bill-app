@@ -5,27 +5,107 @@
 //  Created by Co Quach on 18/9/26.
 //
 import SwiftUI
+import Domains
 import SystemDesign
 
 public struct HomeView: View {
 
-    @State private var viewModel: HomeViewModel
+    @State
+    private var viewModel: HomeViewModel
 
-    public init(viewModel: HomeViewModel) {
+    private let onNavigateTransfer: () -> Void
+    private let onNavigateSplitBill: () -> Void
+//    private let onSettings: () -> Void
+    private let onNavigateTransactionHistory: () -> Void
+
+    public init(
+        viewModel: HomeViewModel,
+        onNavigateTransfer: @escaping () -> Void = {},
+        onNavigateSplitBill: @escaping () -> Void = {},
+//        onSettings: @escaping () -> Void = {},
+        onNavigateTransactionHistory: @escaping () -> Void = {}
+    ) {
         _viewModel = State(initialValue: viewModel)
+
+        self.onNavigateTransfer = onNavigateTransfer
+        self.onNavigateSplitBill = onNavigateSplitBill
+//        self.onSettings = onSettings
+        self.onNavigateTransactionHistory = onNavigateTransactionHistory
     }
 
     public var body: some View {
-        ScrollView {
-            VStack(
-                alignment: .leading,
-                spacing: AppSpacing.xl
-            ) {
-
-            }
+        ZStack(alignment: .bottom) {
+            content
         }
-        .padding(.horizontal, AppSpacing.md)
-        .padding(.top, AppSpacing.md)
-        .padding(.bottom, 120)
+        .background(
+            Color.appBackground
+                .ignoresSafeArea()
+        )
+        .task {
+            await viewModel.load()
+        }
+        .refreshable {
+            await viewModel.load()
+        }
+        .alert(
+            "Something went wrong",
+            isPresented: Binding(
+                get: {
+                    viewModel.errorMessage != nil
+                },
+                set: {
+                    if !$0 {
+                        viewModel.clearError()
+                    }
+                }
+            )
+        ) {
+            Button("OK", role: .cancel) {
+                viewModel.clearError()
+            }
+        } message: {
+            Text(viewModel.errorMessage ?? "")
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if viewModel.isLoading && viewModel.wallet == nil {
+            HomeSkeletonView()
+        } else {
+            ScrollView(showsIndicators: false) {
+                VStack(
+                    alignment: .leading,
+                    spacing: AppSpacing.xl
+                ) {
+                    HomeProfileHeader(
+                        displayName: viewModel.displayName,
+//                        onSettings: onSettings
+                    )
+
+                    HomeBalanceCard(
+                        balance: viewModel.formattedBalance,
+                        currency: viewModel.currency,
+                        lastFourDigits: viewModel.lastFourWalletDigits,
+                        holderName: viewModel.walletHolderName
+                    )
+
+                    HomeQuickActions(
+                        onTransfer: onNavigateTransfer,
+                        onSplit: onNavigateSplitBill
+                    )
+
+                    HomeRecentTransactions(
+                        transactions: viewModel.recentTransfers,
+                        isLoading: viewModel.isLoading,
+                        onSeeAll: onNavigateTransactionHistory
+                    )
+                }
+                .padding(.horizontal, AppSpacing.xl)
+                .padding(.top, AppSpacing.sm)
+                .padding(.bottom, 140)
+            }
+            .scrollIndicators(.hidden)
+        }
     }
 }
