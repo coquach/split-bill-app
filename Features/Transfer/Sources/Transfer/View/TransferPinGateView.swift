@@ -25,8 +25,6 @@ public struct TransferPinGateView: View {
 
     public var body: some View {
         VStack(spacing: AppSpacing.xl) {
-            topNavBar
-
             Spacer()
 
             VStack(spacing: AppSpacing.xs) {
@@ -39,8 +37,8 @@ public struct TransferPinGateView: View {
                     .multilineTextAlignment(.center)
             }
 
-            OTPCodeInput(length: 4, code: $viewModel.pin)
-                .frame(maxWidth: 300)
+            OTPCodeInput(length: TransferPIN.length, code: $viewModel.pin)
+                .frame(maxWidth: 340)
                 .frame(maxWidth: .infinity)
 
             if viewModel.isIncorrect {
@@ -58,30 +56,12 @@ public struct TransferPinGateView: View {
             .opacity(viewModel.isPinComplete ? 1 : 0.35)
         }
         .padding(AppSpacing.lg)
-        .background(Color.appBackground)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground.ignoresSafeArea())
+        .safeAreaInset(edge: .top, spacing: 0) {
+            AppNavBar(title: "Transfer", onBack: onCancel)
+        }
         .navigationBarHidden(true)
         .screenLifecycle("TransferPinGate")
-    }
-
-    private var topNavBar: some View {
-        HStack {
-            Button(action: onCancel) {
-                Image(systemName: "chevron.left")
-                    .foregroundStyle(Color.appOnSurface)
-                    .frame(width: 44, height: 44)
-            }
-            .buttonStyle(.plain)
-
-            Spacer()
-
-            Text("Transfer")
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(Color.appOnSurface)
-
-            Spacer()
-
-            Color.clear.frame(width: 44, height: 44)
-        }
-        .frame(height: 44)
     }
 }

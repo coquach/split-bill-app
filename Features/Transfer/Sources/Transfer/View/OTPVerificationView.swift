@@ -25,35 +25,26 @@ public struct OTPVerificationView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            topNavBar
-
-            Spacer(minLength: AppSpacing.lg)
+        VStack(spacing: AppSpacing.xl) {
+            Spacer()
 
             iconBadge
-
-            Spacer(minLength: AppSpacing.lg)
 
             VStack(spacing: AppSpacing.xs) {
                 Text("Enter PIN")
                     .font(AppTypography.title)
                     .foregroundStyle(Color.appOnSurface)
-                Text("Enter your 4-digit PIN to authorize this transfer")
+                Text("Enter your 6-digit PIN to authorize this transfer")
                     .font(AppTypography.caption)
                     .foregroundStyle(Color.appSecondary)
                     .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, AppSpacing.xxl)
             }
 
-            Spacer(minLength: AppSpacing.xl)
-
-            OTPCodeInput(length: 4, code: $viewModel.pin, isKeyboardDriven: false)
-                .frame(maxWidth: 300)
+            OTPCodeInput(length: TransferPIN.length, code: $viewModel.pin)
+                .frame(maxWidth: 340)
                 .frame(maxWidth: .infinity)
-                .padding(.horizontal, AppSpacing.lg)
 
-            Spacer(minLength: AppSpacing.xl)
+            Spacer()
 
             AppButton(
                 title: "Verify",
@@ -69,16 +60,13 @@ public struct OTPVerificationView: View {
             }
             .disabled(!viewModel.isPinComplete || viewModel.state == .verifying)
             .opacity(viewModel.isPinComplete ? 1 : 0.35)
-            .padding(.horizontal, AppSpacing.lg)
-
-            Spacer(minLength: AppSpacing.lg)
-
-            NumericKeypadTray(
-                onDigit: viewModel.appendDigit,
-                onBackspace: viewModel.deleteLast
-            )
         }
-        .background(Color.appBackground)
+        .padding(AppSpacing.lg)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.appBackground.ignoresSafeArea())
+        .safeAreaInset(edge: .top, spacing: 0) {
+            AppNavBar(title: "Verify", onBack: onBack)
+        }
         .navigationBarHidden(true)
         .screenLifecycle("OTPVerification")
         .modalOverlay(isPresented: isShowingError) {
@@ -91,37 +79,6 @@ public struct OTPVerificationView: View {
                     viewModel.retry()
                 }
             }
-        }
-    }
-
-    private var topNavBar: some View {
-        HStack {
-            Button(action: onBack) {
-                Image(systemName: "chevron.left")
-                    .foregroundStyle(Color.appOnSurface)
-                    .frame(width: 44, height: 44)
-            }
-            .buttonStyle(.plain)
-
-            Spacer()
-
-            Text("Verify")
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(Color.appOnSurface)
-
-            Spacer()
-
-            Color.clear.frame(width: 44, height: 44)
-        }
-        .padding(.horizontal, AppSpacing.xs)
-        .frame(height: 44)
-        .background(Color.appBackground)
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(Color.black.opacity(0.05))
-                .frame(height: 1)
-                .blur(radius: 2)
-                .offset(y: 2)
         }
     }
 

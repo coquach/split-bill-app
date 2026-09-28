@@ -10,7 +10,7 @@ import Domains
 public enum AccountLookupState: Equatable {
     case idle
     case loading
-    case found(ResolvedAccount)
+    case found(WalletRecipient)
     case notFound
     case failed(String)
 }

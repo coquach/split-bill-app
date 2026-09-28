@@ -10,15 +10,18 @@ import SystemDesign
 
 public struct TransferConfirmView: View {
     @State private var viewModel: TransferConfirmViewModel
+    private let onBack: () -> Void
     private let onConfirm: () -> Void
     private let onCancel: () -> Void
 
     public init(
         viewModel: TransferConfirmViewModel,
+        onBack: @escaping () -> Void,
         onConfirm: @escaping () -> Void,
         onCancel: @escaping () -> Void
     ) {
         _viewModel = State(initialValue: viewModel)
+        self.onBack = onBack
         self.onConfirm = onConfirm
         self.onCancel = onCancel
     }
@@ -74,13 +77,16 @@ public struct TransferConfirmView: View {
 
             VStack(spacing: AppSpacing.sm) {
                 AppButton(title: "Confirm & Send", style: .primary, action: onConfirm)
-                AppButton(title: "Cancel", style: .secondary, action: onCancel)
+                AppButton(title: "Cancel", style: .accent, action: onCancel)
             }
         }
         .padding(AppSpacing.lg)
-        .background(Color.appBackground)
-        .navigationTitle("Confirm Transfer")
-        .navigationBarTitleDisplayMode(.inline)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Color.appBackground.ignoresSafeArea())
+        .safeAreaInset(edge: .top, spacing: 0) {
+            AppNavBar(title: "Confirm Transfer", onBack: onBack)
+        }
+        .navigationBarHidden(true)
         .screenLifecycle("TransferConfirm")
     }
 

@@ -16,7 +16,7 @@ public final class OTPVerificationViewModel {
     public enum State: Equatable {
         case idle
         case verifying
-        case failed(TransferRepositoryError)
+        case failed(DomainError)
     }
 
     public var pin: String = ""
@@ -26,72 +26,59 @@ public final class OTPVerificationViewModel {
     private let draft: TransferDraft
     private let transferRepository: ITransferRepository
 
+    private var idempotencyKey = UUID().uuidString
+
     public init(draft: TransferDraft, transferRepository: ITransferRepository) {
         self.draft = draft
         self.transferRepository = transferRepository
     }
 
     public var isPinComplete: Bool {
-        pin.count == 4
-    }
-
-    // MARK: - Keypad input
-
-    // Input comes from the custom NumericKeypadTray, not the system
-    // keyboard - these are its only entry points into `pin`.
-    public func appendDigit(_ digit: Int) {
-        guard pin.count < 4 else { return }
-        pin.append(String(digit))
-    }
-
-    public func deleteLast() {
-        guard !pin.isEmpty else { return }
-        pin.removeLast()
+        pin.count == TransferPIN.length
     }
 
     public var errorMessage: String? {
         guard case .failed(let error) = state else { return nil }
-        switch error {
-        case .accountNotFound:
-            return "This account could not be found."
-        case .insufficientBalance:
-            return "Insufficient balance in your SplitPay wallet to complete this \(draft.amount.formatted) VND transfer. Please top up or try again."
-        case .invalidAmount:
-            return "This amount isn't valid."
-        case .invalidPin:
-            return "Incorrect PIN. Please try again."
-        case .network:
-            return "Check your connection and try again."
-        case .transferFailed, .unknown:
-            return "Something went wrong. Please try again."
-        }
+        return error.message
     }
 
-    // This is meant to be the one real network call in the whole flow —
-    // Input and Confirm only ever collect intent. For now it's gated by
-    // TestPIN instead of actually calling transferRepository, since there's
-    // no real backend running yet to submit to. Remove the guard (and the
-    // synthesized receipt) once one exists.
+    
     public func submit() async {
         guard isPinComplete, state != .verifying else { return }
 
         state = .verifying
 
-        guard pin == TestPIN.value else {
-            state = .failed(.invalidPin)
-            return
+        let command = CreateTransferCommand(
+            recipientWalletId: draft.receiverWalletId,
+
+            amount: Int64(draft.amount.amount.rounded()),
+            description: draft.description.isEmpty ? nil : draft.description,
+            pin: pin,
+            idempotencyKey: idempotencyKey
+        )
+
+        do {
+            let result = try await transferRepository.createTransfer(command)
+            receipt = TransferReceipt(result: result, draft: draft)
+            state = .idle
+        } catch let error as DomainError {
+            handleFailure(error)
+        } catch {
+            handleFailure(.unknown(code: nil, message: error.localizedDescription))
+        }
+    }
+
+    private func handleFailure(_ error: DomainError) {
+    
+        switch error {
+        case .invalidPin, .invalidPinFormat, .pinLocked, .validation,
+             .insufficientBalance:
+            idempotencyKey = UUID().uuidString
+        default:
+            break
         }
 
-        receipt = TransferReceipt(
-            id: UUID().uuidString,
-            receiverAccountNumber: draft.receiverAccountNumber,
-            receiverHolderName: draft.receiverHolderName,
-            amount: draft.amount,
-            description: draft.description,
-            createdAt: Date(),
-            status: "completed"
-        )
-        state = .idle
+        state = .failed(error)
     }
 
     public func retry() {

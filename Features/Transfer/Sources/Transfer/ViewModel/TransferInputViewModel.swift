@@ -21,13 +21,13 @@ public final class TransferInputViewModel {
 
     public private(set) var lookupState: AccountLookupState = .idle
 
-    private let accountRepository: IAccountRepository
+    private let walletRepository: IWalletRepository
     private let sessionStore: SessionStore
 
     private var lookupTask: Task<Void, Never>?
 
-    public init(accountRepository: IAccountRepository, sessionStore: SessionStore) {
-        self.accountRepository = accountRepository
+    public init(walletRepository: IWalletRepository, sessionStore: SessionStore) {
+        self.walletRepository = walletRepository
         self.sessionStore = sessionStore
     }
 
@@ -35,12 +35,21 @@ public final class TransferInputViewModel {
         Amount(Double(amountText) ?? 0)
     }
 
-    public var availableBalance: Amount {
+    /// `nil` while the balance hasn't loaded — the view shows that state
+    /// rather than pretending the wallet is empty.
+    public var availableBalance: Amount? {
         sessionStore.availableBalance
     }
 
+    /// Only ever true when we actually know the balance. If the fetch hasn't
+    /// landed we let the transfer through and let `create_transfer` reject
+    /// it: the server re-checks the real balance regardless, and blocking on
+    /// a number we failed to load would strand the user with no way forward.
     public var exceedsAvailableBalance: Bool {
-        amount.amount > 0 && amount > sessionStore.availableBalance
+        guard let balance = sessionStore.availableBalance else {
+            return false
+        }
+        return amount.amount > 0 && amount > balance
     }
 
     public var isFormValid: Bool {
@@ -61,19 +70,30 @@ public final class TransferInputViewModel {
     }
 
     public func makeDraft() -> TransferDraft? {
-        guard case .found(let account) = lookupState else { return nil }
+        guard case .found(let recipient) = lookupState else { return nil }
         return TransferDraft(
-            receiverAccountNumber: account.accountNumber,
-            receiverHolderName: account.holderName,
+            // The wallet id from the lookup, not the number the user typed —
+            // it's what `create_transfer` actually takes.
+            receiverWalletId: recipient.walletId,
+            receiverAccountNumber: recipient.walletNumber,
+            receiverHolderName: recipient.holderName,
             amount: amount,
-            description: descriptionText
+            description: descriptionText.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            )
         )
     }
 
     private func scheduleAccountLookup() {
         lookupTask?.cancel()
 
-        let query = accountNumber.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Normalise before it leaves the app: wallet numbers are stored
+        // uppercase, and the lookup may well be a plain equality check.
+        // Trim first so a trailing space from paste or autocomplete doesn't
+        // turn into a "not found".
+        let query = accountNumber
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .uppercased()
         guard !query.isEmpty else {
             lookupState = .idle
             return
@@ -81,16 +101,16 @@ public final class TransferInputViewModel {
 
         lookupState = .loading
 
-        lookupTask = Task { [accountRepository] in
+        lookupTask = Task { [walletRepository] in
             try? await Task.sleep(for: .milliseconds(400))
             guard !Task.isCancelled else { return }
 
             do {
-                let account = try await accountRepository.resolveAccount(accountNumber: query)
+                let recipient = try await walletRepository.resolveWallet(walletNumber: query)
                 guard !Task.isCancelled else { return }
-                lookupState = .found(account)
+                lookupState = .found(recipient)
             } catch is CancellationError {
-            } catch AccountRepositoryError.notFound {
+            } catch DomainError.notFound {
                 guard !Task.isCancelled else { return }
                 lookupState = .notFound
             } catch {

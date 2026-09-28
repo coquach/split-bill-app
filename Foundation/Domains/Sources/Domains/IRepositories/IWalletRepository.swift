@@ -13,11 +13,22 @@ public protocol IWalletRepository: Sendable {
     func resolveWallet(walletNumber: String) async throws -> WalletRecipient
 }
 
-public struct WalletRecipient: Sendable, Equatable {
+/// One row of the `resolve_wallet_by_number` RPC.
+///
+/// `walletId` matters more than it looks: it's what `create_transfer` wants
+/// as `p_recipient_wallet_id`. The wallet number the user types is only ever
+/// a lookup key — it never goes to the backend as an identifier.
+public struct WalletRecipient: Sendable, Equatable, Hashable {
+    public let walletId: UUID
     public let walletNumber: String
     public let holderName: String
 
-    public init(walletNumber: String, holderName: String) {
+    public init(
+        walletId: UUID,
+        walletNumber: String,
+        holderName: String
+    ) {
+        self.walletId = walletId
         self.walletNumber = walletNumber
         self.holderName = holderName
     }

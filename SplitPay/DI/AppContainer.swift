@@ -9,6 +9,7 @@ final class AppContainer: @unchecked Sendable {
             [
                 SupabaseAssembly(),
                 DomainDataAssembly(),
+                SessionAssembly(),
             ],
             container: container
         )

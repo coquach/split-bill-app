@@ -35,48 +35,14 @@ public struct TransferInputView: View {
             .padding(.top, AppSpacing.lg)
             .padding(.bottom, AppSpacing.xxl)
         }
-        .background(Color.appBackground)
-        .safeAreaInset(edge: .top, spacing: 0) { topNavBar }
+        .background(Color.appBackground.ignoresSafeArea())
+        .safeAreaInset(edge: .top, spacing: 0) {
+            AppNavBar(title: "Transfer", onBack: onBack)
+        }
         .safeAreaInset(edge: .bottom, spacing: 0) { bottomBar }
         .navigationBarHidden(true)
         .screenLifecycle("TransferInput", onDisappear: viewModel.cancelPendingLookup)
     }
-
-    // MARK: - Pinned top nav bar
-
-    private var topNavBar: some View {
-        HStack {
-            Button(action: onBack) {
-                Image(systemName: "chevron.left")
-                    .foregroundStyle(Color.appOnSurface)
-                    .frame(width: 44, height: 44)
-            }
-            .buttonStyle(.plain)
-
-            Spacer()
-
-            Text("Transfer")
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(Color.appOnSurface)
-
-            Spacer()
-
-            // Balances the leading chevron so the title stays centered.
-            Color.clear.frame(width: 44, height: 44)
-        }
-        .padding(.horizontal, AppSpacing.xs)
-        .frame(height: 44)
-        .background(Color.appBackground)
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(Color.black.opacity(0.05))
-                .frame(height: 1)
-                .blur(radius: 2)
-                .offset(y: 2)
-        }
-    }
-
-    // MARK: - Receiver
 
     private var receiverSection: some View {
         VStack(alignment: .leading, spacing: AppSpacing.xs) {
@@ -86,19 +52,17 @@ public struct TransferInputView: View {
 
             AppIconTextField(
                 icon: "creditcard",
-                placeholder: "0071 4482 7390",
+                placeholder: "SP-1D533AB6FC",
                 text: $viewModel.accountNumber
             )
-            .keyboardType(.numberPad)
+            .keyboardType(.asciiCapable)
+            .textInputAutocapitalization(.characters)
+            .autocorrectionDisabled()
 
             resolvedReceiverRow
         }
     }
 
-    // The green-check/red-mark convention: purely driven by lookup state,
-    // no separate "verified" flag. Inline row under the field, not a
-    // separate screen state or modal, so the user keeps context of what
-    // they typed while seeing confirmation.
     @ViewBuilder
     private var resolvedReceiverRow: some View {
         switch viewModel.lookupState {
@@ -132,8 +96,6 @@ public struct TransferInputView: View {
         }
     }
 
-    // MARK: - Amount
-
     private var amountSection: some View {
         VStack(alignment: .leading, spacing: AppSpacing.xs) {
             Text("Amount")
@@ -151,28 +113,47 @@ public struct TransferInputView: View {
                 onSelect: viewModel.selectQuickAmount
             )
 
-            if viewModel.exceedsAvailableBalance {
+            if let balance = viewModel.availableBalance,
+               viewModel.exceedsAvailableBalance {
                 AlertBanner(
-                    message: "This exceeds your available balance of \(viewModel.availableBalance.formatted) VND.",
+                    message: "This exceeds your available balance of \(balance.formatted) VND.",
                     style: .warning
                 )
             }
         }
     }
 
-    // A narrow, deliberate exception to the neutral+mint palette - an
-    // "info pill" used only for this kind of informational call-out.
+ 
+    @ViewBuilder
     private var balancePill: some View {
-        Text("Available balance \(viewModel.availableBalance.formatted) VND")
-            .font(AppTypography.label)
-            .foregroundStyle(Color.appInfo)
-            .padding(.horizontal, AppSpacing.md)
-            .padding(.vertical, AppSpacing.xs)
-            .background(Color.appInfoContainer)
-            .clipShape(Capsule())
+        if let balance = viewModel.availableBalance {
+            pill(
+                text: "Available balance \(balance.formatted) VND",
+                foreground: Color.appInfo,
+                background: Color.appInfoContainer
+            )
+        } else {
+            pill(
+                text: "Balance unavailable",
+                foreground: Color.appTextTertiary,
+                background: Color.appSurfaceSecondary
+            )
+        }
     }
 
-    // MARK: - Description
+    private func pill(
+        text: String,
+        foreground: Color,
+        background: Color
+    ) -> some View {
+        Text(text)
+            .font(AppTypography.label)
+            .foregroundStyle(foreground)
+            .padding(.horizontal, AppSpacing.md)
+            .padding(.vertical, AppSpacing.xs)
+            .background(background)
+            .clipShape(Capsule())
+    }
 
     private var descriptionSection: some View {
         VStack(alignment: .leading, spacing: AppSpacing.xs) {
@@ -186,8 +167,6 @@ public struct TransferInputView: View {
             AppMultilineTextField(placeholder: "Add a note", text: $viewModel.descriptionText)
         }
     }
-
-    // MARK: - Pinned bottom bar
 
     private var bottomBar: some View {
         VStack(spacing: 0) {
@@ -207,6 +186,6 @@ public struct TransferInputView: View {
             .padding(.horizontal, AppSpacing.lg)
             .padding(.vertical, AppSpacing.sm)
         }
-        .background(Color.appSurface)
+        .background(Color.appBackground)
     }
 }

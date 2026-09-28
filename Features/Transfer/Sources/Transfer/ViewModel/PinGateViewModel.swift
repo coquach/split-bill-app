@@ -16,11 +16,11 @@ public final class PinGateViewModel {
     public init() {}
 
     public var isPinComplete: Bool {
-        pin.count == 4
+        pin.count == TransferPIN.length
     }
 
     public func verify() -> Bool {
-        guard pin == TestPIN.value else {
+        guard pin == TransferPIN.testValue else {
             isIncorrect = true
             pin = ""
             return false

@@ -2,6 +2,7 @@ import Authentication
 import Domains
 import Home
 import SwiftUI
+import Transfer
 
 @main
 struct SplitPayApp: App {
@@ -13,7 +14,10 @@ struct SplitPayApp: App {
 
         self.container = container
         self.coordinator = AppCoordinator(
-            authRepository: container.resolve(IAuthRepository.self)
+            authRepository: container.resolve(IAuthRepository.self),
+            walletRepository: container.resolve(IWalletRepository.self),
+            sessionStore: container.resolve(SessionStore.self),
+            transferRepository: container.resolve(ITransferRepository.self)
         )
 
     }
@@ -29,6 +33,7 @@ struct SplitPayApp: App {
 private struct AppRootView: View {
     @Environment(AppCoordinator.self) private var coordinator
     @Environment(\.scenePhase) private var scenePhase
+    @State private var isTransferPresented = false
 
     var body: some View {
         Group {
@@ -51,6 +56,27 @@ private struct AppRootView: View {
                         authRepository: coordinator.authRepository
                     )
                 )
+                // Temp test entry point, lives here (app target) rather than
+                // inside HomeView so it doesn't depend on Home's own UI.
+                .overlay(alignment: .bottomTrailing) {
+                    Button("Test Transfer") { isTransferPresented = true }
+                        .padding()
+                }
+                .fullScreenCover(
+                    isPresented: $isTransferPresented,
+                    // A completed transfer has moved money, so the cached
+                    // balance is stale the moment this flow closes.
+                    onDismiss: { coordinator.refreshBalance() }
+                ) {
+                    TransferCoordinator(
+                        dependencies: .init(
+                            walletRepository: coordinator.walletRepository,
+                            sessionStore: coordinator.sessionStore,
+                            transferRepository: coordinator.transferRepository
+                        ),
+                        onFinish: { isTransferPresented = false }
+                    )
+                }
             }
         }.onAppear {
             coordinator.start()

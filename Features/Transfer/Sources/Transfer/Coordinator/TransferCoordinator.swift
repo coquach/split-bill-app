@@ -14,6 +14,7 @@ public enum TransferDestination: Hashable {
     case confirm(TransferDraft)
     case otp(TransferDraft)
     case success(TransferReceipt)
+    case detail(TransferReceipt)
 }
 
 public struct TransferCoordinator: View {
@@ -40,7 +41,7 @@ public struct TransferCoordinator: View {
                 case .input:
                     TransferInputView(
                         viewModel: TransferInputViewModel(
-                            accountRepository: dependencies.accountRepository,
+                            walletRepository: dependencies.walletRepository,
                             sessionStore: dependencies.sessionStore
                         ),
                         onBack: { router.navigateBack() },
@@ -52,6 +53,7 @@ public struct TransferCoordinator: View {
                 case .confirm(let draft):
                     TransferConfirmView(
                         viewModel: TransferConfirmViewModel(draft: draft),
+                        onBack: { router.navigateBack() },
                         onConfirm: {
                             router.navigate(to: TransferDestination.otp(draft))
                         },
@@ -73,9 +75,23 @@ public struct TransferCoordinator: View {
                 case .success(let receipt):
                     TransferSuccessView(
                         receipt: receipt,
-                        // Transaction Detail isn't built yet (out of scope for
-                        // this slice) - falls back to the same as Back to Home.
-                        onViewDetails: onFinish,
+                        onViewDetails: {
+                            router.navigate(
+                                to: TransferDestination.detail(receipt)
+                            )
+                        },
+                        onBackToHome: onFinish
+                    )
+
+                case .detail(let receipt):
+                    TransactionDetailView(
+                        viewModel: TransactionDetailViewModel(
+                            transactionId: receipt.id,
+                            receiverHolderName: receipt.receiverHolderName,
+                            transferRepository: dependencies.transferRepository
+                        ),
+                        onBack: { router.navigateBack() },
+                        onSplitBill: {},
                         onBackToHome: onFinish
                     )
                 }
@@ -87,16 +103,16 @@ public struct TransferCoordinator: View {
 
 extension TransferCoordinator {
     public struct Dependencies {
-        let accountRepository: IAccountRepository
+        let walletRepository: IWalletRepository
         let sessionStore: SessionStore
         let transferRepository: ITransferRepository
 
         public init(
-            accountRepository: IAccountRepository,
+            walletRepository: IWalletRepository,
             sessionStore: SessionStore,
             transferRepository: ITransferRepository
         ) {
-            self.accountRepository = accountRepository
+            self.walletRepository = walletRepository
             self.sessionStore = sessionStore
             self.transferRepository = transferRepository
         }

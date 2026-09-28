@@ -90,6 +90,24 @@ public extension Color {
 
     /// #E7F0F7
     static let appInfoBackground = Color(hex: 0xE7F0F7)
+
+    // MARK: - Compatibility aliases
+    // Bridges older component code (built against a prior token set) onto
+    // this palette. Remove a given alias once every call site using it has
+    // been migrated to the token above it maps to.
+
+    /// -> appTextPrimary
+    static let appOnSurface = appTextPrimary
+    /// -> appSurfacePrimary
+    static let appSurface = appSurfacePrimary
+    /// -> appSubtle
+    static let appPrimaryContainer = appSubtle
+    /// -> appInfoBackground
+    static let appInfoContainer = appInfoBackground
+    /// -> appSurfaceSecondary
+    static let appIconBadge = appSurfaceSecondary
+    /// #D1D3D9 - custom numeric keypad tray background, no equivalent yet.
+    static let appKeypadTray = Color(hex: 0xD1D3D9)
 }
 
 

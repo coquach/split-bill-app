@@ -1,10 +1,11 @@
-import Domains
 //
 //  WalletDTO.swift
-//  Domains
+//  DomainDatas
 //
 //  Created by Co Quach on 27/9/26.
 //
+
+import Domains
 import Foundation
 
 struct WalletDTO: Decodable, Sendable {
@@ -14,7 +15,13 @@ struct WalletDTO: Decodable, Sendable {
     let walletHolderName: String
     let isDefault: Bool
     let status: WalletStatus
-    let balance: Int64
+
+    /// `wallets.balance` is Postgres `numeric`. That never decodes straight
+    /// into `Int64` — it arrives with a fractional part (`10000.00`), and
+    /// sometimes quoted. `PostgresNumeric` absorbs both forms; the rounding
+    /// to whole VND happens exactly once, in `toDomain()`.
+    let balance: PostgresNumeric
+
     let currency: String
     let createdAt: Date
     let updatedAt: Date
@@ -40,7 +47,7 @@ struct WalletDTO: Decodable, Sendable {
             walletHolderName: walletHolderName,
             isDefault: isDefault,
             status: status,
-            balance: balance,
+            balance: Int64(balance.value.rounded()),
             currency: currency,
             createdAt: createdAt,
             updatedAt: updatedAt
@@ -56,14 +63,26 @@ struct ResolveWalletRequest: Encodable, Sendable {
     }
 }
 
+/// One row of `resolve_wallet_by_number`, declared server-side as
+/// `RETURNS TABLE(wallet_id uuid, wallet_number text, holder_name text)`.
+/// Two consequences: the keys are snake_case, and the response is a JSON
+/// *array* of rows rather than a single object.
 struct WalletRecipientDTO: Decodable, Sendable {
-    public let walletNumber: String
-    public let holderName: String
+    let walletId: UUID
+    let walletNumber: String
+    let holderName: String
+
     enum CodingKeys: String, CodingKey {
-        case walletNumber = "walletNumber"
-        case holderName = "holderName"
+        case walletId = "wallet_id"
+        case walletNumber = "wallet_number"
+        case holderName = "holder_name"
     }
+
     func toDomain() -> WalletRecipient {
-        WalletRecipient(walletNumber: walletNumber, holderName: holderName)
+        WalletRecipient(
+            walletId: walletId,
+            walletNumber: walletNumber,
+            holderName: holderName
+        )
     }
 }

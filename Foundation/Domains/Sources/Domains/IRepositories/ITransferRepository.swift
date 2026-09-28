@@ -8,7 +8,13 @@
 import Foundation
 
 public protocol ITransferRepository: Sendable {
-    func createTransfer(_ command: CreateTransferCommand) async throws -> TransferTransaction
-    func getTransfers() async throws -> [TransferTransaction]
-    func getTransfer(id: UUID) async throws -> TransferTransaction
+    /// Calls the `create_transfer` RPC. The PIN travels with the command and
+    /// is verified server-side — the app never decides whether a PIN is
+    /// correct, it only collects it.
+    func createTransfer(
+        _ command: CreateTransferCommand
+    ) async throws -> TransferResult
+
+    /// Calls the `get_transfer_detail` RPC.
+    func getTransferDetail(id: UUID) async throws -> TransferDetail
 }

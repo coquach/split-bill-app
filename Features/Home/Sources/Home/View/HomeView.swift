@@ -21,8 +21,28 @@ public struct HomeView: View {
                 alignment: .leading,
                 spacing: AppSpacing.xl
             ) {
+                Text("Welcome")
+                Text(viewModel.email)
 
+                Button {
+                    Task {
+                        await viewModel.logout()
+                    }
+                } label: {
+                    if viewModel.isLoggingOut {
+                        ProgressView()
+                    } else {
+                        Text("Log out")
+                    }
+                }
+                .disabled(viewModel.isLoggingOut)
+
+                if let errorMessage = viewModel.errorMessage {
+                    Text(errorMessage)
+                        .foregroundStyle(.red)
+                }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, AppSpacing.md)
         .padding(.top, AppSpacing.md)

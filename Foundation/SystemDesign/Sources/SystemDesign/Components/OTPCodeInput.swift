@@ -28,8 +28,15 @@ public struct OTPCodeInput: View {
                     .tint(.clear)
                     .focused($isFocused)
                     .onChange(of: code) { _, newValue in
-                        if newValue.count > length {
-                            code = String(newValue.prefix(length))
+                        // Keep digits only, then clamp to `length`. The
+                        // numberPad can't produce anything else, but a
+                        // hardware keyboard (and the Simulator) can, and a
+                        // PIN that quietly contains a letter would be
+                        // rejected by the backend with no obvious cause.
+                        let digits = newValue.filter(\.isNumber)
+                        let clamped = String(digits.prefix(length))
+                        if clamped != newValue {
+                            code = clamped
                         }
                     }
             }

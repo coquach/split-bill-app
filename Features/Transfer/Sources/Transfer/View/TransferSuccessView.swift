@@ -50,7 +50,7 @@ public struct TransferSuccessView: View {
 
             VStack(spacing: AppSpacing.sm) {
                 AppButton(title: "View Details", style: .secondary, action: onViewDetails)
-                AppButton(title: "Back to Home", style: .translucent, action: onBackToHome)
+                AppButton(title: "Back to Home", style: .accent, action: onBackToHome)
             }
         }
         .padding(AppSpacing.lg)
