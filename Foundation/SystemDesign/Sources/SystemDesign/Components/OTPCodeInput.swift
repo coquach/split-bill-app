@@ -56,20 +56,27 @@ public struct OTPCodeInput: View {
             : (index == code.count)
         let hasDigit = index < code.count
 
-        ZStack {
-            if hasDigit {
-                Text(digit(at: index))
-                    .font(AppTypography.title)
-                    .foregroundStyle(Color.appOnSurface)
-            } else if isActiveBox {
-                Rectangle()
-                    .fill(Color.appOnSurface)
-                    .frame(width: 2)
-                    .padding(.vertical, AppSpacing.sm)
+        // A flexible `Color.clear` sized 1:1, with the digit drawn on top.
+        // This is what makes the box square: the HStack hands each child an
+        // equal share of the width, `Color.clear` accepts it, and
+        // `aspectRatio` derives the height from that width. Putting
+        // `.frame(maxWidth: .infinity)` and `.aspectRatio` on the content
+        // itself instead leaves the size ambiguous — the boxes collapse and
+        // spill out of the row.
+        Color.clear
+            .aspectRatio(1, contentMode: .fit)
+            .overlay {
+                if hasDigit {
+                    Text(digit(at: index))
+                        .font(AppTypography.title)
+                        .foregroundStyle(Color.appOnSurface)
+                } else if isActiveBox {
+                    Rectangle()
+                        .fill(Color.appOnSurface)
+                        .frame(width: 2)
+                        .padding(.vertical, AppSpacing.sm)
+                }
             }
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: 66) 
         .background(Color.appSurface)
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
         .shadow(

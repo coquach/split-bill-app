@@ -39,7 +39,19 @@ public struct TransferInputView: View {
         .safeAreaInset(edge: .top, spacing: 0) {
             AppNavBar(title: "Transfer", onBack: onBack)
         }
-        .safeAreaInset(edge: .bottom, spacing: 0) { bottomBar }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            BottomActionBar(
+                primary: .init(
+                    title: "Continue",
+                    style: .primary,
+                    isEnabled: viewModel.isFormValid
+                ) {
+                    if let draft = viewModel.makeDraft() {
+                        onContinue(draft)
+                    }
+                }
+            )
+        }
         .navigationBarHidden(true)
         .screenLifecycle("TransferInput", onDisappear: viewModel.cancelPendingLookup)
     }
@@ -166,26 +178,5 @@ public struct TransferInputView: View {
 
             AppMultilineTextField(placeholder: "Add a note", text: $viewModel.descriptionText)
         }
-    }
-
-    private var bottomBar: some View {
-        VStack(spacing: 0) {
-            Rectangle()
-                .fill(Color.black.opacity(0.05))
-                .frame(height: 1)
-                .blur(radius: 2)
-                .offset(y: -2)
-
-            AppButton(title: "Continue", style: .primary) {
-                if let draft = viewModel.makeDraft() {
-                    onContinue(draft)
-                }
-            }
-            .disabled(!viewModel.isFormValid)
-            .opacity(viewModel.isFormValid ? 1 : 0.35)
-            .padding(.horizontal, AppSpacing.lg)
-            .padding(.vertical, AppSpacing.sm)
-        }
-        .background(Color.appBackground)
     }
 }

@@ -16,17 +16,22 @@ public struct AppButton: View {
 
     private let title: String
     private let style: Style
+    private let icon: String?
     private let isLoading: Bool
     private let action: () -> Void
 
+    /// - Parameter icon: optional SF Symbol drawn before the label, e.g.
+    ///   "qrcode" on Generate QR or "square.and.arrow.up" on Share.
     public init(
         title: String,
         style: Style = .primary,
+        icon: String? = nil,
         isLoading: Bool = false,
         action: @escaping () -> Void
     ) {
         self.title = title
         self.style = style
+        self.icon = icon
         self.isLoading = isLoading
         self.action = action
     }
@@ -38,8 +43,14 @@ public struct AppButton: View {
                     ProgressView()
                         .tint(foregroundColor)
                 } else {
-                    Text(title)
-                        .font(AppTypography.bodyMedium)
+                    HStack(spacing: AppSpacing.xs) {
+                        if let icon {
+                            Image(systemName: icon)
+                                .font(.system(size: 16, weight: .medium))
+                        }
+                        Text(title)
+                            .font(AppTypography.bodyMedium)
+                    }
                 }
             }
             .frame(maxWidth: .infinity)

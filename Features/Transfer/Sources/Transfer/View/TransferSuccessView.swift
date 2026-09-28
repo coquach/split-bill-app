@@ -47,11 +47,6 @@ public struct TransferSuccessView: View {
             }
 
             Spacer()
-
-            VStack(spacing: AppSpacing.sm) {
-                AppButton(title: "View Details", style: .secondary, action: onViewDetails)
-                AppButton(title: "Back to Home", style: .accent, action: onBackToHome)
-            }
         }
         .padding(AppSpacing.lg)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -63,6 +58,23 @@ public struct TransferSuccessView: View {
             )
             .ignoresSafeArea()
         )
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            BottomActionBar(
+                primary: .init(
+                    title: "View Details",
+                    style: .secondary,
+                    handler: onViewDetails
+                ),
+                secondary: .init(
+                    title: "Back to Home",
+                    style: .accent,
+                    handler: onBackToHome
+                ),
+                // This screen sits on a gradient, so the bar must not paint
+                // its own background over it.
+                background: .clear
+            )
+        }
         .navigationBarBackButtonHidden(true)
         .screenLifecycle("TransferSuccess")
     }

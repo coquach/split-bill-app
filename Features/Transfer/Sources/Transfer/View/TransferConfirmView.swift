@@ -74,17 +74,26 @@ public struct TransferConfirmView: View {
                 message: "Check the receiver details. Transfers cannot be reversed once sent.",
                 style: .error
             )
-
-            VStack(spacing: AppSpacing.sm) {
-                AppButton(title: "Confirm & Send", style: .primary, action: onConfirm)
-                AppButton(title: "Cancel", style: .accent, action: onCancel)
-            }
         }
         .padding(AppSpacing.lg)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.appBackground.ignoresSafeArea())
         .safeAreaInset(edge: .top, spacing: 0) {
             AppNavBar(title: "Confirm Transfer", onBack: onBack)
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            BottomActionBar(
+                primary: .init(
+                    title: "Confirm & Send",
+                    style: .primary,
+                    handler: onConfirm
+                ),
+                secondary: .init(
+                    title: "Cancel",
+                    style: .accent,
+                    handler: onCancel
+                )
+            )
         }
         .navigationBarHidden(true)
         .screenLifecycle("TransferConfirm")

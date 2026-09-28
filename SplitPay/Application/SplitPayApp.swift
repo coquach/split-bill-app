@@ -1,6 +1,7 @@
 import Authentication
 import Domains
 import Home
+import SplitBill
 import SwiftUI
 import Transfer
 
@@ -17,7 +18,8 @@ struct SplitPayApp: App {
             authRepository: container.resolve(IAuthRepository.self),
             walletRepository: container.resolve(IWalletRepository.self),
             sessionStore: container.resolve(SessionStore.self),
-            transferRepository: container.resolve(ITransferRepository.self)
+            transferRepository: container.resolve(ITransferRepository.self),
+            splitBillRepository: container.resolve(ISplitBillRepository.self)
         )
 
     }
@@ -34,6 +36,11 @@ private struct AppRootView: View {
     @Environment(AppCoordinator.self) private var coordinator
     @Environment(\.scenePhase) private var scenePhase
     @State private var isTransferPresented = false
+
+    /// Non-nil while the Split sub-flow is open. It lives here, not inside
+    /// TransferCoordinator, because AppCoordinator's layer is the only place
+    /// that's allowed to know about two feature modules at once.
+    @State private var splitSource: SplitSource?
 
     var body: some View {
         Group {
@@ -74,8 +81,21 @@ private struct AppRootView: View {
                             sessionStore: coordinator.sessionStore,
                             transferRepository: coordinator.transferRepository
                         ),
-                        onFinish: { isTransferPresented = false }
+                        onFinish: { isTransferPresented = false },
+                        onSplitBill: { source in splitSource = source }
                     )
+                    // Presented from inside the Transfer cover so that
+                    // closing Split returns to Transaction Detail rather than
+                    // dropping the user all the way back to Home.
+                    .fullScreenCover(item: $splitSource) { source in
+                        SplitBillCoordinator(
+                            source: source,
+                            dependencies: .init(
+                                splitBillRepository: coordinator.splitBillRepository
+                            ),
+                            onFinish: { splitSource = nil }
+                        )
+                    }
                 }
             }
         }.onAppear {

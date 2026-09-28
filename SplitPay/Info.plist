@@ -26,6 +26,8 @@
 	<string>$(SUPABASE_KEY)</string>
 	<key>SUPABASE_URL</key>
 	<string>$(SUPABASE_URL)</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>SplitPay saves your split bill QR code to Photos so you can share it later.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 </dict>

@@ -25,8 +25,6 @@ public struct TransferPinGateView: View {
 
     public var body: some View {
         VStack(spacing: AppSpacing.xl) {
-            Spacer()
-
             VStack(spacing: AppSpacing.xs) {
                 Text("Enter your PIN")
                     .font(AppTypography.bodyMedium)
@@ -46,20 +44,26 @@ public struct TransferPinGateView: View {
             }
 
             Spacer()
-
-            AppButton(title: "Continue", style: .primary) {
-                if viewModel.verify() {
-                    onVerified()
-                }
-            }
-            .disabled(!viewModel.isPinComplete)
-            .opacity(viewModel.isPinComplete ? 1 : 0.35)
         }
         .padding(AppSpacing.lg)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.top, AppSpacing.xl)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.appBackground.ignoresSafeArea())
         .safeAreaInset(edge: .top, spacing: 0) {
             AppNavBar(title: "Transfer", onBack: onCancel)
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            BottomActionBar(
+                primary: .init(
+                    title: "Continue",
+                    style: .primary,
+                    isEnabled: viewModel.isPinComplete
+                ) {
+                    if viewModel.verify() {
+                        onVerified()
+                    }
+                }
+            )
         }
         .navigationBarHidden(true)
         .screenLifecycle("TransferPinGate")

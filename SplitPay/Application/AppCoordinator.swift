@@ -25,6 +25,7 @@ final class AppCoordinator {
     let walletRepository: IWalletRepository
     let sessionStore: SessionStore
     let transferRepository: ITransferRepository
+    let splitBillRepository: ISplitBillRepository
 
     private var authTask: Task<Void, Never>?
 
@@ -32,12 +33,14 @@ final class AppCoordinator {
         authRepository: IAuthRepository,
         walletRepository: IWalletRepository,
         sessionStore: SessionStore,
-        transferRepository: ITransferRepository
+        transferRepository: ITransferRepository,
+        splitBillRepository: ISplitBillRepository
     ) {
         self.authRepository = authRepository
         self.walletRepository = walletRepository
         self.sessionStore = sessionStore
         self.transferRepository = transferRepository
+        self.splitBillRepository = splitBillRepository
     }
 
     func start() {
