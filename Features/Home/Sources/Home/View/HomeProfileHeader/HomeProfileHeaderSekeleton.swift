@@ -30,11 +30,11 @@ struct HomeProfileHeaderSkeleton: View {
 
             Spacer()
 
-            SkeletonView(
-                width: 44,
-                height: 44,
-                cornerRadius: AppRadius.md
-            )
+//            SkeletonView(
+//                width: 44,
+//                height: 44,
+//                cornerRadius: AppRadius.md
+//            )
         }
     }
 }

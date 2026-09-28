@@ -24,18 +24,33 @@ final class AppCoordinator {
     let authRepository: IAuthRepository
     let walletRepository: IWalletRepository
     let transferRepository: ITransferRepository
+    let profileRepository: IProfileRepository
+    let pinRepository: IPinRepository
+    let repaymentRepository: IRepaymentRepository
+    let splitBillRepository: ISplitBillRepository
+    let splitQRRepository: ISplitQRRepository
 
     private var authTask: Task<Void, Never>?
 
     init(
         authRepository: IAuthRepository,
         walletRepository: IWalletRepository,
-        transferRepository: ITransferRepository
+        transferRepository: ITransferRepository,
+        profileRepository: IProfileRepository,
+        pinRepository: IPinRepository,
+        repaymentRepository: IRepaymentRepository,
+        splitBillRepository: ISplitBillRepository,
+        splitQRRepository: ISplitQRRepository
+        
     ) {
         self.authRepository = authRepository
         self.walletRepository = walletRepository
         self.transferRepository = transferRepository
-
+        self.profileRepository = profileRepository
+        self.pinRepository = pinRepository
+        self.repaymentRepository = repaymentRepository
+        self.splitBillRepository = splitBillRepository
+        self.splitQRRepository = splitQRRepository
     }
 
     func start() {

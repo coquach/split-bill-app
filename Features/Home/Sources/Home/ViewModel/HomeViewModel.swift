@@ -12,41 +12,38 @@ import Utils
 @MainActor
 @Observable
 public final class HomeViewModel {
-    private(set) var email: String
+    private(set) var profile: Profile?
     private(set) var wallet: Wallet?
     private(set) var recentTransfers: [HomeTransaction] = []
     private(set) var isLoading = false
     private(set) var errorMessage: String?
 
-    private let userId: UUID
-    private let authRepository: IAuthRepository
+    private let profileRepository: IProfileRepository
     private let walletRepository: IWalletRepository
     private let transferRepository: ITransferRepository
 
     public init(
-        user: User,
-        authRepository: IAuthRepository,
+        profileRepository: IProfileRepository,
         walletRepository: IWalletRepository,
         transferRepository: ITransferRepository
     ) {
-        self.email = user.email
-        self.userId = user.id
-        self.authRepository = authRepository
+        self.profileRepository = profileRepository
         self.walletRepository = walletRepository
         self.transferRepository = transferRepository
+        self.profile = nil
     }
 
     var displayName: String {
-        if let wallet,
-            !wallet.walletHolderName.trimmingCharacters(
-                in: .whitespacesAndNewlines
-            ).isEmpty
-        {
-            return
-                "Hi, \(wallet.walletHolderName.split(separator: " ").last.map(String.init) ?? wallet.walletHolderName)"
+        let name =
+            profile?.fullName?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            ?? "unknown"
+
+        guard !name.isEmpty else {
+            return "Hi"
         }
-        return
-            "Hi, \(email.split(separator: "@").first.map(String.init) ?? email)"
+
+        return "Hi, \(name)"
     }
 
     var walletHolderName: String {
@@ -75,22 +72,26 @@ public final class HomeViewModel {
         defer { isLoading = false }
 
         do {
+            async let profileTask = profileRepository.getCurrentProfile()
             async let walletTask = walletRepository.getDefaultWallet()
-            async let transferTask = transferRepository.getTransfers()
+            async let transferTask = transferRepository.getTransfers(page: 1, pageSize: 10, filter: .all)
 
-            let (loadedWallet, transfers) = try await (walletTask, transferTask)
+            let (
+                loadedProfile,
+                loadedWallet,
+                transfers
+            ) = try await (
+                profileTask,
+                walletTask,
+                transferTask
+            )
+
+            profile = loadedProfile
             wallet = loadedWallet
+            
             recentTransfers = transfers.prefix(4).map {
-                HomeTransaction(transaction: $0, currentUserId: userId)
+                HomeTransaction(transaction: $0, currentUserId: loadedProfile.id)
             }
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-    }
-
-    func logout() async {
-        do {
-            try await authRepository.signOut()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -117,7 +118,7 @@ public struct HomeTransaction: Identifiable, Sendable, Equatable {
     public let currency: String
     public let createdAt: Date
 
-    public init(transaction: TransferTransaction, currentUserId: UUID) {
+    public init(transaction: TransferHistory, currentUserId: UUID) {
         id = transaction.id
         title = "Transfer"
         subtitle = transaction.transactionRef

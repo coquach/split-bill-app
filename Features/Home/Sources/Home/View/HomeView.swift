@@ -13,37 +13,29 @@ public struct HomeView: View {
     @State
     private var viewModel: HomeViewModel
 
-    private let onTransfer: () -> Void
-    private let onSplit: () -> Void
-    private let onProfile: () -> Void
+    private let onNavigateTransfer: () -> Void
+    private let onNavigateSplitBill: () -> Void
 //    private let onSettings: () -> Void
-    private let onSeeAll: () -> Void
+    private let onNavigateTransactionHistory: () -> Void
 
     public init(
         viewModel: HomeViewModel,
-        onTransfer: @escaping () -> Void = {},
-        onSplit: @escaping () -> Void = {},
-        onProfile: @escaping () -> Void = {},
-        onSettings: @escaping () -> Void = {},
-        onSeeAll: @escaping () -> Void = {}
+        onNavigateTransfer: @escaping () -> Void = {},
+        onNavigateSplitBill: @escaping () -> Void = {},
+//        onSettings: @escaping () -> Void = {},
+        onNavigateTransactionHistory: @escaping () -> Void = {}
     ) {
         _viewModel = State(initialValue: viewModel)
 
-        self.onTransfer = onTransfer
-        self.onSplit = onSplit
-        self.onProfile = onProfile
+        self.onNavigateTransfer = onNavigateTransfer
+        self.onNavigateSplitBill = onNavigateSplitBill
 //        self.onSettings = onSettings
-        self.onSeeAll = onSeeAll
+        self.onNavigateTransactionHistory = onNavigateTransactionHistory
     }
 
     public var body: some View {
         ZStack(alignment: .bottom) {
             content
-
-            HomeFloatingNavigation(
-                onSplit: onSplit,
-                onProfile: onProfile
-            )
         }
         .background(
             Color.appBackground
@@ -99,14 +91,14 @@ public struct HomeView: View {
                     )
 
                     HomeQuickActions(
-                        onTransfer: onTransfer,
-                        onSplit: onSplit
+                        onTransfer: onNavigateTransfer,
+                        onSplit: onNavigateSplitBill
                     )
 
                     HomeRecentTransactions(
                         transactions: viewModel.recentTransfers,
                         isLoading: viewModel.isLoading,
-                        onSeeAll: onSeeAll
+                        onSeeAll: onNavigateTransactionHistory
                     )
                 }
                 .padding(.horizontal, AppSpacing.xl)

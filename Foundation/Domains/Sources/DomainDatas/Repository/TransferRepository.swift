@@ -35,13 +35,22 @@ public final class TransferRepository: ITransferRepository {
         }
     }
 
-    public func getTransfers() async throws -> [TransferTransaction] {
+    public func getTransfers(
+        page: Int = 1,
+        pageSize: Int = 20,
+        filter: TransactionTypeFilter = .all
+    ) async throws -> [TransferHistory] {
         do {
-            let dtos: [TransferTransactionDTO] =
+            let dtos: [TransferHistoryDTO] =
                 try await client
-                .from("transfer_transactions")
-                .select()
-                .order("created_at", ascending: false)
+                .rpc(
+                    "get_transfer_history",
+                    params: GetTransferHistoryRequest(
+                        page: page,
+                        pageSize: pageSize,
+                        type: filter
+                    )
+                )
                 .execute()
                 .value
 
@@ -51,14 +60,14 @@ public final class TransferRepository: ITransferRepository {
         }
     }
 
-    public func getTransfer(id: UUID) async throws -> TransferTransaction {
+    public func getTransfer(id: UUID) async throws -> TransferDetail {
         do {
-            let dto: TransferTransactionDTO =
+            let dto: TransferDetailDTO =
                 try await client
-                .from("transfer_transactions")
-                .select()
-                .eq("id", value: id.uuidString)
-                .single()
+                .rpc(
+                    "get_transfer_detail",
+                    params: GetTransferDetailRequest(pTransactionId: id)
+                )
                 .execute()
                 .value
 
