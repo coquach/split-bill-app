@@ -7,27 +7,28 @@
 
 import Domains
 import Foundation
-import Supabase
 
 public final class ProfileRepository: IProfileRepository {
-    private let client: SupabaseClient
+    private let client: SupabaseRestClient
+    private let accessTokenProvider: AccessTokenProviding
 
-    public init(client: SupabaseClient) {
+    public init(
+        client: SupabaseRestClient,
+        accessTokenProvider: AccessTokenProviding
+    ) {
         self.client = client
+        self.accessTokenProvider = accessTokenProvider
     }
 
     public func getCurrentProfile() async throws -> Profile {
         do {
-            let user = try await client.auth.user()
+            let userId = try await accessTokenProvider.currentUserId()
 
-            let dto: ProfileDTO =
-                try await client
-                .from("profiles")
-                .select()
-                .eq("id", value: user.id.uuidString)
-                .single()
-                .execute()
-                .value
+            let dto: ProfileDTO = try await client.select(
+                table: "profiles",
+                filters: ["id": "eq.\(userId.uuidString)"],
+                single: true
+            )
 
             return dto.toDomain()
         } catch {
@@ -40,22 +41,17 @@ public final class ProfileRepository: IProfileRepository {
         phoneNumber: String?
     ) async throws -> Profile {
         do {
-            let user = try await client.auth.user()
+            let userId = try await accessTokenProvider.currentUserId()
 
-            let values = ProfileUpdateDTO(
-                fullName: fullName,
-                phoneNumber: phoneNumber
+            let dto: ProfileDTO = try await client.update(
+                table: "profiles",
+                filters: ["id": "eq.\(userId.uuidString)"],
+                body: ProfileUpdateDTO(
+                    fullName: fullName,
+                    phoneNumber: phoneNumber
+                ),
+                single: true
             )
-
-            let dto: ProfileDTO =
-                try await client
-                .from("profiles")
-                .update(values)
-                .eq("id", value: user.id.uuidString)
-                .select()
-                .single()
-                .execute()
-                .value
 
             return dto.toDomain()
         } catch {

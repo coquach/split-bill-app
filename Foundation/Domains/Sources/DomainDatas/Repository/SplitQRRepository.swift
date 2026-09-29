@@ -7,25 +7,20 @@
 
 import Domains
 import Foundation
-import Supabase
 
 public final class SplitQRRepository: ISplitQRRepository {
-    private let client: SupabaseClient
+    private let client: SupabaseRestClient
 
-    public init(client: SupabaseClient) {
+    public init(client: SupabaseRestClient) {
         self.client = client
     }
 
     public func getQR(splitBillId: UUID) async throws -> SplitQRCode {
         do {
-            let dtos: [SplitQRCodeDTO] =
-                try await client
-                .rpc(
-                    "get_split_qr",
-                    params: GetSplitQRRequest(splitBillId: splitBillId)
-                )
-                .execute()
-                .value
+            let dtos: [SplitQRCodeDTO] = try await client.rpc(
+                "get_split_qr",
+                params: GetSplitQRRequest(splitBillId: splitBillId)
+            )
             guard let dto = dtos.first else {
                 throw DomainError.unknown(
                     code: "QR_NOT_FOUND",
@@ -43,14 +38,10 @@ public final class SplitQRRepository: ISplitQRRepository {
             let request = DecodeSplitQRRequest(qrPayload: payload)
 
             // RETURNS TABLE, so PostgREST sends an array even for one row.
-            let rows: [SplitQRReviewDTO] =
-                try await client
-                .rpc(
-                    "decode_split_qr",
-                    params: request
-                )
-                .execute()
-                .value
+            let rows: [SplitQRReviewDTO] = try await client.rpc(
+                "decode_split_qr",
+                params: request
+            )
 
             guard let dto = rows.first else {
                 throw DomainError.notFound

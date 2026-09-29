@@ -1,11 +1,10 @@
 import Domains
 import Foundation
-import Supabase
 
 public final class SplitBillRepository: ISplitBillRepository {
-    private let client: SupabaseClient
+    private let client: SupabaseRestClient
 
-    public init(client: SupabaseClient) {
+    public init(client: SupabaseRestClient) {
         self.client = client
     }
 
@@ -14,13 +13,10 @@ public final class SplitBillRepository: ISplitBillRepository {
     ) async throws -> SplitBill {
         do {
             // RETURNS TABLE, so PostgREST sends an array even for one row.
-            let rows: [SplitBillDTO] = try await client
-                .rpc(
-                    "create_split_bill",
-                    params: CreateSplitBillRequest(command)
-                )
-                .execute()
-                .value
+            let rows: [SplitBillDTO] = try await client.rpc(
+                "create_split_bill",
+                params: CreateSplitBillRequest(command)
+            )
 
             guard let dto = rows.first else {
                 throw DomainError.unknown(
@@ -42,18 +38,15 @@ public final class SplitBillRepository: ISplitBillRepository {
         pageSize: Int = 20
     ) async throws -> SplitBillPage {
         do {
-            let dtos: [SplitBillListItemDTO] = try await client
-                .rpc(
-                    "get_split_bills",
-                    params: GetSplitBillsRequest(
-                        role: role,
-                        status: status,
-                        page: page,
-                        pageSize: pageSize
-                    )
+            let dtos: [SplitBillListItemDTO] = try await client.rpc(
+                "get_split_bills",
+                params: GetSplitBillsRequest(
+                    role: role,
+                    status: status,
+                    page: page,
+                    pageSize: pageSize
                 )
-                .execute()
-                .value
+            )
 
             return SplitBillPage(
                 items: dtos.map { $0.toDomain() },
@@ -69,13 +62,10 @@ public final class SplitBillRepository: ISplitBillRepository {
     public func getSplitBill(id: UUID) async throws -> SplitBill {
         do {
             // RETURNS TABLE, so PostgREST sends an array even for one row.
-            let rows: [SplitBillDetailDTO] = try await client
-                .rpc(
-                    "get_split_bill_detail",
-                    params: GetSplitBillDetailRequest(splitBillId: id)
-                )
-                .execute()
-                .value
+            let rows: [SplitBillDetailDTO] = try await client.rpc(
+                "get_split_bill_detail",
+                params: GetSplitBillDetailRequest(splitBillId: id)
+            )
 
             guard let dto = rows.first else {
                 throw DomainError.notFound
@@ -92,13 +82,10 @@ public final class SplitBillRepository: ISplitBillRepository {
     ) async throws -> SplitBillDetail {
         do {
             // RETURNS TABLE, so PostgREST sends an array even for one row.
-            let rows: [SplitBillDetailDTO] = try await client
-                .rpc(
-                    "get_split_bill_detail",
-                    params: GetSplitBillDetailRequest(splitBillId: id)
-                )
-                .execute()
-                .value
+            let rows: [SplitBillDetailDTO] = try await client.rpc(
+                "get_split_bill_detail",
+                params: GetSplitBillDetailRequest(splitBillId: id)
+            )
 
             guard let dto = rows.first else {
                 throw DomainError.notFound
@@ -114,13 +101,10 @@ public final class SplitBillRepository: ISplitBillRepository {
         _ command: UpdateSplitBillCommand
     ) async throws -> SplitBill {
         do {
-            let dto: SplitBillDTO = try await client
-                .rpc(
-                    "update_split_bill",
-                    params: UpdateSplitBillRequest(command)
-                )
-                .execute()
-                .value
+            let dto: SplitBillDTO = try await client.rpc(
+                "update_split_bill",
+                params: UpdateSplitBillRequest(command)
+            )
 
             return dto.toDomain()
         } catch {
@@ -130,13 +114,10 @@ public final class SplitBillRepository: ISplitBillRepository {
 
     public func closeSplitBill(id: UUID) async throws -> SplitBill {
         do {
-            let dto: SplitBillDTO = try await client
-                .rpc(
-                    "close_split_bill",
-                    params: CloseSplitBillRequest(splitBillId: id)
-                )
-                .execute()
-                .value
+            let dto: SplitBillDTO = try await client.rpc(
+                "close_split_bill",
+                params: CloseSplitBillRequest(splitBillId: id)
+            )
 
             return dto.toDomain()
         } catch {

@@ -7,12 +7,11 @@
 
 import Domains
 import Foundation
-import Supabase
 
 public final class TransferRepository: ITransferRepository {
-    private let client: SupabaseClient
+    private let client: SupabaseRestClient
 
-    public init(client: SupabaseClient) {
+    public init(client: SupabaseRestClient) {
         self.client = client
     }
 
@@ -21,14 +20,10 @@ public final class TransferRepository: ITransferRepository {
     ) async throws -> TransferTransaction {
         do {
             // RETURNS TABLE, so PostgREST sends an array even for one row.
-            let rows: [TransferTransactionDTO] =
-                try await client
-                .rpc(
-                    "create_transfer",
-                    params: CreateTransferRequest(command)
-                )
-                .execute()
-                .value
+            let rows: [TransferTransactionDTO] = try await client.rpc(
+                "create_transfer",
+                params: CreateTransferRequest(command)
+            )
 
             guard let dto = rows.first else {
                 throw DomainError.unknown(
@@ -49,18 +44,14 @@ public final class TransferRepository: ITransferRepository {
         filter: TransactionTypeFilter = .all
     ) async throws -> [TransferHistory] {
         do {
-            let dtos: [TransferHistoryDTO] =
-                try await client
-                .rpc(
-                    "get_transfer_history",
-                    params: GetTransferHistoryRequest(
-                        page: page,
-                        pageSize: pageSize,
-                        type: filter
-                    )
+            let dtos: [TransferHistoryDTO] = try await client.rpc(
+                "get_transfer_history",
+                params: GetTransferHistoryRequest(
+                    page: page,
+                    pageSize: pageSize,
+                    type: filter
                 )
-                .execute()
-                .value
+            )
 
             return dtos.map { $0.toDomain() }
         } catch {
@@ -71,14 +62,10 @@ public final class TransferRepository: ITransferRepository {
     public func getTransfer(id: UUID) async throws -> TransferDetail {
         do {
             // RETURNS TABLE, so PostgREST sends an array even for one row.
-            let rows: [TransferDetailDTO] =
-                try await client
-                .rpc(
-                    "get_transfer_detail",
-                    params: GetTransferDetailRequest(pTransactionId: id)
-                )
-                .execute()
-                .value
+            let rows: [TransferDetailDTO] = try await client.rpc(
+                "get_transfer_detail",
+                params: GetTransferDetailRequest(pTransactionId: id)
+            )
 
             guard let dto = rows.first else {
                 throw DomainError.notFound

@@ -7,12 +7,11 @@
 
 import Domains
 import Foundation
-import Supabase
 
 public final class RepaymentRepository: IRepaymentRepository {
-    private let client: SupabaseClient
+    private let client: SupabaseRestClient
 
-    public init(client: SupabaseClient) {
+    public init(client: SupabaseRestClient) {
         self.client = client
     }
 
@@ -21,14 +20,10 @@ public final class RepaymentRepository: IRepaymentRepository {
     ) async throws -> Repayment {
         do {
             // RETURNS TABLE, so PostgREST sends an array even for one row.
-            let rows: [RepaymentDTO] =
-                try await client
-                .rpc(
-                    "create_qr_repayment",
-                    params: CreateQRRepaymentRequest(command)
-                )
-                .execute()
-                .value
+            let rows: [RepaymentDTO] = try await client.rpc(
+                "create_qr_repayment",
+                params: CreateQRRepaymentRequest(command)
+            )
 
             guard let dto = rows.first else {
                 throw DomainError.unknown(
@@ -47,14 +42,11 @@ public final class RepaymentRepository: IRepaymentRepository {
         splitBillId: UUID
     ) async throws -> [Repayment] {
         do {
-            let dtos: [RepaymentDTO] =
-                try await client
-                .from("repayments")
-                .select()
-                .eq("split_bill_id", value: splitBillId.uuidString)
-                .order("paid_at", ascending: false)
-                .execute()
-                .value
+            let dtos: [RepaymentDTO] = try await client.select(
+                table: "repayments",
+                filters: ["split_bill_id": "eq.\(splitBillId.uuidString)"],
+                order: "paid_at.desc"
+            )
 
             return dtos.map { $0.toDomain() }
         } catch {
@@ -64,12 +56,9 @@ public final class RepaymentRepository: IRepaymentRepository {
 
     public func getMyRepaymentRecords() async throws -> [RepaymentRecord] {
         do {
-            let dtos: [RepaymentRecordDTO] =
-                try await client
-                .from("my_repayment_records")
-                .select()
-                .execute()
-                .value
+            let dtos: [RepaymentRecordDTO] = try await client.select(
+                table: "my_repayment_records"
+            )
 
             return dtos.map { $0.toDomain() }
         } catch {

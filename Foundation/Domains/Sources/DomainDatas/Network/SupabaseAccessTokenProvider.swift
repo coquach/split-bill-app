@@ -6,6 +6,7 @@
 //
 
 import Domains
+import Foundation
 import Supabase
 
 // Bridges SupabaseRestClient to the session the Supabase Auth SDK already manages.
@@ -18,5 +19,9 @@ public final class SupabaseAccessTokenProvider: AccessTokenProviding {
 
     public func currentAccessToken() async throws -> String? {
         try? await client.auth.session.accessToken
+    }
+
+    public func currentUserId() async throws -> UUID {
+        try await client.auth.user().id
     }
 }

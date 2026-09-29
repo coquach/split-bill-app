@@ -81,6 +81,31 @@ public final class SupabaseRestClient: Sendable {
         return try await execute(request)
     }
 
+    // PATCH /rest/v1/<table>?<filters>, returning the updated row(s).
+    public func update<Body: Encodable, Response: Decodable>(
+        table: String,
+        filters: [String: String],
+        body: Body,
+        single: Bool = false
+    ) async throws -> Response {
+        let query = filters.map { URLQueryItem(name: $0.key, value: $0.value) }
+        var request = try await makeRequest(
+            path: "rest/v1/\(table)",
+            method: "PATCH",
+            query: query
+        )
+        request.httpBody = try encoder.encode(body)
+        // Without this PostgREST returns 204 No Content on a successful PATCH.
+        request.setValue("return=representation", forHTTPHeaderField: "Prefer")
+        if single {
+            request.setValue(
+                "application/vnd.pgrst.object+json",
+                forHTTPHeaderField: "Accept"
+            )
+        }
+        return try await execute(request)
+    }
+
     // MARK: - Request building
 
     private func makeRequest(
