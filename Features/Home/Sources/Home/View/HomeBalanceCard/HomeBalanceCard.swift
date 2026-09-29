@@ -34,7 +34,7 @@ struct HomeBalanceCard: View {
         .padding(AppSpacing.xl)
         .frame(
             maxWidth: .infinity,
-            minHeight: 250
+            minHeight: 200
         )
         .background(background)
         .clipShape(

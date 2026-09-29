@@ -192,7 +192,8 @@ public final class SupabaseRestClient: Sendable {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
-            let string = try container.decode(String.self)
+            let raw = try container.decode(String.self)
+            let string = Self.truncatingToMilliseconds(raw)
             if let date = withFractional.date(from: string)
                 ?? withoutFractional.date(from: string)
             {
@@ -200,10 +201,26 @@ public final class SupabaseRestClient: Sendable {
             }
             throw DecodingError.dataCorruptedError(
                 in: container,
-                debugDescription: "Invalid date format: \(string)"
+                debugDescription: "Invalid date format: \(raw)"
             )
         }
         return decoder
+    }
+
+    // ISO8601DateFormatter only parses up to millisecond precision, but a literal now() in Postgres carries microseconds - truncate before parsing.
+    private static func truncatingToMilliseconds(_ string: String) -> String {
+        guard let dotIndex = string.firstIndex(of: "."),
+              let digitsEnd = string[string.index(after: dotIndex)...]
+                .firstIndex(where: { !$0.isNumber })
+        else {
+            return string
+        }
+        let digitsStart = string.index(after: dotIndex)
+        guard string.distance(from: digitsStart, to: digitsEnd) > 3 else {
+            return string
+        }
+        let truncated = string[digitsStart..<digitsEnd].prefix(3)
+        return String(string[..<digitsStart]) + truncated + string[digitsEnd...]
     }
 
     private static func makeEncoder() -> JSONEncoder {

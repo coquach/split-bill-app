@@ -65,7 +65,10 @@ public struct SplitQRView: View {
                         save(image)
                     },
                     layout: .sideBySide,
-                    link: .init(title: "Done", handler: onDone)
+                    link: .init(
+                        title: "Home",
+                        handler: onDone
+                    )
                 )
             }
         } else {
