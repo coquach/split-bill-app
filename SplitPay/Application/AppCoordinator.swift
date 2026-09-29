@@ -23,30 +23,34 @@ final class AppCoordinator {
 
     let authRepository: IAuthRepository
     let walletRepository: IWalletRepository
-    let sessionStore: SessionStore
     let transferRepository: ITransferRepository
+    let profileRepository: IProfileRepository
+    let pinRepository: IPinRepository
+    let repaymentRepository: IRepaymentRepository
     let splitBillRepository: ISplitBillRepository
     let splitQRRepository: ISplitQRRepository
-    let repaymentRepository: IRepaymentRepository
 
     private var authTask: Task<Void, Never>?
 
     init(
         authRepository: IAuthRepository,
         walletRepository: IWalletRepository,
-        sessionStore: SessionStore,
         transferRepository: ITransferRepository,
+        profileRepository: IProfileRepository,
+        pinRepository: IPinRepository,
+        repaymentRepository: IRepaymentRepository,
         splitBillRepository: ISplitBillRepository,
-        splitQRRepository: ISplitQRRepository,
-        repaymentRepository: IRepaymentRepository
+        splitQRRepository: ISplitQRRepository
+        
     ) {
         self.authRepository = authRepository
         self.walletRepository = walletRepository
-        self.sessionStore = sessionStore
         self.transferRepository = transferRepository
+        self.profileRepository = profileRepository
+        self.pinRepository = pinRepository
+        self.repaymentRepository = repaymentRepository
         self.splitBillRepository = splitBillRepository
         self.splitQRRepository = splitQRRepository
-        self.repaymentRepository = repaymentRepository
     }
 
     func start() {
@@ -61,7 +65,6 @@ final class AppCoordinator {
                 switch authStateChanges {
                 case .authenticated(let user):
                     root = .authenticated(user)
-                    refreshBalance()
 
                 case .unauthenticated:
                     root = .unauthenticated
@@ -87,31 +90,6 @@ final class AppCoordinator {
             }
 
             root = .unauthenticated
-        }
-    }
-
-    /// Loads the wallet balance into `SessionStore` once, on sign-in. Every
-    /// other module reads the cached value rather than fetching its own —
-    /// without this call it stays at zero, which silently disables Continue
-    /// on the Transfer input screen (any amount "exceeds" a zero balance).
-    ///
-    /// Also called after the Transfer flow closes, since a completed
-    /// transfer has just changed the real balance.
-    func refreshBalance() {
-        Task { [weak self] in
-            guard let self else {
-                return
-            }
-
-            do {
-                try await sessionStore.refreshBalance()
-            } catch {
-                // The cached balance is a UX affordance, not correctness —
-                // the backend re-validates at submit time. A failure here
-                // just means the input screen shows a stale number, so it
-                // isn't worth interrupting the user over.
-                print("[AppCoordinator] balance refresh failed: \(error)")
-            }
         }
     }
 

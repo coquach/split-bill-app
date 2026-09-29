@@ -1,6 +1,6 @@
 //
 //  PinRepository.swift
-//  DomainDatas
+//  Domains
 //
 //  Created by Co Quach on 27/9/26.
 //
@@ -9,11 +9,8 @@ import Domains
 import Foundation
 import Supabase
 
-/// All four PIN RPCs return a bare `boolean`, so each of these decodes a
-/// scalar rather than a wrapper object. Failures (wrong PIN, PIN not set,
-/// lockout) come back as raised Postgres errors, not as `false`, and
-/// `RepositoryErrorMapper` turns those into the matching `DomainError`.
 public final class PinRepository: IPinRepository {
+
     private let client: SupabaseClient
 
     public init(client: SupabaseClient) {
@@ -22,10 +19,12 @@ public final class PinRepository: IPinRepository {
 
     public func checkPinStatus() async throws -> Bool {
         do {
-            return try await client
+            let result: Bool = try await client
                 .rpc("check_pin_status")
                 .execute()
                 .value
+
+            return result
         } catch {
             throw RepositoryErrorMapper.map(error)
         }
@@ -33,30 +32,39 @@ public final class PinRepository: IPinRepository {
 
     public func setupPin(_ pin: String) async throws -> Bool {
         do {
-            return try await client
-                .rpc("setup_pin", params: SetupPinRequest(pin: pin))
+            let result: Bool = try await client
+                .rpc(
+                    "setup_pin",
+                    params: [
+                        "p_pin": pin
+                    ]
+                )
                 .execute()
                 .value
+
+            return result
         } catch {
             throw RepositoryErrorMapper.map(error)
         }
     }
 
     public func changePin(
-        currentPin: String,
+        oldPin: String,
         newPin: String
     ) async throws -> Bool {
         do {
-            return try await client
+            let result: Bool = try await client
                 .rpc(
                     "change_pin",
-                    params: ChangePinRequest(
-                        currentPin: currentPin,
-                        newPin: newPin
-                    )
+                    params: [
+                        "p_current_pin": oldPin,
+                        "p_new_pin": newPin
+                    ]
                 )
                 .execute()
                 .value
+
+            return result
         } catch {
             throw RepositoryErrorMapper.map(error)
         }
@@ -64,10 +72,17 @@ public final class PinRepository: IPinRepository {
 
     public func verifyPin(_ pin: String) async throws -> Bool {
         do {
-            return try await client
-                .rpc("verify_pin", params: VerifyPinRequest(pin: pin))
+            let result: Bool = try await client
+                .rpc(
+                    "verify_pin",
+                    params: [
+                        "p_pin": pin
+                    ]
+                )
                 .execute()
                 .value
+
+            return result
         } catch {
             throw RepositoryErrorMapper.map(error)
         }

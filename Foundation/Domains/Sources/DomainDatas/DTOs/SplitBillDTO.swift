@@ -1,25 +1,27 @@
 import Domains
 import Foundation
 
+// MARK: - Split Bill record returned by create/update/close RPCs
+
 struct SplitBillDTO: Decodable, Sendable {
     let id: UUID
     let requesterId: UUID
     let sourceTransferId: UUID
     let title: String
     let note: String?
-    // Postgres `numeric`; see PostgresNumeric for why these aren't Int64.
-    let totalAmount: PostgresNumeric
+    let totalAmount: Int64
     let currency: String
     let participantCount: Int
-    let perPersonAmount: PostgresNumeric
-    let requesterAmount: PostgresNumeric
+    let perPersonAmount: Int64
+    let requesterAmount: Int64
     let requiredSlots: Int
     let paidSlots: Int
     let status: SplitBillStatus
+    let idempotencyKey: String?
     let expiresAt: Date?
     let closedAt: Date?
     let createdAt: Date
-    let updatedAt: Date?
+    let updatedAt: Date
 
     enum CodingKeys: String, CodingKey {
         case id, title, note, currency, status
@@ -31,11 +33,13 @@ struct SplitBillDTO: Decodable, Sendable {
         case requesterAmount = "requester_amount"
         case requiredSlots = "required_slots"
         case paidSlots = "paid_slots"
+        case idempotencyKey = "idempotency_key"
         case expiresAt = "expires_at"
         case closedAt = "closed_at"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
+
     func toDomain() -> SplitBill {
         SplitBill(
             id: id,
@@ -43,11 +47,11 @@ struct SplitBillDTO: Decodable, Sendable {
             sourceTransferId: sourceTransferId,
             title: title,
             note: note,
-            totalAmount: Amount(totalAmount.value),
+            totalAmount: totalAmount,
             currency: currency,
             participantCount: participantCount,
-            perPersonAmount: Amount(perPersonAmount.value),
-            requesterAmount: Amount(requesterAmount.value),
+            perPersonAmount: perPersonAmount,
+            requesterAmount: requesterAmount,
             requiredSlots: requiredSlots,
             paidSlots: paidSlots,
             remainingSlots: max(requiredSlots - paidSlots, 0),
@@ -55,18 +59,21 @@ struct SplitBillDTO: Decodable, Sendable {
             expiresAt: expiresAt,
             closedAt: closedAt,
             createdAt: createdAt,
-            updatedAt: updatedAt ?? createdAt
+            updatedAt: updatedAt
         )
     }
 }
 
+// MARK: - RPC requests
+
 struct CreateSplitBillRequest: Encodable, Sendable {
-    let title: String?
+    let title: String
     let note: String?
-    let participantCount: Int?
-    let sourceTransferId: UUID?
+    let participantCount: Int
+    let sourceTransferId: UUID
     let idempotencyKey: String?
-    let expiryDays: Int?
+    let expiryDays: Int
+
     enum CodingKeys: String, CodingKey {
         case title = "p_title"
         case note = "p_note"
@@ -75,13 +82,36 @@ struct CreateSplitBillRequest: Encodable, Sendable {
         case idempotencyKey = "p_idempotency_key"
         case expiryDays = "p_expiry_days"
     }
-    init(_ c: CreateSplitBillCommand) {
-        title = c.title
-        note = c.note
-        participantCount = c.participantCount
-        sourceTransferId = c.sourceTransferId
-        idempotencyKey = c.idempotencyKey
-        expiryDays = c.expiryDays
+
+    init(_ command: CreateSplitBillCommand) {
+        title = command.title
+        note = command.note
+        participantCount = command.participantCount
+        sourceTransferId = command.sourceTransferId
+        idempotencyKey = command.idempotencyKey
+        expiryDays = command.expiryDays
+    }
+}
+
+struct GetSplitBillsRequest: Encodable, Sendable {
+    let role: SplitBillRoleFilter
+    let status: SplitBillStatusFilter
+    let page: Int
+    let pageSize: Int
+
+    enum CodingKeys: String, CodingKey {
+        case role = "p_role"
+        case status = "p_status"
+        case page = "p_page"
+        case pageSize = "p_page_size"
+    }
+}
+
+struct GetSplitBillDetailRequest: Encodable, Sendable {
+    let splitBillId: UUID
+
+    enum CodingKeys: String, CodingKey {
+        case splitBillId = "p_split_bill_id"
     }
 }
 
@@ -100,27 +130,31 @@ struct UpdateSplitBillRequest: Encodable, Sendable {
         case expiresAt = "p_expires_at"
     }
 
-    init(_ c: UpdateSplitBillCommand) {
-        splitBillId = c.splitBillId
-        title = c.title
-        note = c.note
-        participantCount = c.participantCount
-        expiresAt = c.expiresAt
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(splitBillId, forKey: .splitBillId)
-        try container.encode(title, forKey: .title)
-        try container.encode(note, forKey: .note)
-        try container.encode(participantCount, forKey: .participantCount)
-        try container.encode(expiresAt, forKey: .expiresAt)
+    init(_ command: UpdateSplitBillCommand) {
+        splitBillId = command.splitBillId
+        title = command.title
+        note = command.note
+        participantCount = command.participantCount
+        expiresAt = command.expiresAt
     }
 }
 
-struct SplitBillDashboardDTO: Decodable, Sendable {
+struct CloseSplitBillRequest: Encodable, Sendable {
     let splitBillId: UUID
+
+    enum CodingKeys: String, CodingKey {
+        case splitBillId = "p_split_bill_id"
+    }
+}
+
+// MARK: - get_split_bills response
+
+struct SplitBillListItemDTO: Decodable, Sendable {
+    let id: UUID
+    let requesterId: UUID
+    let sourceTransferId: UUID
     let title: String
+    let note: String?
     let totalAmount: Int64
     let currency: String
     let participantCount: Int
@@ -128,26 +162,39 @@ struct SplitBillDashboardDTO: Decodable, Sendable {
     let requesterAmount: Int64
     let requiredSlots: Int
     let paidSlots: Int
-    let remainingSlots: Int
     let status: SplitBillStatus
-    let repayments: [RepaymentDTO]
+    let expiresAt: Date?
+    let closedAt: Date?
+    let createdAt: Date
+    let isRequester: Bool
+    let hasRepaid: Bool
+    let totalCount: Int64
+
     enum CodingKeys: String, CodingKey {
-        case splitBillId = "split_bill_id"
-        case title
+        case id, title, note, currency, status
+        case requesterId = "requester_id"
+        case sourceTransferId = "source_transfer_id"
         case totalAmount = "total_amount"
-        case currency
         case participantCount = "participant_count"
         case perPersonAmount = "per_person_amount"
         case requesterAmount = "requester_amount"
         case requiredSlots = "required_slots"
         case paidSlots = "paid_slots"
-        case remainingSlots = "remaining_slots"
-        case status, repayments
+        case expiresAt = "expires_at"
+        case closedAt = "closed_at"
+        case createdAt = "created_at"
+        case isRequester = "is_requester"
+        case hasRepaid = "has_repaid"
+        case totalCount = "total_count"
     }
-    func toDomain() -> SplitBillDashboard {
-        SplitBillDashboard(
-            splitBillId: splitBillId,
+
+    func toDomain() -> SplitBillListItem {
+        SplitBillListItem(
+            id: id,
+            requesterId: requesterId,
+            sourceTransferId: sourceTransferId,
             title: title,
+            note: note,
             totalAmount: totalAmount,
             currency: currency,
             participantCount: participantCount,
@@ -155,24 +202,17 @@ struct SplitBillDashboardDTO: Decodable, Sendable {
             requesterAmount: requesterAmount,
             requiredSlots: requiredSlots,
             paidSlots: paidSlots,
-            remainingSlots: remainingSlots,
             status: status,
-            repayments: repayments.map { $0.toDomain() }
+            expiresAt: expiresAt,
+            closedAt: closedAt,
+            createdAt: createdAt,
+            isRequester: isRequester,
+            hasRepaid: hasRepaid
         )
     }
 }
 
-struct SplitBillRecordDTO: Decodable, Sendable {
-    let splitBill: SplitBillDTO
-    let role: String?
-    enum CodingKeys: String, CodingKey {
-        case splitBill = "split_bill"
-        case role
-    }
-    func toDomain() -> SplitBillRecord {
-        SplitBillRecord(splitBill: splitBill.toDomain(), role: role)
-    }
-}
+// MARK: - get_split_bill_detail response
 
 struct SplitBillDetailDTO: Decodable, Sendable {
     let id: UUID
@@ -180,11 +220,11 @@ struct SplitBillDetailDTO: Decodable, Sendable {
     let sourceTransferId: UUID
     let title: String
     let note: String?
-    let totalAmount: PostgresNumeric
+    let totalAmount: Int64
     let currency: String
     let participantCount: Int
-    let perPersonAmount: PostgresNumeric
-    let requesterAmount: PostgresNumeric
+    let perPersonAmount: Int64
+    let requesterAmount: Int64
     let requiredSlots: Int
     let paidSlots: Int
     let status: SplitBillStatus
@@ -193,6 +233,11 @@ struct SplitBillDetailDTO: Decodable, Sendable {
     let createdAt: Date
     let transferStatus: TransferStatus
     let transactionRef: String
+    let qrId: UUID?
+    let qrPayload: String?
+    let qrImageURL: String?
+    let qrIsActive: Bool?
+    let qrExpiresAt: Date?
     let isRequester: Bool
     let hasRepaid: Bool
     let canUpdate: Bool
@@ -214,6 +259,11 @@ struct SplitBillDetailDTO: Decodable, Sendable {
         case createdAt = "created_at"
         case transferStatus = "transfer_status"
         case transactionRef = "transaction_ref"
+        case qrId = "qr_id"
+        case qrPayload = "qr_payload"
+        case qrImageURL = "qr_image_url"
+        case qrIsActive = "qr_is_active"
+        case qrExpiresAt = "qr_expires_at"
         case isRequester = "is_requester"
         case hasRepaid = "has_repaid"
         case canUpdate = "can_update"
@@ -228,11 +278,11 @@ struct SplitBillDetailDTO: Decodable, Sendable {
             sourceTransferId: sourceTransferId,
             title: title,
             note: note,
-            totalAmount: Amount(totalAmount.value),
+            totalAmount: totalAmount,
             currency: currency,
             participantCount: participantCount,
-            perPersonAmount: Amount(perPersonAmount.value),
-            requesterAmount: Amount(requesterAmount.value),
+            perPersonAmount: perPersonAmount,
+            requesterAmount: requesterAmount,
             requiredSlots: requiredSlots,
             paidSlots: paidSlots,
             remainingSlots: max(requiredSlots - paidSlots, 0),
@@ -242,91 +292,21 @@ struct SplitBillDetailDTO: Decodable, Sendable {
             createdAt: createdAt,
             updatedAt: createdAt
         )
+
         return SplitBillDetail(
             splitBill: bill,
             transferStatus: transferStatus,
             transactionRef: transactionRef,
+            qrId: qrId,
+            qrPayload: qrPayload,
+            qrImageURL: qrImageURL,
+            qrIsActive: qrIsActive,
+            qrExpiresAt: qrExpiresAt,
             isRequester: isRequester,
             hasRepaid: hasRepaid,
             canUpdate: canUpdate,
             canClose: canClose,
             canRepay: canRepay
         )
-    }
-}
-
-struct CreatedSplitQRDTO: Decodable, Sendable {
-    let id: UUID?
-    let splitBillId: UUID?
-    let walletId: UUID?
-    let qrPayload: String?
-    let isActive: Bool?
-    let expiresAt: Date?
-    let createdAt: Date?
-    let updatedAt: Date?
-
-    enum CodingKeys: String, CodingKey {
-        case id = "qr_id"
-        case splitBillId = "qr_split_bill_id"
-        case walletId = "qr_wallet_id"
-        case qrPayload = "qr_payload"
-        case isActive = "qr_is_active"
-        case expiresAt = "qr_expires_at"
-        case createdAt = "qr_created_at"
-        case updatedAt = "qr_updated_at"
-    }
-
-    func toDomain() -> SplitQRCode? {
-        guard
-            let id,
-            let splitBillId,
-            let walletId,
-            let qrPayload,
-            let createdAt
-        else {
-            return nil
-        }
-
-        return SplitQRCode(
-            id: id,
-            splitBillId: splitBillId,
-            walletId: walletId,
-            qrPayload: qrPayload,
-            isActive: isActive ?? true,
-            expiresAt: expiresAt,
-            createdAt: createdAt,
-            updatedAt: updatedAt ?? createdAt
-        )
-    }
-}
-
-struct CreateSplitBillResultDTO: Decodable, Sendable {
-    let bill: SplitBillDTO
-    let qr: CreatedSplitQRDTO
-
-    init(from decoder: Decoder) throws {
-        bill = try SplitBillDTO(from: decoder)
-        qr = try CreatedSplitQRDTO(from: decoder)
-    }
-
-    func toDomain() -> SplitBillCreation {
-        SplitBillCreation(
-            splitBill: bill.toDomain(),
-            qrCode: qr.toDomain()
-        )
-    }
-}
-
-struct GetSplitBillsRequest: Encodable, Sendable {
-    let role: String
-    let status: String
-    let page: Int
-    let pageSize: Int
-
-    enum CodingKeys: String, CodingKey {
-        case role = "p_role"
-        case status = "p_status"
-        case page = "p_page"
-        case pageSize = "p_page_size"
     }
 }
