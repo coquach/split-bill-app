@@ -10,14 +10,14 @@ import SwiftUI
 import SystemDesign
 
 public struct OTPVerificationView: View {
-    @State private var viewModel: OTPVerificationViewModel
+    @State private var viewModel: TransferFlowViewModel
     private let onBack: () -> Void
-    private let onSuccess: (TransferReceipt) -> Void
+    private let onSuccess: () -> Void
 
     public init(
-        viewModel: OTPVerificationViewModel,
+        viewModel: TransferFlowViewModel,
         onBack: @escaping () -> Void,
-        onSuccess: @escaping (TransferReceipt) -> Void
+        onSuccess: @escaping () -> Void
     ) {
         _viewModel = State(initialValue: viewModel)
         self.onBack = onBack
@@ -60,9 +60,9 @@ public struct OTPVerificationView: View {
                     isLoading: viewModel.state == .verifying
                 ) {
                     Task {
-                        await viewModel.submit()
-                        if let receipt = viewModel.receipt {
-                            onSuccess(receipt)
+                        await viewModel.submitOTP()
+                        if viewModel.receipt != nil {
+                            onSuccess()
                         }
                     }
                 }

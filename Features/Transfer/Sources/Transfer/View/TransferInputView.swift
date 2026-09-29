@@ -10,14 +10,14 @@ import SwiftUI
 import SystemDesign
 
 public struct TransferInputView: View {
-    @State private var viewModel: TransferInputViewModel
+    @State private var viewModel: TransferFlowViewModel
     private let onBack: () -> Void
-    private let onContinue: (TransferDraft) -> Void
+    private let onContinue: () -> Void
 
     public init(
-        viewModel: TransferInputViewModel,
+        viewModel: TransferFlowViewModel,
         onBack: @escaping () -> Void,
-        onContinue: @escaping (TransferDraft) -> Void
+        onContinue: @escaping () -> Void
     ) {
         _viewModel = State(initialValue: viewModel)
         self.onBack = onBack
@@ -46,8 +46,8 @@ public struct TransferInputView: View {
                     style: .primary,
                     isEnabled: viewModel.isFormValid
                 ) {
-                    if let draft = viewModel.makeDraft() {
-                        onContinue(draft)
+                    if viewModel.confirmInput() {
+                        onContinue()
                     }
                 }
             )
