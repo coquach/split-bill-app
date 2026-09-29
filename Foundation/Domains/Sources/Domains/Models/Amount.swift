@@ -30,10 +30,19 @@ public struct Amount: Sendable, Equatable, Hashable, Comparable, Codable {
     /// Always shows 0 fraction digits, regardless of the underlying
     /// Double's precision, since VND is never split into sub-units.
     public var formatted: String {
+        formatted(maximumFractionDigits: 0)
+    }
+
+    /// Shows up to `maximumFractionDigits` decimals, dropping trailing
+    /// zeros. Used by the split calculation, where a share divides to
+    /// something like 13.333 and rounding it away to a whole dong would
+    /// make the parts visibly fail to add back up to the total.
+    public func formatted(maximumFractionDigits: Int) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = 0
-        return formatter.string(from: NSNumber(value: amount)) ?? "\(Int(amount))"
+        formatter.maximumFractionDigits = maximumFractionDigits
+        return formatter.string(from: NSNumber(value: amount))
+            ?? "\(amount)"
     }
 }

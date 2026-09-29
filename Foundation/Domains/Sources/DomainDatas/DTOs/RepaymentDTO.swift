@@ -14,7 +14,8 @@ struct RepaymentDTO: Decodable, Sendable {
     let payerUserId: UUID?
     let transferTransactionId: UUID?
     let paymentMethod: PaymentMethod
-    let amount: Int64
+    // Postgres `numeric`; see PostgresNumeric.
+    let amount: PostgresNumeric
     let currency: String
     let payerDisplayName: String
     let note: String?
@@ -46,7 +47,7 @@ struct RepaymentDTO: Decodable, Sendable {
             payerUserId: payerUserId,
             transferTransactionId: transferTransactionId,
             paymentMethod: paymentMethod,
-            amount: amount,
+            amount: Amount(amount.value),
             currency: currency,
             payerDisplayName: payerDisplayName,
             note: note,

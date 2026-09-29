@@ -21,10 +21,16 @@ public struct TransferCoordinator: View {
     @State private var router = Router()
     private let dependencies: Dependencies
     private let onFinish: () -> Void
+    private let onSplitBill: (SplitSource) -> Void
 
-    public init(dependencies: Dependencies, onFinish: @escaping () -> Void) {
+    public init(
+        dependencies: Dependencies,
+        onFinish: @escaping () -> Void,
+        onSplitBill: @escaping (SplitSource) -> Void
+    ) {
         self.dependencies = dependencies
         self.onFinish = onFinish
+        self.onSplitBill = onSplitBill
     }
 
     public var body: some View {
@@ -91,7 +97,7 @@ public struct TransferCoordinator: View {
                             transferRepository: dependencies.transferRepository
                         ),
                         onBack: { router.navigateBack() },
-                        onSplitBill: {},
+                        onSplitBill: onSplitBill,
                         onBackToHome: onFinish
                     )
                 }

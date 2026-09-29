@@ -13,7 +13,7 @@ public struct Repayment: Identifiable, Sendable, Equatable {
     public let payerUserId: UUID?
     public let transferTransactionId: UUID?
     public let paymentMethod: PaymentMethod
-    public let amount: Int64
+    public let amount: Amount
     public let currency: String
     public let payerDisplayName: String
     public let note: String?
@@ -28,7 +28,7 @@ public struct Repayment: Identifiable, Sendable, Equatable {
         payerUserId: UUID?,
         transferTransactionId: UUID?,
         paymentMethod: PaymentMethod,
-        amount: Int64,
+        amount: Amount,
         currency: String,
         payerDisplayName: String,
         note: String?,
