@@ -29,17 +29,20 @@ public enum SplitBillDestination: Hashable {
 }
 
 public struct SplitBillCoordinator: View {
-    @State private var router = Router()
+    // Injectable so a parent tab view can hold the same instance across tab switches and reset it to root.
+    @Bindable private var router: Router
     private let entry: SplitBillEntry
     private let dependencies: Dependencies
     private let onFinish: () -> Void
 
     public init(
         entry: SplitBillEntry,
+        router: Router = Router(),
         dependencies: Dependencies,
         onFinish: @escaping () -> Void
     ) {
         self.entry = entry
+        self.router = router
         self.dependencies = dependencies
         self.onFinish = onFinish
     }
@@ -185,8 +188,6 @@ public struct SplitBillCoordinator: View {
                 )
             }
         )
-        // Pins its own bottom bar, which the tab bar would sit on top of.
-        .toolbar(.hidden, for: .tabBar)
     }
 
 

@@ -1,16 +1,18 @@
-import Home
 //
 //  AppTabView.swift
 //  SplitPay
 //
 //  Created by Co Quach on 28/9/26.
 //
+
+import Domains
+import Home
+import Profile
+import Router
+import SplitBill
 import SwiftUI
 import SystemDesign
-import Profile
 import Transfer
-import SplitBill
-import Domains
 
 struct AppTabView: View {
     enum Tab: Hashable {
@@ -26,6 +28,11 @@ struct AppTabView: View {
     @State private var isTransferPresented = false
     @State private var isShowingScanner = false
 
+    // Held here, not inside the coordinators, so switching tabs can reset
+    // each one's navigation stack back to its entry screen.
+    @State private var transferRouter = Router()
+    @State private var splitRouter = Router()
+
     // Non-nil while Split is open on a specific transaction, reached from
     // Transaction Detail inside the Transfer tab.
     @State private var splitSource: SplitSource?
@@ -36,6 +43,15 @@ struct AppTabView: View {
             splitQRRepository: coordinator.splitQRRepository,
             repaymentRepository: coordinator.repaymentRepository
         )
+    }
+
+    // Home and Profile never push, so they're always at their root.
+    private var isSelectedTabAtRoot: Bool {
+        switch selectedTab {
+        case .home, .profile: return true
+        case .transfer: return transferRouter.navPath.isEmpty
+        case .splitBill: return splitRouter.navPath.isEmpty
+        }
     }
 
     var body: some View {
@@ -58,6 +74,7 @@ struct AppTabView: View {
 
                 TransferCoordinator(
                     entry: .history,
+                    router: transferRouter,
                     dependencies: .init(
                         walletRepository: coordinator.walletRepository,
                         sessionStore: coordinator.sessionStore,
@@ -67,16 +84,13 @@ struct AppTabView: View {
                     onSplitBill: { source in splitSource = source }
                 )
                 .tabItem {
-                    Label("Transfer", systemImage: "arrow.left.arrow.right")
+                    Label("History", systemImage: "arrow.left.arrow.right")
                 }
-                .toolbarBackground(
-                    Color.appPrimary,
-                    for: .tabBar
-                )
                 .tag(Tab.transfer)
 
                 SplitBillCoordinator(
                     entry: .history,
+                    router: splitRouter,
                     dependencies: splitDependencies,
                     onFinish: { selectedTab = .home }
                 )
@@ -98,10 +112,12 @@ struct AppTabView: View {
                 .tag(Tab.profile)
             }
 
-            ScanQRButton {
-                isShowingScanner = true
+            if isSelectedTabAtRoot {
+                ScanQRButton {
+                    isShowingScanner = true
+                }
+                .offset(y: -30)
             }
-            .offset(x: 0, y: -30)
         }
         .tint(Color.appPrimary)
         .toolbarBackground(
@@ -112,6 +128,16 @@ struct AppTabView: View {
             .visible,
             for: .tabBar
         )
+        .onChange(of: selectedTab) { _, newTab in
+            switch newTab {
+            case .home, .profile:
+                break
+            case .transfer:
+                transferRouter.navigateToRoot()
+            case .splitBill:
+                splitRouter.navigateToRoot()
+            }
+        }
         .fullScreenCover(isPresented: $isTransferPresented) {
             TransferCoordinator(
                 entry: .flow,

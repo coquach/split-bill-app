@@ -24,7 +24,8 @@ public enum TransferDestination: Hashable {
 }
 
 public struct TransferCoordinator: View {
-    @State private var router = Router()
+    // Injectable so a parent tab view can hold the same instance across tab switches and reset it to root.
+    @Bindable private var router: Router
     private let entry: TransferEntry
     private let dependencies: Dependencies
     private let onFinish: () -> Void
@@ -32,11 +33,13 @@ public struct TransferCoordinator: View {
 
     public init(
         entry: TransferEntry = .flow,
+        router: Router = Router(),
         dependencies: Dependencies,
         onFinish: @escaping () -> Void,
         onSplitBill: @escaping (SplitSource) -> Void
     ) {
         self.entry = entry
+        self.router = router
         self.dependencies = dependencies
         self.onFinish = onFinish
         self.onSplitBill = onSplitBill
@@ -106,9 +109,6 @@ public struct TransferCoordinator: View {
                         onSplitBill: onSplitBill,
                         onBackToHome: onFinish
                     )
-                    // The detail screen pins its own bottom bar, which the tab
-                    // bar would otherwise sit on top of.
-                    .toolbar(.hidden, for: .tabBar)
                 }
             }
         }
