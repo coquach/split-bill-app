@@ -10,6 +10,7 @@ import Foundation
 import Supabase
 
 public final class PinRepository: IPinRepository {
+
     private let client: SupabaseClient
 
     public init(client: SupabaseClient) {
@@ -18,34 +19,30 @@ public final class PinRepository: IPinRepository {
 
     public func checkPinStatus() async throws -> Bool {
         do {
-            let response: PinStatusResponse =
-                try await client
+            let result: Bool = try await client
                 .rpc("check_pin_status")
                 .execute()
                 .value
-            return response.hasPin
+
+            return result
         } catch {
             throw RepositoryErrorMapper.map(error)
         }
     }
 
-    public func setupPin(_ pin: String) async throws {
+    public func setupPin(_ pin: String) async throws -> Bool {
         do {
-            let response: SetupPinResponse =
-                try await client
+            let result: Bool = try await client
                 .rpc(
                     "setup_pin",
-                    params: SetupPinRequest(pin: pin)
+                    params: [
+                        "p_pin": pin
+                    ]
                 )
                 .execute()
                 .value
 
-            if !response.success {
-                throw DomainError.unknown(
-                    code: response.error,
-                    message: response.error ?? "Unable to set up PIN."
-                )
-            }
+            return result
         } catch {
             throw RepositoryErrorMapper.map(error)
         }
@@ -54,41 +51,38 @@ public final class PinRepository: IPinRepository {
     public func changePin(
         oldPin: String,
         newPin: String
-    ) async throws {
+    ) async throws -> Bool {
         do {
-            _ =
-                try await client
+            let result: Bool = try await client
                 .rpc(
                     "change_pin",
-                    params: ChangePinRequest(
-                        oldPin: oldPin,
-                        newPin: newPin
-                    )
+                    params: [
+                        "p_current_pin": oldPin,
+                        "p_new_pin": newPin
+                    ]
                 )
                 .execute()
+                .value
+
+            return result
         } catch {
             throw RepositoryErrorMapper.map(error)
         }
     }
 
-    public func verifyPin(
-        _ pin: String
-    ) async throws -> PinVerificationResult {
+    public func verifyPin(_ pin: String) async throws -> Bool {
         do {
-            let response: VerifyPinResponse =
-                try await client
+            let result: Bool = try await client
                 .rpc(
                     "verify_pin",
-                    params: VerifyPinRequest(pin: pin)
+                    params: [
+                        "p_pin": pin
+                    ]
                 )
                 .execute()
                 .value
 
-            return PinVerificationResult(
-                valid: response.valid,
-                remainingAttempts: response.remainingAttempts,
-                lockedUntil: response.lockedUntil
-            )
+            return result
         } catch {
             throw RepositoryErrorMapper.map(error)
         }

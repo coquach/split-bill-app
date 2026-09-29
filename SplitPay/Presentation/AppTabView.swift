@@ -7,6 +7,7 @@ import Home
 //
 import SwiftUI
 import SystemDesign
+import Profile
 
 struct AppTabView: View {
     enum Tab: Hashable {
@@ -62,12 +63,13 @@ struct AppTabView: View {
                 }
                 .tag(Tab.splitBill)
 
-                NavigationStack {
-                    PlaceholderScreen(
-                        title: "Profile",
-                        systemImage: "person.fill"
+                ProfileCoordinator(
+                    dependencies: .init(
+                        profileRepository: coordinator.profileRepository,
+                        pinRepository: coordinator.pinRepository,
+                        authRepository: coordinator.authRepository
                     )
-                }
+                )
                 .tabItem {
                     Label("Profile", systemImage: "person.fill")
                 }

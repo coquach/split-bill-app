@@ -71,8 +71,3 @@ public struct VerifyPinResponse: Decodable, Sendable, Equatable {
         case lockedUntil = "locked_until"
     }
 }
-
-public struct PinStatusResponse: Decodable, Sendable, Equatable {
-    public let hasPin: Bool
-    enum CodingKeys: String, CodingKey { case hasPin = "has_pin" }
-}
