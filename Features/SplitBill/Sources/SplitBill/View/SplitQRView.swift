@@ -51,24 +51,19 @@ public struct SplitQRView: View {
             VStack(spacing: 0) {
                 BottomActionBar(
                     primary: .init(
-                        title: "Share",
-                        style: .primary,
-                        icon: "square.and.arrow.up"
-                    ) {
-                        share(image)
-                    },
-                    secondary: .init(
                         title: "Save",
-                        style: .secondary,
+                        style: .primary,
                         icon: "square.and.arrow.down"
                     ) {
                         save(image)
                     },
-                    layout: .sideBySide,
-                    link: .init(
+                    secondary: .init(
                         title: "Home",
+                        style: .secondary,
+                        icon: "house.fill",
                         handler: onDone
-                    )
+                    ),
+                    layout: .sideBySide
                 )
             }
         } else {
@@ -80,27 +75,5 @@ public struct SplitQRView: View {
 
     private func save(_ image: UIImage) {
         UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-    }
-
-    private func share(_ image: UIImage) {
-        guard
-            let scene = UIApplication.shared.connectedScenes
-                .first(where: { $0.activationState == .foregroundActive })
-                as? UIWindowScene,
-            let root = scene.keyWindow?.rootViewController
-        else {
-            return
-        }
-
-        let controller = UIActivityViewController(
-            activityItems: [image],
-            applicationActivities: nil
-        )
-
-        // Required on iPad, where a share sheet is a popover and needs an
-        // anchor; harmless on iPhone.
-        controller.popoverPresentationController?.sourceView = root.view
-
-        root.present(controller, animated: true)
     }
 }

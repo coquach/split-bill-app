@@ -24,7 +24,7 @@ struct AppTabView: View {
 
     @Environment(AppCoordinator.self) private var coordinator
 
-    @State private var selectedTab: Tab = .splitBill
+    @State private var selectedTab: Tab = .home
     @State private var isTransferPresented = false
     @State private var isShowingScanner = false
 

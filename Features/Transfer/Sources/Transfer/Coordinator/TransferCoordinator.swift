@@ -112,6 +112,8 @@ public struct TransferCoordinator: View {
                 }
             }
         }
+        // Tab bar only shows on this tab's entry screen, not on anything pushed on top.
+        .toolbar(router.navPath.isEmpty ? .visible : .hidden, for: .tabBar)
         .environment(router)
     }
 }

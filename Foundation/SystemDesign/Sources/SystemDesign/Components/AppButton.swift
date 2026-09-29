@@ -8,7 +8,7 @@ import SwiftUI
 
 public struct AppButton: View {
 
-    public enum Style {
+    public enum Style: Equatable {
         case primary
         case accent
         case secondary
@@ -72,6 +72,14 @@ public struct AppButton: View {
                 style: .continuous
             )
         )
+        .overlay {
+            // Secondary sits on a white fill, so it needs a border to read
+            // as a button rather than blend into the surface behind it.
+            if style == .secondary {
+                RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                    .strokeBorder(Color.appPrimary, lineWidth: 1)
+            }
+        }
         .disabled(isLoading)
     }
 
@@ -90,7 +98,7 @@ public struct AppButton: View {
             return .appInfoBackground
 
         case .destructive:
-            return .appErrorBackground
+            return .appError
         }
     }
 
@@ -109,7 +117,7 @@ public struct AppButton: View {
             return .appInfo
 
         case .destructive:
-            return .appError
+            return .appTextOnPrimary
         }
     }
 }
