@@ -7,17 +7,21 @@
 
 import Foundation
 
+/// Money here is `Amount`, not `Int64`: the underlying columns are Postgres
+/// `numeric`, and a per-person share divides to fractional dong (40 / 3 =
+/// 13.333). Truncating that to a whole number would make the shares stop
+/// summing back to the total.
 public struct SplitBill: Identifiable, Sendable, Equatable {
     public let id: UUID
     public let requesterId: UUID
     public let sourceTransferId: UUID
     public let title: String
     public let note: String?
-    public let totalAmount: Int64
+    public let totalAmount: Amount
     public let currency: String
     public let participantCount: Int
-    public let perPersonAmount: Int64
-    public let requesterAmount: Int64
+    public let perPersonAmount: Amount
+    public let requesterAmount: Amount
     public let requiredSlots: Int
     public let paidSlots: Int
     public let remainingSlots: Int
@@ -33,11 +37,11 @@ public struct SplitBill: Identifiable, Sendable, Equatable {
         sourceTransferId: UUID,
         title: String,
         note: String?,
-        totalAmount: Int64,
+        totalAmount: Amount,
         currency: String,
         participantCount: Int,
-        perPersonAmount: Int64,
-        requesterAmount: Int64,
+        perPersonAmount: Amount,
+        requesterAmount: Amount,
         requiredSlots: Int,
         paidSlots: Int,
         remainingSlots: Int,

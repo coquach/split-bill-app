@@ -56,10 +56,6 @@ public final class WalletRepository: IWalletRepository {
         do {
             let request = ResolveWalletRequest(walletNumber: walletNumber)
 
-            // `resolve_wallet_by_number` is declared `RETURNS TABLE`, so the
-            // response is an array of rows. An unknown wallet number simply
-            // yields zero rows — it isn't an error the RPC raises — which is
-            // why "not found" is detected here rather than in the mapper.
             let rows: [WalletRecipientDTO] =
                 try await client
                 .rpc("resolve_wallet_by_number", params: request)

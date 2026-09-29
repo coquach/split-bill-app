@@ -20,9 +20,6 @@ public final class TransferRepository: ITransferRepository {
         _ command: CreateTransferCommand
     ) async throws -> TransferResult {
         do {
-            // `create_transfer` is declared `RETURNS TABLE`, so PostgREST
-            // hands back an array of rows even though this one always
-            // produces exactly one.
             let rows: [CreateTransferResultDTO] =
                 try await client
                 .rpc(
@@ -33,10 +30,6 @@ public final class TransferRepository: ITransferRepository {
                 .value
 
             guard let row = rows.first else {
-                // The RPC reports real problems (bad PIN, insufficient
-                // balance) by raising, which surfaces as a PostgrestError.
-                // An empty result means something changed server-side that
-                // we don't model yet — don't silently treat it as success.
                 throw DomainError.unknown(
                     code: nil,
                     message: "create_transfer returned no row."

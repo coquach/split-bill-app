@@ -90,15 +90,22 @@ public struct SplitBillDetail: Sendable, Equatable {
 }
 
 public protocol ISplitBillRepository: Sendable {
+    /// Creates the split and returns its QR alongside it — the RPC produces
+    /// both in a single call.
     func createSplitBill(_ command: CreateSplitBillCommand) async throws
-        -> SplitBill
-    func getSplitBills() async throws -> [SplitBill]
+        -> SplitBillCreation
+    /// Calls `get_split_bills`. `role` is "CREATED" (splits I requested) or
+    /// "PARTICIPATED"; `status` is a `SplitBillStatus` raw value or "ALL".
+    func getSplitBills(
+        role: String,
+        status: String,
+        page: Int,
+        pageSize: Int
+    ) async throws -> [SplitBill]
     func getSplitBill(id: UUID) async throws -> SplitBill
     func getSplitBillDetail(id: UUID) async throws -> SplitBillDetail
     func updateSplitBill(_ command: UpdateSplitBillCommand) async throws
         -> SplitBill
     func closeSplitBill(id: UUID) async throws -> SplitBill
-    func cancelSplitBill(id: UUID) async throws -> SplitBill
-    func getDashboard(id: UUID) async throws -> SplitBillDashboard
     func getMySplitBillRecords() async throws -> [SplitBillRecord]
 }
