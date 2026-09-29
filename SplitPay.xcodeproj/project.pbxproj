@@ -640,13 +640,13 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Features/Home;
 		};
-		A1B2C3D40000000000000013 /* XCLocalSwiftPackageReference "Features/Profile" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = Features/Profile;
-		};
 		A1B2C3D40000000000000003 /* XCLocalSwiftPackageReference "Features/SplitBill" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Features/SplitBill;
+		};
+		A1B2C3D40000000000000013 /* XCLocalSwiftPackageReference "Features/Profile" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Features/Profile;
 		};
 		AE2EF6B5734DC2123D6FF15F /* XCLocalSwiftPackageReference "Features/Authentication" */ = {
 			isa = XCLocalSwiftPackageReference;
@@ -708,15 +708,15 @@
 			package = 7F9188783472FC449C2CFCE0 /* XCLocalSwiftPackageReference "Features/Home" */;
 			productName = Home;
 		};
-		A1B2C3D40000000000000012 /* Profile */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = A1B2C3D40000000000000013 /* XCLocalSwiftPackageReference "Features/Profile" */;
-			productName = Profile;
-		};
 		A1B2C3D40000000000000002 /* SplitBill */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A1B2C3D40000000000000003 /* XCLocalSwiftPackageReference "Features/SplitBill" */;
 			productName = SplitBill;
+		};
+		A1B2C3D40000000000000012 /* Profile */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1B2C3D40000000000000013 /* XCLocalSwiftPackageReference "Features/Profile" */;
+			productName = Profile;
 		};
 		C6678F0CE84F51BCD7CE4F1F /* Transfer */ = {
 			isa = XCSwiftPackageProductDependency;
