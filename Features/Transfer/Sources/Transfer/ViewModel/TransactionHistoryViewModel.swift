@@ -103,7 +103,9 @@ public final class TransactionHistoryViewModel {
 
     public func amountText(for item: TransferHistory) -> String {
         let sign = item.direction == .received ? "+" : "-"
-        return "\(sign)\(Amount(Double(item.amount)).formatted) \(item.currency)"
+        // The app only ever deals in VND - always show that instead of the
+        // raw currency column, which has held stray non-code values.
+        return "\(sign)\(Amount(Double(item.amount)).formatted) VND"
     }
 
     public func isIncoming(_ item: TransferHistory) -> Bool {

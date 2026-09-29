@@ -11,6 +11,7 @@ import SystemDesign
 
 public struct SplitHistoryView: View {
     @State private var viewModel: SplitHistoryViewModel
+    @Namespace private var categoryNamespace
     private let onBack: () -> Void
     private let onSelect: (SplitBillListItem) -> Void
 
@@ -25,14 +26,22 @@ public struct SplitHistoryView: View {
     }
 
     public var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: AppSpacing.lg) {
-                categoryPicker
+        // categoryPicker sits outside the ScrollView so only the split list
+        // underneath it scrolls - the picker stays fixed at the top.
+        VStack(spacing: 0) {
+            categoryPicker
+                .padding(.horizontal, AppSpacing.lg)
+                .padding(.top, AppSpacing.lg)
+                .padding(.bottom, AppSpacing.md)
+
+            ScrollView {
                 content
+                    .padding(.horizontal, AppSpacing.lg)
+                    .padding(.bottom, AppSpacing.xxl)
+                    .id(viewModel.selectedCategory)
+                    .transition(.opacity.combined(with: .move(edge: .trailing)))
             }
-            .padding(.horizontal, AppSpacing.lg)
-            .padding(.top, AppSpacing.lg)
-            .padding(.bottom, AppSpacing.xxl)
+            .animation(.easeInOut(duration: 0.25), value: viewModel.selectedCategory)
         }
         .background(Color.appBackground.ignoresSafeArea())
         .safeAreaInset(edge: .top, spacing: 0) {
@@ -43,7 +52,9 @@ public struct SplitHistoryView: View {
         .task { await viewModel.load() }
     }
 
-    // Segmented control filtering the list by Active / Inactive.
+    // Segmented control filtering the list by Active / Inactive. The
+    // highlight capsule slides between labels via matchedGeometryEffect
+    // instead of just popping into place.
     private var categoryPicker: some View {
         HStack(spacing: AppSpacing.xxs) {
             ForEach(SplitHistoryViewModel.Category.allCases, id: \.self) { category in
@@ -59,8 +70,13 @@ public struct SplitHistoryView: View {
                         )
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, AppSpacing.xs)
-                        .background(isSelected ? Color.appPrimary : Color.clear)
-                        .clipShape(Capsule())
+                        .background {
+                            if isSelected {
+                                Capsule()
+                                    .fill(Color.appPrimary)
+                                    .matchedGeometryEffect(id: "selectedCategory", in: categoryNamespace)
+                            }
+                        }
                 }
                 .buttonStyle(.plain)
             }
@@ -68,6 +84,7 @@ public struct SplitHistoryView: View {
         .padding(AppSpacing.xxs)
         .background(Color.appSurfaceSecondary)
         .clipShape(Capsule())
+        .animation(.easeInOut(duration: 0.25), value: viewModel.selectedCategory)
     }
 
     @ViewBuilder
