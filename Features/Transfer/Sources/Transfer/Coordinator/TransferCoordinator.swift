@@ -16,7 +16,6 @@ public enum TransferEntry: Hashable {
 }
 
 public enum TransferDestination: Hashable {
-    case input
     case confirm(TransferDraft)
     case otp(TransferDraft)
     case success(TransferReceipt)
@@ -50,18 +49,6 @@ public struct TransferCoordinator: View {
             root
             .navigationDestination(for: TransferDestination.self) { destination in
                 switch destination {
-                case .input:
-                    TransferInputView(
-                        viewModel: TransferInputViewModel(
-                            walletRepository: dependencies.walletRepository,
-                            sessionStore: dependencies.sessionStore
-                        ),
-                        onBack: { router.navigateBack() },
-                        onContinue: { draft in
-                            router.navigate(to: TransferDestination.confirm(draft))
-                        }
-                    )
-
                 case .confirm(let draft):
                     TransferConfirmView(
                         viewModel: TransferConfirmViewModel(draft: draft),
@@ -123,10 +110,15 @@ extension TransferCoordinator {
     fileprivate var root: some View {
         switch entry {
         case .flow:
-            TransferPinGateView(
-                viewModel: PinGateViewModel(),
-                onVerified: { router.navigate(to: TransferDestination.input) },
-                onCancel: onFinish
+            TransferInputView(
+                viewModel: TransferInputViewModel(
+                    walletRepository: dependencies.walletRepository,
+                    sessionStore: dependencies.sessionStore
+                ),
+                onBack: onFinish,
+                onContinue: { draft in
+                    router.navigate(to: TransferDestination.confirm(draft))
+                }
             )
 
         case .history:
