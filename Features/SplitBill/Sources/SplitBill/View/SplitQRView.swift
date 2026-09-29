@@ -9,12 +9,12 @@ import SwiftUI
 import SystemDesign
 
 public struct SplitQRView: View {
-    @State private var viewModel: SplitQRViewModel
+    @State private var viewModel: SplitFlowViewModel
     private let onBack: () -> Void
     private let onDone: () -> Void
 
     public init(
-        viewModel: SplitQRViewModel,
+        viewModel: SplitFlowViewModel,
         onBack: @escaping () -> Void,
         onDone: @escaping () -> Void
     ) {
@@ -23,11 +23,17 @@ public struct SplitQRView: View {
         self.onDone = onDone
     }
 
+    // This screen is only ever reached once Setup's generateQR() (or the
+    // Download QR path) has already stored a context on the shared VM.
+    private var context: SplitQRContext {
+        viewModel.context!
+    }
+
     public var body: some View {
         ScrollView {
             QRCard(
-                data: viewModel.context.qrPayload,
-                title: viewModel.context.title,
+                data: context.qrPayload,
+                title: context.title,
                 subtitle: viewModel.subtitle,
                 captionLabel: "Amount per person:",
                 captionValue: viewModel.perPersonText
