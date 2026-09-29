@@ -26,8 +26,6 @@ public struct OTPVerificationView: View {
 
     public var body: some View {
         VStack(spacing: AppSpacing.xl) {
-            Spacer()
-
             iconBadge
 
             VStack(spacing: AppSpacing.xs) {
@@ -45,27 +43,30 @@ public struct OTPVerificationView: View {
                 .frame(maxWidth: .infinity)
 
             Spacer()
-
-            AppButton(
-                title: "Verify",
-                style: .primary,
-                isLoading: viewModel.state == .verifying
-            ) {
-                Task {
-                    await viewModel.submit()
-                    if let receipt = viewModel.receipt {
-                        onSuccess(receipt)
-                    }
-                }
-            }
-            .disabled(!viewModel.isPinComplete || viewModel.state == .verifying)
-            .opacity(viewModel.isPinComplete ? 1 : 0.35)
         }
         .padding(AppSpacing.lg)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.top, AppSpacing.xl)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Color.appBackground.ignoresSafeArea())
         .safeAreaInset(edge: .top, spacing: 0) {
             AppNavBar(title: "Verify", onBack: onBack)
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            BottomActionBar(
+                primary: .init(
+                    title: "Verify",
+                    style: .primary,
+                    isEnabled: viewModel.isPinComplete,
+                    isLoading: viewModel.state == .verifying
+                ) {
+                    Task {
+                        await viewModel.submit()
+                        if let receipt = viewModel.receipt {
+                            onSuccess(receipt)
+                        }
+                    }
+                }
+            )
         }
         .navigationBarHidden(true)
         .screenLifecycle("OTPVerification")
