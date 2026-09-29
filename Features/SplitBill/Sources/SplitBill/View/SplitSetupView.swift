@@ -10,15 +10,15 @@ import SwiftUI
 import SystemDesign
 
 public struct SplitSetupView: View {
-    @State private var viewModel: SplitSetupViewModel
+    @State private var viewModel: SplitFlowViewModel
     private let onBack: () -> Void
-    private let onGenerated: (SplitQRContext) -> Void
+    private let onGenerated: () -> Void
     private let onCancelled: () -> Void
 
     public init(
-        viewModel: SplitSetupViewModel,
+        viewModel: SplitFlowViewModel,
         onBack: @escaping () -> Void,
-        onGenerated: @escaping (SplitQRContext) -> Void,
+        onGenerated: @escaping () -> Void,
         onCancelled: @escaping () -> Void = {}
     ) {
         _viewModel = State(initialValue: viewModel)
@@ -51,8 +51,8 @@ public struct SplitSetupView: View {
                     isLoading: viewModel.isCreating
                 ) {
                     Task {
-                        if let context = await viewModel.generateQR() {
-                            onGenerated(context)
+                        if await viewModel.generateQR() {
+                            onGenerated()
                         }
                     }
                 },
@@ -154,7 +154,7 @@ public struct SplitSetupView: View {
 
             AppStepper(
                 value: $viewModel.participantCount,
-                range: SplitSetupViewModel.participantRange
+                range: SplitFlowViewModel.participantRange
             )
         }
     }
