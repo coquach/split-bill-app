@@ -141,6 +141,8 @@ public struct SplitBillCoordinator: View {
                 )
             }
         )
+        // Pins its own bottom bar, which the tab bar would sit on top of.
+        .toolbar(.hidden, for: .tabBar)
     }
 
 

@@ -40,7 +40,7 @@ public final class TransactionDetailViewModel {
         state = .loading
 
         do {
-            let detail = try await transferRepository.getTransferDetail(
+            let detail = try await transferRepository.getTransfer(
                 id: transactionId
             )
             state = .loaded(detail)
@@ -73,7 +73,7 @@ public final class TransactionDetailViewModel {
         return "\(day) · \(time)"
     }
 
-    public func formattedOutgoingAmount(_ amount: Amount) -> String {
-        "-\(amount.formatted) VND"
+    public func formattedOutgoingAmount(_ amount: Int64) -> String {
+        "-\(Amount(Double(amount)).formatted) VND"
     }
 }

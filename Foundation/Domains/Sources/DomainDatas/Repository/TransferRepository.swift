@@ -20,7 +20,8 @@ public final class TransferRepository: ITransferRepository {
         _ command: CreateTransferCommand
     ) async throws -> TransferTransaction {
         do {
-            let dto: TransferTransactionDTO =
+            // RETURNS TABLE, so PostgREST sends an array even for one row.
+            let rows: [TransferTransactionDTO] =
                 try await client
                 .rpc(
                     "create_transfer",
@@ -28,6 +29,13 @@ public final class TransferRepository: ITransferRepository {
                 )
                 .execute()
                 .value
+
+            guard let dto = rows.first else {
+                throw DomainError.unknown(
+                    code: nil,
+                    message: "create_transfer returned no row."
+                )
+            }
 
             return dto.toDomain()
         } catch {
@@ -62,7 +70,8 @@ public final class TransferRepository: ITransferRepository {
 
     public func getTransfer(id: UUID) async throws -> TransferDetail {
         do {
-            let dto: TransferDetailDTO =
+            // RETURNS TABLE, so PostgREST sends an array even for one row.
+            let rows: [TransferDetailDTO] =
                 try await client
                 .rpc(
                     "get_transfer_detail",
@@ -70,6 +79,10 @@ public final class TransferRepository: ITransferRepository {
                 )
                 .execute()
                 .value
+
+            guard let dto = rows.first else {
+                throw DomainError.notFound
+            }
 
             return dto.toDomain()
         } catch {

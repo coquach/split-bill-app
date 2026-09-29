@@ -188,7 +188,7 @@ public struct TransactionDetailView: View {
                 : description,
             counterpartyName: viewModel.receiverHolderName,
             date: detail.createdAt,
-            totalAmount: detail.amount
+            totalAmount: Amount(Double(detail.amount))
         )
     }
 

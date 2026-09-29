@@ -9,10 +9,7 @@ import Foundation
 
 /// What the Success screen shows, and what it hands to Transaction Detail.
 ///
-/// It's a merge of two sources, because neither one is enough on its own:
-/// the transaction fields come from `TransferResult` (the `create_transfer`
-/// RPC), while the receiver's name and account number come from the
-/// `TransferDraft` the user just confirmed — the RPC doesn't return either.
+// Server fields plus the receiver from the draft; the backend returns no name.
 public struct TransferReceipt: Sendable, Equatable, Hashable {
 
     // MARK: - From the server
@@ -31,18 +28,18 @@ public struct TransferReceipt: Sendable, Equatable, Hashable {
     public let receiverAccountNumber: String
     public let receiverHolderName: String
 
-    public init(result: TransferResult, draft: TransferDraft) {
-        self.id = result.id
-        self.transactionRef = result.transactionRef
-        self.status = result.status
-        self.amount = result.amount
-        self.fee = result.fee
+    public init(transaction: TransferTransaction, draft: TransferDraft) {
+        self.id = transaction.id
+        self.transactionRef = transaction.transactionRef
+        self.status = transaction.status
+        self.amount = Amount(Double(transaction.amount))
+        self.fee = Amount(Double(transaction.fee))
         // Prefer whatever the server echoed back, since that's the row of
         // record. Fall back to the draft so the receipt still reads
         // correctly if the RPC normalises an empty description to null.
-        self.description = result.description ?? draft.description
-        self.completedAt = result.completedAt
-        self.createdAt = result.createdAt
+        self.description = transaction.description ?? draft.description
+        self.completedAt = transaction.completedAt
+        self.createdAt = transaction.createdAt
         self.receiverAccountNumber = draft.receiverAccountNumber
         self.receiverHolderName = draft.receiverHolderName
     }

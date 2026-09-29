@@ -20,7 +20,8 @@ public final class RepaymentRepository: IRepaymentRepository {
         _ command: CreateQRRepaymentCommand
     ) async throws -> Repayment {
         do {
-            let dto: RepaymentDTO =
+            // RETURNS TABLE, so PostgREST sends an array even for one row.
+            let rows: [RepaymentDTO] =
                 try await client
                 .rpc(
                     "create_qr_repayment",
@@ -28,6 +29,13 @@ public final class RepaymentRepository: IRepaymentRepository {
                 )
                 .execute()
                 .value
+
+            guard let dto = rows.first else {
+                throw DomainError.unknown(
+                    code: nil,
+                    message: "create_qr_repayment returned no row."
+                )
+            }
 
             return dto.toDomain()
         } catch {

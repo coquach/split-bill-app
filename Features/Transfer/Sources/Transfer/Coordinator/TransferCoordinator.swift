@@ -9,25 +9,34 @@ import Domains
 import Router
 import SwiftUI
 
+// Two entry points: the send-money flow, and the history list shown as a tab.
+public enum TransferEntry: Hashable {
+    case flow
+    case history
+}
+
 public enum TransferDestination: Hashable {
     case input
     case confirm(TransferDraft)
     case otp(TransferDraft)
     case success(TransferReceipt)
-    case detail(TransferReceipt)
+    case detail(transactionId: UUID, receiverName: String)
 }
 
 public struct TransferCoordinator: View {
     @State private var router = Router()
+    private let entry: TransferEntry
     private let dependencies: Dependencies
     private let onFinish: () -> Void
     private let onSplitBill: (SplitSource) -> Void
 
     public init(
+        entry: TransferEntry = .flow,
         dependencies: Dependencies,
         onFinish: @escaping () -> Void,
         onSplitBill: @escaping (SplitSource) -> Void
     ) {
+        self.entry = entry
         self.dependencies = dependencies
         self.onFinish = onFinish
         self.onSplitBill = onSplitBill
@@ -35,13 +44,7 @@ public struct TransferCoordinator: View {
 
     public var body: some View {
         NavigationStack(path: $router.navPath) {
-            TransferPinGateView(
-                viewModel: PinGateViewModel(),
-                onVerified: {
-                    router.navigate(to: TransferDestination.input)
-                },
-                onCancel: onFinish
-            )
+            root
             .navigationDestination(for: TransferDestination.self) { destination in
                 switch destination {
                 case .input:
@@ -83,27 +86,64 @@ public struct TransferCoordinator: View {
                         receipt: receipt,
                         onViewDetails: {
                             router.navigate(
-                                to: TransferDestination.detail(receipt)
+                                to: TransferDestination.detail(
+                                    transactionId: receipt.id,
+                                    receiverName: receipt.receiverHolderName
+                                )
                             )
                         },
                         onBackToHome: onFinish
                     )
 
-                case .detail(let receipt):
+                case .detail(let transactionId, let receiverName):
                     TransactionDetailView(
                         viewModel: TransactionDetailViewModel(
-                            transactionId: receipt.id,
-                            receiverHolderName: receipt.receiverHolderName,
+                            transactionId: transactionId,
+                            receiverHolderName: receiverName,
                             transferRepository: dependencies.transferRepository
                         ),
                         onBack: { router.navigateBack() },
                         onSplitBill: onSplitBill,
                         onBackToHome: onFinish
                     )
+                    // The detail screen pins its own bottom bar, which the tab
+                    // bar would otherwise sit on top of.
+                    .toolbar(.hidden, for: .tabBar)
                 }
             }
         }
         .environment(router)
+    }
+}
+
+extension TransferCoordinator {
+    @ViewBuilder
+    fileprivate var root: some View {
+        switch entry {
+        case .flow:
+            TransferPinGateView(
+                viewModel: PinGateViewModel(),
+                onVerified: { router.navigate(to: TransferDestination.input) },
+                onCancel: onFinish
+            )
+
+        case .history:
+            TransactionHistoryView(
+                viewModel: TransactionHistoryViewModel(
+                    transferRepository: dependencies.transferRepository
+                ),
+                onSelect: { item in
+                    router.navigate(
+                        to: TransferDestination.detail(
+                            transactionId: item.id,
+                            receiverName: item.counterpartyName
+                                ?? item.counterpartyWalletNumber
+                                ?? "Unknown"
+                        )
+                    )
+                }
+            )
+        }
     }
 }
 

@@ -15,7 +15,7 @@ public final class SplitHistoryViewModel {
 
     public enum State: Equatable {
         case loading
-        case loaded(active: [SplitBill], settled: [SplitBill])
+        case loaded(active: [SplitBillListItem], settled: [SplitBillListItem])
         case failed(DomainError)
     }
 
@@ -31,12 +31,14 @@ public final class SplitHistoryViewModel {
         state = .loading
 
         do {
-            let bills = try await splitBillRepository.getSplitBills(
-                role: "CREATED",
-                status: "ALL",
+            // `.created` = splits this user requested, not ones they paid into.
+            let page = try await splitBillRepository.getSplitBills(
+                role: .created,
+                status: .all,
                 page: 1,
                 pageSize: 50
             )
+            let bills = page.items
 
             let active = bills.filter { $0.status == .active }
             let settled = bills.filter { $0.status != .active }
@@ -51,15 +53,15 @@ public final class SplitHistoryViewModel {
         }
     }
 
-    public func subtitle(for bill: SplitBill) -> String {
+    public func subtitle(for bill: SplitBillListItem) -> String {
         "\(bill.paidSlots) of \(bill.requiredSlots) paid"
     }
 
-    public func amountText(for bill: SplitBill) -> String {
-        "\(bill.totalAmount.formatted) VND"
+    public func amountText(for bill: SplitBillListItem) -> String {
+        "\(Amount(Double(bill.totalAmount)).formatted) VND"
     }
 
-    public func statusText(for bill: SplitBill) -> String {
+    public func statusText(for bill: SplitBillListItem) -> String {
         switch bill.status {
         case .active: return "Active"
         case .closed: return "Settled"

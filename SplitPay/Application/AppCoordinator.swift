@@ -29,6 +29,7 @@ final class AppCoordinator {
     let repaymentRepository: IRepaymentRepository
     let splitBillRepository: ISplitBillRepository
     let splitQRRepository: ISplitQRRepository
+    let sessionStore: SessionStore
 
     private var authTask: Task<Void, Never>?
 
@@ -40,8 +41,8 @@ final class AppCoordinator {
         pinRepository: IPinRepository,
         repaymentRepository: IRepaymentRepository,
         splitBillRepository: ISplitBillRepository,
-        splitQRRepository: ISplitQRRepository
-        
+        splitQRRepository: ISplitQRRepository,
+        sessionStore: SessionStore
     ) {
         self.authRepository = authRepository
         self.walletRepository = walletRepository
@@ -51,6 +52,7 @@ final class AppCoordinator {
         self.repaymentRepository = repaymentRepository
         self.splitBillRepository = splitBillRepository
         self.splitQRRepository = splitQRRepository
+        self.sessionStore = sessionStore
     }
 
     func start() {
@@ -64,6 +66,7 @@ final class AppCoordinator {
             for await authStateChanges in authRepository.authStateChanges {
                 switch authStateChanges {
                 case .authenticated(let user):
+                    refreshBalance()
                     root = .authenticated(user)
 
                 case .unauthenticated:
@@ -90,6 +93,18 @@ final class AppCoordinator {
             }
 
             root = .unauthenticated
+        }
+    }
+
+    // Without this the cached balance stays nil and Transfer can't show it.
+    func refreshBalance() {
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await sessionStore.refreshBalance()
+            } catch {
+                print("[AppCoordinator] balance refresh failed: \(error)")
+            }
         }
     }
 

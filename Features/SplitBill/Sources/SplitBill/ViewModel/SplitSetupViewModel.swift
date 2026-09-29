@@ -120,27 +120,20 @@ public final class SplitSetupViewModel {
         )
 
         do {
-            let creation = try await splitBillRepository.createSplitBill(command)
+            let bill = try await splitBillRepository.createSplitBill(command)
 
-            guard let qrCode = creation.qrCode else {
-                state = .failed(
-                    .unknown(
-                        code: "QR_NOT_RETURNED",
-                        message: "The split was created but its QR code wasn't returned."
-                    )
-                )
-                return nil
-            }
+            // Creation returns the split alone; the QR it made is read separately.
+            let qr = try await splitQRRepository.getQR(splitBillId: bill.id)
 
             state = .idle
 
             return SplitQRContext(
-                splitBillId: creation.splitBill.id,
-                title: creation.splitBill.title,
+                splitBillId: bill.id,
+                title: bill.title,
                 counterpartyName: source.counterpartyName,
-                participantCount: creation.splitBill.participantCount,
-                perPersonAmount: creation.splitBill.perPersonAmount,
-                qrPayload: qrCode.qrPayload
+                participantCount: bill.participantCount,
+                perPersonAmount: bill.perPersonAmount,
+                qrPayload: qr.qrPayload
             )
         } catch let error as DomainError {
             state = .failed(error)

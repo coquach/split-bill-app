@@ -13,13 +13,21 @@ public final class SplitBillRepository: ISplitBillRepository {
         _ command: CreateSplitBillCommand
     ) async throws -> SplitBill {
         do {
-            let dto: SplitBillDTO = try await client
+            // RETURNS TABLE, so PostgREST sends an array even for one row.
+            let rows: [SplitBillDTO] = try await client
                 .rpc(
                     "create_split_bill",
                     params: CreateSplitBillRequest(command)
                 )
                 .execute()
                 .value
+
+            guard let dto = rows.first else {
+                throw DomainError.unknown(
+                    code: "SPLIT_BILL_NOT_CREATED",
+                    message: "Split Bill was not returned."
+                )
+            }
 
             return dto.toDomain()
         } catch {
@@ -60,13 +68,18 @@ public final class SplitBillRepository: ISplitBillRepository {
 
     public func getSplitBill(id: UUID) async throws -> SplitBill {
         do {
-            let dto: SplitBillDetailDTO = try await client
+            // RETURNS TABLE, so PostgREST sends an array even for one row.
+            let rows: [SplitBillDetailDTO] = try await client
                 .rpc(
                     "get_split_bill_detail",
                     params: GetSplitBillDetailRequest(splitBillId: id)
                 )
                 .execute()
                 .value
+
+            guard let dto = rows.first else {
+                throw DomainError.notFound
+            }
 
             return dto.toDomain().splitBill
         } catch {
@@ -78,13 +91,18 @@ public final class SplitBillRepository: ISplitBillRepository {
         id: UUID
     ) async throws -> SplitBillDetail {
         do {
-            let dto: SplitBillDetailDTO = try await client
+            // RETURNS TABLE, so PostgREST sends an array even for one row.
+            let rows: [SplitBillDetailDTO] = try await client
                 .rpc(
                     "get_split_bill_detail",
                     params: GetSplitBillDetailRequest(splitBillId: id)
                 )
                 .execute()
                 .value
+
+            guard let dto = rows.first else {
+                throw DomainError.notFound
+            }
 
             return dto.toDomain()
         } catch {

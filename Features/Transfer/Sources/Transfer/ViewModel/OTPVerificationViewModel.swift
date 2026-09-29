@@ -58,8 +58,8 @@ public final class OTPVerificationViewModel {
         )
 
         do {
-            let result = try await transferRepository.createTransfer(command)
-            receipt = TransferReceipt(result: result, draft: draft)
+            let transaction = try await transferRepository.createTransfer(command)
+            receipt = TransferReceipt(transaction: transaction, draft: draft)
             state = .idle
         } catch let error as DomainError {
             handleFailure(error)

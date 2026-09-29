@@ -12,12 +12,12 @@ import SystemDesign
 public struct SplitHistoryView: View {
     @State private var viewModel: SplitHistoryViewModel
     private let onBack: () -> Void
-    private let onSelect: (SplitBill) -> Void
+    private let onSelect: (SplitBillListItem) -> Void
 
     public init(
         viewModel: SplitHistoryViewModel,
         onBack: @escaping () -> Void,
-        onSelect: @escaping (SplitBill) -> Void
+        onSelect: @escaping (SplitBillListItem) -> Void
     ) {
         _viewModel = State(initialValue: viewModel)
         self.onBack = onBack
@@ -76,7 +76,7 @@ public struct SplitHistoryView: View {
         }
     }
 
-    private func section(title: String, bills: [SplitBill]) -> some View {
+    private func section(title: String, bills: [SplitBillListItem]) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.xs) {
             Text(title)
                 .font(AppTypography.caption)

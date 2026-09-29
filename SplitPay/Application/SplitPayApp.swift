@@ -20,7 +20,8 @@ struct SplitPayApp: App {
             pinRepository: container.resolve(IPinRepository.self),
             repaymentRepository: container.resolve(IRepaymentRepository.self),
             splitBillRepository: container.resolve(ISplitBillRepository.self),
-            splitQRRepository: container.resolve(ISplitQRRepository.self)
+            splitQRRepository: container.resolve(ISplitQRRepository.self),
+            sessionStore: container.resolve(SessionStore.self)
         )
 
     }

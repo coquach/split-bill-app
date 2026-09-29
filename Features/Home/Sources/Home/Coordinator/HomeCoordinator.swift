@@ -18,9 +18,20 @@ public enum HomeDestination: Hashable {
 public struct HomeCoordinator: View {
     @State private var router = Router()
     private let dependencies: Dependencies
+    private let onTransfer: () -> Void
+    private let onSplitBill: () -> Void
+    private let onTransactionHistory: () -> Void
 
-    public init(dependencies: Dependencies) {
+    public init(
+        dependencies: Dependencies,
+        onTransfer: @escaping () -> Void = {},
+        onSplitBill: @escaping () -> Void = {},
+        onTransactionHistory: @escaping () -> Void = {}
+    ) {
         self.dependencies = dependencies
+        self.onTransfer = onTransfer
+        self.onSplitBill = onSplitBill
+        self.onTransactionHistory = onTransactionHistory
     }
 
     public var body: some View {
@@ -31,15 +42,9 @@ public struct HomeCoordinator: View {
                     walletRepository: dependencies.walletRepository,
                     transferRepository: dependencies.transferRepository
                 ),
-                onNavigateTransfer: {
-                    router.navigate(to: HomeDestination.transfer)
-                },
-                onNavigateSplitBill: {
-                    router.navigate(to: HomeDestination.splitBill)
-                },
-                onNavigateTransactionHistory: {
-                    router.navigate(to: HomeDestination.transactionHistory)
-                }
+                onNavigateTransfer: onTransfer,
+                onNavigateSplitBill: onSplitBill,
+                onNavigateTransactionHistory: onTransactionHistory
             )
             .navigationDestination(for: HomeDestination.self) { destination in
                 switch destination {

@@ -8,6 +8,9 @@ import Home
 import SwiftUI
 import SystemDesign
 import Profile
+import Transfer
+import SplitBill
+import Domains
 
 struct AppTabView: View {
     enum Tab: Hashable {
@@ -20,7 +23,20 @@ struct AppTabView: View {
     @Environment(AppCoordinator.self) private var coordinator
 
     @State private var selectedTab: Tab = .home
+    @State private var isTransferPresented = false
     @State private var isShowingScanner = false
+
+    // Non-nil while Split is open on a specific transaction, reached from
+    // Transaction Detail inside the Transfer tab.
+    @State private var splitSource: SplitSource?
+
+    private var splitDependencies: SplitBillCoordinator.Dependencies {
+        .init(
+            splitBillRepository: coordinator.splitBillRepository,
+            splitQRRepository: coordinator.splitQRRepository,
+            repaymentRepository: coordinator.repaymentRepository
+        )
+    }
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -30,19 +46,26 @@ struct AppTabView: View {
                         profileRepository: coordinator.profileRepository,
                         walletRepository: coordinator.walletRepository,
                         transferRepository: coordinator.transferRepository
-                    )
+                    ),
+                    onTransfer: { isTransferPresented = true },
+                    onSplitBill: { selectedTab = .splitBill },
+                    onTransactionHistory: { selectedTab = .transfer }
                 )
                 .tabItem {
                     Label("Home", systemImage: "house.fill")
                 }
                 .tag(Tab.home)
 
-                NavigationStack {
-                    PlaceholderScreen(
-                        title: "Transfer",
-                        systemImage: "arrow.left.arrow.right"
-                    )
-                }
+                TransferCoordinator(
+                    entry: .history,
+                    dependencies: .init(
+                        walletRepository: coordinator.walletRepository,
+                        sessionStore: coordinator.sessionStore,
+                        transferRepository: coordinator.transferRepository
+                    ),
+                    onFinish: { selectedTab = .home },
+                    onSplitBill: { source in splitSource = source }
+                )
                 .tabItem {
                     Label("Transfer", systemImage: "arrow.left.arrow.right")
                 }
@@ -52,12 +75,11 @@ struct AppTabView: View {
                 )
                 .tag(Tab.transfer)
 
-                NavigationStack {
-                    PlaceholderScreen(
-                        title: "Split Bill",
-                        systemImage: "person.2.fill"
-                    )
-                }
+                SplitBillCoordinator(
+                    entry: .history,
+                    dependencies: splitDependencies,
+                    onFinish: { selectedTab = .home }
+                )
                 .tabItem {
                     Label("Split Bill", systemImage: "person.2.fill")
                 }
@@ -90,21 +112,33 @@ struct AppTabView: View {
             .visible,
             for: .tabBar
         )
+        .fullScreenCover(isPresented: $isTransferPresented) {
+            TransferCoordinator(
+                entry: .flow,
+                dependencies: .init(
+                    walletRepository: coordinator.walletRepository,
+                    sessionStore: coordinator.sessionStore,
+                    transferRepository: coordinator.transferRepository
+                ),
+                onFinish: {
+                    isTransferPresented = false
+                    coordinator.refreshBalance()
+                },
+                onSplitBill: { source in splitSource = source }
+            )
+            .fullScreenCover(item: $splitSource) { source in
+                SplitBillCoordinator(
+                    entry: .create(source),
+                    dependencies: splitDependencies,
+                    onFinish: { splitSource = nil }
+                )
+            }
+        }
         .sheet(isPresented: $isShowingScanner) {
             NavigationStack {
                 ScanQRView()
             }
         }
-    }
-}
-
-private struct PlaceholderScreen: View {
-    let title: String
-    let systemImage: String
-
-    var body: some View {
-        ContentUnavailableView(title, systemImage: systemImage)
-            .navigationTitle(title)
     }
 }
 

@@ -42,7 +42,8 @@ public final class SplitQRRepository: ISplitQRRepository {
         do {
             let request = DecodeSplitQRRequest(qrPayload: payload)
 
-            let dto: SplitQRReviewDTO =
+            // RETURNS TABLE, so PostgREST sends an array even for one row.
+            let rows: [SplitQRReviewDTO] =
                 try await client
                 .rpc(
                     "decode_split_qr",
@@ -50,6 +51,10 @@ public final class SplitQRRepository: ISplitQRRepository {
                 )
                 .execute()
                 .value
+
+            guard let dto = rows.first else {
+                throw DomainError.notFound
+            }
 
             return dto.toDomain()
         } catch {

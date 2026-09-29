@@ -10,10 +10,11 @@
 		28A044F18533967C325B14C2 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 6DD963D890A117190990341E /* Supabase */; };
 		49B6F73202F3F0E9974219FE /* DomainDatas in Frameworks */ = {isa = PBXBuildFile; productRef = 1D6DCBA62023BEB803E4F315 /* DomainDatas */; };
 		8FBF665DA704543D14C06CB3 /* Authentication in Frameworks */ = {isa = PBXBuildFile; productRef = 12C4F10794A44EEEA3EB7EF7 /* Authentication */; };
+		A1B2C3D40000000000000001 /* SplitBill in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D40000000000000002 /* SplitBill */; };
+		A1B2C3D40000000000000011 /* Profile in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D40000000000000012 /* Profile */; };
 		B9C7AA436FA80A4A4437DF9B /* Swinject in Frameworks */ = {isa = PBXBuildFile; productRef = 8365A70EE796F9CBD61E9A48 /* Swinject */; };
 		C6025CDB8BC1C74E0A701D1F /* Domains in Frameworks */ = {isa = PBXBuildFile; productRef = 1D70B04CFCF6109EB72DAE74 /* Domains */; };
 		D4D8B4743A46B6D731F6D484 /* Transfer in Frameworks */ = {isa = PBXBuildFile; productRef = C6678F0CE84F51BCD7CE4F1F /* Transfer */; };
-		A1B2C3D40000000000000001 /* SplitBill in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D40000000000000002 /* SplitBill */; };
 		F502A887C035B317C72114F7 /* Home in Frameworks */ = {isa = PBXBuildFile; productRef = A190C03D57BC162228379A41 /* Home */; };
 /* End PBXBuildFile section */
 
@@ -74,6 +75,7 @@
 				49B6F73202F3F0E9974219FE /* DomainDatas in Frameworks */,
 				D4D8B4743A46B6D731F6D484 /* Transfer in Frameworks */,
 				A1B2C3D40000000000000001 /* SplitBill in Frameworks */,
+				A1B2C3D40000000000000011 /* Profile in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -140,6 +142,7 @@
 				1D6DCBA62023BEB803E4F315 /* DomainDatas */,
 				C6678F0CE84F51BCD7CE4F1F /* Transfer */,
 				A1B2C3D40000000000000002 /* SplitBill */,
+				A1B2C3D40000000000000012 /* Profile */,
 			);
 			productName = SplitPay;
 			productReference = 6A67E95B3062C6FD005289DA /* SplitPay.app */;
@@ -225,6 +228,7 @@
 				4BBE510D6FC71260F2515FD0 /* XCLocalSwiftPackageReference "Foundation/Domains" */,
 				BEE559A04E946679DFD7A126 /* XCLocalSwiftPackageReference "Features/Transfer" */,
 				A1B2C3D40000000000000003 /* XCLocalSwiftPackageReference "Features/SplitBill" */,
+				A1B2C3D40000000000000013 /* XCLocalSwiftPackageReference "Features/Profile" */,
 				00DB6970191D9A9B4181E5F6 /* XCRemoteSwiftPackageReference "Swinject" */,
 				7E82B32F2E5E65F174560AD5 /* XCRemoteSwiftPackageReference "supabase-swift" */,
 			);
@@ -636,13 +640,17 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Features/Home;
 		};
-		AE2EF6B5734DC2123D6FF15F /* XCLocalSwiftPackageReference "Features/Authentication" */ = {
+		A1B2C3D40000000000000013 /* XCLocalSwiftPackageReference "Features/Profile" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = Features/Authentication;
+			relativePath = Features/Profile;
 		};
 		A1B2C3D40000000000000003 /* XCLocalSwiftPackageReference "Features/SplitBill" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Features/SplitBill;
+		};
+		AE2EF6B5734DC2123D6FF15F /* XCLocalSwiftPackageReference "Features/Authentication" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Features/Authentication;
 		};
 		BEE559A04E946679DFD7A126 /* XCLocalSwiftPackageReference "Features/Transfer" */ = {
 			isa = XCLocalSwiftPackageReference;
@@ -699,6 +707,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 7F9188783472FC449C2CFCE0 /* XCLocalSwiftPackageReference "Features/Home" */;
 			productName = Home;
+		};
+		A1B2C3D40000000000000012 /* Profile */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1B2C3D40000000000000013 /* XCLocalSwiftPackageReference "Features/Profile" */;
+			productName = Profile;
 		};
 		A1B2C3D40000000000000002 /* SplitBill */ = {
 			isa = XCSwiftPackageProductDependency;
