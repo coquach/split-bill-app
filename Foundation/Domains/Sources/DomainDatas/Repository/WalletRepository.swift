@@ -1,32 +1,31 @@
 //
 //  WalletRepository.swift
-//  Domains
+//  DomainDatas
 //
 //  Created by Co Quach on 27/9/26.
 //
 
 import Domains
 import Foundation
-import Supabase
 
+// Calls PostgREST directly over HTTPS - no Supabase SDK import.
 public final class WalletRepository: IWalletRepository {
-    private let client: SupabaseClient
+    private let client: SupabaseRestClient
 
-    public init(client: SupabaseClient) {
+    public init(client: SupabaseRestClient) {
         self.client = client
     }
 
     public func getDefaultWallet() async throws -> Wallet {
         do {
-            let dto: WalletDTO =
-                try await client
-                .from("wallets")
-                .select()
-                .eq("is_default", value: true)
-                .eq("status", value: WalletStatus.active.rawValue)
-                .single()
-                .execute()
-                .value
+            let dto: WalletDTO = try await client.select(
+                table: "wallets",
+                filters: [
+                    "is_default": "eq.true",
+                    "status": "eq.\(WalletStatus.active.rawValue)",
+                ],
+                single: true
+            )
 
             return dto.toDomain()
         } catch {
@@ -36,13 +35,10 @@ public final class WalletRepository: IWalletRepository {
 
     public func getWallets() async throws -> [Wallet] {
         do {
-            let dtos: [WalletDTO] =
-                try await client
-                .from("wallets")
-                .select()
-                .eq("status", value: WalletStatus.active.rawValue)
-                .execute()
-                .value
+            let dtos: [WalletDTO] = try await client.select(
+                table: "wallets",
+                filters: ["status": "eq.\(WalletStatus.active.rawValue)"]
+            )
 
             return dtos.map { $0.toDomain() }
         } catch {
@@ -56,11 +52,11 @@ public final class WalletRepository: IWalletRepository {
         do {
             let request = ResolveWalletRequest(walletNumber: walletNumber)
 
-            let rows: [WalletRecipientDTO] =
-                try await client
-                .rpc("resolve_wallet_by_number", params: request)
-                .execute()
-                .value
+            // RETURNS TABLE, so PostgREST sends an array even for one row.
+            let rows: [WalletRecipientDTO] = try await client.rpc(
+                "resolve_wallet_by_number",
+                params: request
+            )
 
             guard let row = rows.first else {
                 throw DomainError.notFound

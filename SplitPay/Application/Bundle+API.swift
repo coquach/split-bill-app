@@ -17,4 +17,12 @@ extension Bundle {
         }
         return url
     }
+
+    // PostgREST requires this on every request, even authenticated ones.
+    var apiKey: String {
+        guard let value = object(forInfoDictionaryKey: "API_KEY") as? String else {
+            fatalError("API_KEY is missing in Info.plist")
+        }
+        return value
+    }
 }

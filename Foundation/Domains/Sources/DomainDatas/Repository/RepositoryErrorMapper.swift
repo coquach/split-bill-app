@@ -31,6 +31,14 @@ enum RepositoryErrorMapper {
             )
         }
 
+        // RestErrorBody is PostgrestError's raw-HTTP equivalent, for SupabaseRestClient callers.
+        if let restError = error as? RestErrorBody {
+            return mapPostgrest(
+                code: restError.code,
+                message: restError.message
+            )
+        }
+
         return .unknown(
             code: nil,
             message: error.localizedDescription
