@@ -156,7 +156,14 @@ struct AppTabView: View {
                 SplitBillCoordinator(
                     entry: .create(source),
                     dependencies: splitDependencies,
-                    onFinish: { splitSource = nil }
+                    // Dismiss both covers so Home on the Split QR screen lands
+                    // on the Home tab, not back on the Transfer flow underneath.
+                    onFinish: {
+                        splitSource = nil
+                        isTransferPresented = false
+                        selectedTab = .home
+                        coordinator.refreshBalance()
+                    }
                 )
             }
         }
