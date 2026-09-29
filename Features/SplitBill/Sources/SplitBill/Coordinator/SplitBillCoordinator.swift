@@ -15,12 +15,17 @@ public enum SplitBillEntry: Hashable {
     case create(SplitSource)
     // From split history to split details
     case history
+    // From the floating scan button
+    case repay
 }
 
 public enum SplitBillDestination: Hashable {
     case qr(SplitQRContext)
     case details(UUID)
     case edit(splitBillId: UUID, source: SplitSource, participantCount: Int)
+    case reviewRepayment(ScannedRepayment)
+    case repaymentPin(ScannedRepayment)
+    case repaymentSuccess(QRRepaymentReceipt)
 }
 
 public struct SplitBillCoordinator: View {
@@ -57,6 +62,34 @@ public struct SplitBillCoordinator: View {
                             participantCount: participantCount,
                             onBack: { router.navigateBack() }
                         )
+
+                    case .reviewRepayment(let scanned):
+                        RepaymentReviewView(
+                            scanned: scanned,
+                            onBack: { router.navigateBack() },
+                            onContinue: {
+                                router.navigate(
+                                    to: SplitBillDestination.repaymentPin(scanned)
+                                )
+                            }
+                        )
+
+                    case .repaymentPin(let scanned):
+                        RepaymentPinView(
+                            viewModel: RepaymentPinViewModel(
+                                scanned: scanned,
+                                repaymentRepository: dependencies.repaymentRepository
+                            ),
+                            onBack: { router.navigateBack() },
+                            onSuccess: { receipt in
+                                router.navigate(
+                                    to: SplitBillDestination.repaymentSuccess(receipt)
+                                )
+                            }
+                        )
+
+                    case .repaymentSuccess(let receipt):
+                        RepaymentSuccessView(receipt: receipt, onDone: onFinish)
                     }
                 }
         }
@@ -82,6 +115,17 @@ public struct SplitBillCoordinator: View {
                 onBack: onFinish,
                 onSelect: { bill in
                     router.navigate(to: SplitBillDestination.details(bill.id))
+                }
+            )
+
+        case .repay:
+            ScanRepayView(
+                viewModel: ScanRepayViewModel(
+                    splitQRRepository: dependencies.splitQRRepository
+                ),
+                onBack: onFinish,
+                onDecoded: { scanned in
+                    router.navigate(to: SplitBillDestination.reviewRepayment(scanned))
                 }
             )
         }

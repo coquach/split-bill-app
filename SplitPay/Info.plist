@@ -30,6 +30,8 @@
 	<string>$(SUPABASE_URL)</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>SplitPay saves your split bill QR code to Photos so you can share it later.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>SplitPay uses your camera to scan a Split Bill QR code so you can pay your share.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 </dict>

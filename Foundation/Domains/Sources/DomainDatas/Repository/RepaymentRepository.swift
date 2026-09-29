@@ -17,10 +17,10 @@ public final class RepaymentRepository: IRepaymentRepository {
 
     public func createQRRepayment(
         _ command: CreateQRRepaymentCommand
-    ) async throws -> Repayment {
+    ) async throws -> QRRepaymentReceipt {
         do {
             // RETURNS TABLE, so PostgREST sends an array even for one row.
-            let rows: [RepaymentDTO] = try await client.rpc(
+            let rows: [CreateQRRepaymentResultDTO] = try await client.rpc(
                 "create_qr_repayment",
                 params: CreateQRRepaymentRequest(command)
             )

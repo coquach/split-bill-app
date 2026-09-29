@@ -59,6 +59,45 @@ struct RepaymentDTO: Decodable, Sendable {
     }
 }
 
+// create_qr_repayment's real return columns - not a repayments row, see QRRepaymentReceipt.
+struct CreateQRRepaymentResultDTO: Decodable, Sendable {
+    let id: UUID
+    let splitBillId: UUID
+    let transferTransactionId: UUID
+    let amount: PostgresNumeric
+    let paymentMethod: PaymentMethod
+    let status: RepaymentStatus
+    let paidSlots: Int
+    let splitBillStatus: SplitBillStatus
+    let paidAt: Date?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case splitBillId = "split_bill_id"
+        case transferTransactionId = "transfer_transaction_id"
+        case amount
+        case paymentMethod = "payment_method"
+        case status
+        case paidSlots = "paid_slots"
+        case splitBillStatus = "split_bill_status"
+        case paidAt = "paid_at"
+    }
+
+    func toDomain() -> QRRepaymentReceipt {
+        QRRepaymentReceipt(
+            id: id,
+            splitBillId: splitBillId,
+            transferTransactionId: transferTransactionId,
+            amount: Amount(amount.value),
+            paymentMethod: paymentMethod,
+            status: status,
+            paidSlots: paidSlots,
+            splitBillStatus: splitBillStatus,
+            paidAt: paidAt
+        )
+    }
+}
+
 struct CreateQRRepaymentRequest: Encodable, Sendable {
     let qrPayload: String
     let pin: String
@@ -75,6 +114,15 @@ struct CreateQRRepaymentRequest: Encodable, Sendable {
         pin = c.pin
         note = c.note
         idempotencyKey = c.idempotencyKey
+    }
+
+    // p_note has no SQL default - same dropped-key risk as CreateTransferRequest.
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(qrPayload, forKey: .qrPayload)
+        try c.encode(pin, forKey: .pin)
+        try c.encode(note, forKey: .note)
+        try c.encode(idempotencyKey, forKey: .idempotencyKey)
     }
 }
 

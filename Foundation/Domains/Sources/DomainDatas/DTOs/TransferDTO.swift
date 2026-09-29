@@ -188,6 +188,16 @@ struct CreateTransferRequest: Encodable, Sendable {
         pin = c.pin
         idempotencyKey = c.idempotencyKey
     }
+
+    // Nil description would drop its key and break PostgREST's function-overload lookup.
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(recipientWalletId, forKey: .recipientWalletId)
+        try c.encode(amount, forKey: .amount)
+        try c.encode(description, forKey: .description)
+        try c.encode(pin, forKey: .pin)
+        try c.encode(idempotencyKey, forKey: .idempotencyKey)
+    }
 }
 
 struct GetTransferHistoryRequest: Encodable, Sendable {

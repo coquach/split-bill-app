@@ -8,7 +8,7 @@
 import Foundation
 
 public protocol IRepaymentRepository: Sendable {
-    func createQRRepayment(_ command: CreateQRRepaymentCommand) async throws -> Repayment
+    func createQRRepayment(_ command: CreateQRRepaymentCommand) async throws -> QRRepaymentReceipt
     func getRepayments(splitBillId: UUID) async throws -> [Repayment]
     func getMyRepaymentRecords() async throws -> [RepaymentRecord]
 }

@@ -1,0 +1,90 @@
+//
+//  ScanRepayView.swift
+//  SplitBill
+//
+//  Created by Dinh Long on 29/9/26.
+//
+
+import Domains
+import SwiftUI
+import SystemDesign
+
+public struct ScanRepayView: View {
+    @State private var viewModel: ScanRepayViewModel
+    private let onBack: () -> Void
+    private let onDecoded: (ScannedRepayment) -> Void
+
+    public init(
+        viewModel: ScanRepayViewModel,
+        onBack: @escaping () -> Void,
+        onDecoded: @escaping (ScannedRepayment) -> Void
+    ) {
+        _viewModel = State(initialValue: viewModel)
+        self.onBack = onBack
+        self.onDecoded = onDecoded
+    }
+
+    public var body: some View {
+        ZStack {
+            QRScannerView { payload in
+                Task {
+                    if let scanned = await viewModel.decode(payload) {
+                        onDecoded(scanned)
+                    }
+                }
+            }
+            .ignoresSafeArea()
+
+            VStack {
+                Spacer()
+
+                if viewModel.state == .decoding {
+                    ProgressView()
+                        .tint(.white)
+                        .padding(AppSpacing.lg)
+                        .background(.black.opacity(0.6))
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous))
+                        .padding(.bottom, AppSpacing.huge)
+                } else {
+                    Text("Point your camera at a Split Bill QR code")
+                        .font(AppTypography.body)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, AppSpacing.lg)
+                        .padding(.vertical, AppSpacing.sm)
+                        .background(.black.opacity(0.6))
+                        .clipShape(Capsule())
+                        .padding(.bottom, AppSpacing.huge)
+                }
+            }
+
+            VStack {
+                HStack {
+                    Button(action: onBack) {
+                        Image(systemName: "xmark")
+                            .foregroundStyle(.white)
+                            .frame(width: 44, height: 44)
+                            .background(.black.opacity(0.6))
+                            .clipShape(Circle())
+                    }
+                    .padding(AppSpacing.lg)
+
+                    Spacer()
+                }
+                Spacer()
+            }
+        }
+        .background(Color.black.ignoresSafeArea())
+        .screenLifecycle("ScanRepay")
+        .modalOverlay(isPresented: viewModel.errorMessage != nil) {
+            AppModal(
+                icon: Image(systemName: "exclamationmark.triangle.fill"),
+                title: "Couldn't Read QR Code",
+                message: viewModel.errorMessage ?? "Something went wrong."
+            ) {
+                AppButton(title: "Try Again", style: .primary) {
+                    viewModel.retry()
+                }
+            }
+        }
+    }
+}

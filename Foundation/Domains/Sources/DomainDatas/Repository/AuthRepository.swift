@@ -209,6 +209,9 @@ public final class AuthRepository: IAuthRepository {
         _ error: Error
     ) -> Domains.AuthError {
 
+        // Unrecognised errors all collapse to .unknown, so log the real one.
+        print("[Auth] raw error: \(String(reflecting: error))")
+
         if let authError = error as? Supabase.AuthError {
 
             switch authError.errorCode {

@@ -134,10 +134,12 @@ struct AppTabView: View {
                 )
             }
         }
-        .sheet(isPresented: $isShowingScanner) {
-            NavigationStack {
-                ScanQRView()
-            }
+        .fullScreenCover(isPresented: $isShowingScanner) {
+            SplitBillCoordinator(
+                entry: .repay,
+                dependencies: splitDependencies,
+                onFinish: { isShowingScanner = false }
+            )
         }
     }
 }
@@ -166,30 +168,5 @@ private struct ScanQRButton: View {
                 )
         }
         .accessibilityLabel("Scan QR")
-    }
-}
-
-private struct ScanQRView: View {
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "qrcode.viewfinder")
-                .font(.system(size: 64))
-            Text("Scan QR")
-                .font(.title2.bold())
-            Text(
-                "The in-app scanner will decode the Split Bill QR payload here."
-            )
-            .multilineTextAlignment(.center)
-            .foregroundStyle(.secondary)
-        }
-        .padding(32)
-        .navigationTitle("Scan QR")
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button("Close") { dismiss() }
-            }
-        }
     }
 }

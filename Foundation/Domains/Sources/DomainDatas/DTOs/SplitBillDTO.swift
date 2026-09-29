@@ -137,6 +137,16 @@ struct UpdateSplitBillRequest: Encodable, Sendable {
         participantCount = command.participantCount
         expiresAt = command.expiresAt
     }
+
+    // Same dropped-key risk as CreateTransferRequest - see there for why.
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(splitBillId, forKey: .splitBillId)
+        try c.encode(title, forKey: .title)
+        try c.encode(note, forKey: .note)
+        try c.encode(participantCount, forKey: .participantCount)
+        try c.encode(expiresAt, forKey: .expiresAt)
+    }
 }
 
 struct CloseSplitBillRequest: Encodable, Sendable {
