@@ -151,6 +151,9 @@ public struct SplitBillCoordinator: View {
             onBack: onBack,
             onGenerated: { context in
                 router.navigate(to: SplitBillDestination.qr(context))
+            },
+            onCancelled: {
+                router.navigateToRoot()
             }
         )
     }

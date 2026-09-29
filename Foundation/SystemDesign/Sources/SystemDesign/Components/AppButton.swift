@@ -17,6 +17,9 @@ public struct AppButton: View {
         /// "Edit" beside a dark primary, where a white pill would recede
         /// into the card behind it.
         case tinted
+        /// A destructive action, e.g. "Cancel Split" - filled with the error
+        /// pairing so it reads as dangerous rather than a normal secondary action.
+        case destructive
     }
 
     private let title: String
@@ -85,6 +88,9 @@ public struct AppButton: View {
 
         case .tinted:
             return .appInfoBackground
+
+        case .destructive:
+            return .appErrorBackground
         }
     }
 
@@ -101,6 +107,9 @@ public struct AppButton: View {
 
         case .tinted:
             return .appInfo
+
+        case .destructive:
+            return .appError
         }
     }
 }

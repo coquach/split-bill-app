@@ -13,15 +13,18 @@ public struct SplitSetupView: View {
     @State private var viewModel: SplitSetupViewModel
     private let onBack: () -> Void
     private let onGenerated: (SplitQRContext) -> Void
+    private let onCancelled: () -> Void
 
     public init(
         viewModel: SplitSetupViewModel,
         onBack: @escaping () -> Void,
-        onGenerated: @escaping (SplitQRContext) -> Void
+        onGenerated: @escaping (SplitQRContext) -> Void,
+        onCancelled: @escaping () -> Void = {}
     ) {
         _viewModel = State(initialValue: viewModel)
         self.onBack = onBack
         self.onGenerated = onGenerated
+        self.onCancelled = onCancelled
     }
 
     public var body: some View {
@@ -52,7 +55,17 @@ public struct SplitSetupView: View {
                             onGenerated(context)
                         }
                     }
-                }
+                },
+                secondary: viewModel.isEditing
+                    ? .init(
+                        title: "Cancel Split",
+                        style: .destructive,
+                        icon: "xmark.circle",
+                        isEnabled: !viewModel.isCreating
+                    ) {
+                        viewModel.requestCancelConfirmation()
+                    }
+                    : nil
             )
         }
         .navigationBarHidden(true)
@@ -65,6 +78,30 @@ public struct SplitSetupView: View {
             ) {
                 AppButton(title: "Try Again", style: .primary) {
                     viewModel.dismissError()
+                }
+            }
+        }
+        .modalOverlay(isPresented: viewModel.isShowingCancelConfirmation) {
+            AppModal(
+                icon: Image(systemName: "exclamationmark.triangle.fill"),
+                title: "Cancel This Split?",
+                message: "The split will become inactive and no one will be able to pay it through the QR code anymore."
+            ) {
+                VStack(spacing: AppSpacing.sm) {
+                    AppButton(
+                        title: "Cancel Split",
+                        style: .destructive,
+                        isLoading: viewModel.isCancelling
+                    ) {
+                        Task {
+                            if await viewModel.cancelSplit() {
+                                onCancelled()
+                            }
+                        }
+                    }
+                    AppButton(title: "Keep Split", style: .secondary) {
+                        viewModel.dismissCancelConfirmation()
+                    }
                 }
             }
         }

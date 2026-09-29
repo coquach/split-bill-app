@@ -24,7 +24,7 @@ struct AppTabView: View {
 
     @Environment(AppCoordinator.self) private var coordinator
 
-    @State private var selectedTab: Tab = .home
+    @State private var selectedTab: Tab = .splitBill
     @State private var isTransferPresented = false
     @State private var isShowingScanner = false
 
@@ -95,7 +95,7 @@ struct AppTabView: View {
                     onFinish: { selectedTab = .home }
                 )
                 .tabItem {
-                    Label("Split Bill", systemImage: "person.2.fill")
+                    Label("Split", systemImage: "person.2.fill")
                 }
                 .tag(Tab.splitBill)
 

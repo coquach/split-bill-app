@@ -16,6 +16,7 @@ public final class SplitSetupViewModel {
     public enum State: Equatable {
         case idle
         case creating
+        case cancelling
         case failed(DomainError)
     }
 
@@ -26,6 +27,7 @@ public final class SplitSetupViewModel {
     public var participantCount: Int = 2
 
     public private(set) var state: State = .idle
+    public var isShowingCancelConfirmation = false
 
     public static let participantRange = 2...20
 
@@ -96,9 +98,44 @@ public final class SplitSetupViewModel {
         state == .creating
     }
 
+    public var isCancelling: Bool {
+        state == .cancelling
+    }
+
     public func dismissError() {
         guard case .failed = state else { return }
         state = .idle
+    }
+
+    public func requestCancelConfirmation() {
+        isShowingCancelConfirmation = true
+    }
+
+    public func dismissCancelConfirmation() {
+        isShowingCancelConfirmation = false
+    }
+
+    // Reuses close_split_bill: closing an active split sets it to CANCELLED,
+    // which the repayment RPCs already reject - same effect as "cancel".
+    public func cancelSplit() async -> Bool {
+        guard let editingSplitBillId else { return false }
+
+        state = .cancelling
+
+        do {
+            _ = try await splitBillRepository.closeSplitBill(id: editingSplitBillId)
+            isShowingCancelConfirmation = false
+            state = .idle
+            return true
+        } catch let error as DomainError {
+            isShowingCancelConfirmation = false
+            state = .failed(error)
+            return false
+        } catch {
+            isShowingCancelConfirmation = false
+            state = .failed(.unknown(code: nil, message: error.localizedDescription))
+            return false
+        }
     }
 
     public func generateQR() async -> SplitQRContext? {

@@ -78,17 +78,10 @@ public struct SplitQRView: View {
         }
     }
 
-    // MARK: - Save / Share
-
-    /// Writes the code to the photo library. This needs
-    /// `NSPhotoLibraryAddUsageDescription` in Info.plist — without it iOS
-    /// terminates the app rather than showing a permission prompt.
     private func save(_ image: UIImage) {
         UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
     }
 
-    /// Presented through UIKit rather than SwiftUI's `ShareLink` so the same
-    /// rendered `UIImage` is shared as the one on screen and the one saved.
     private func share(_ image: UIImage) {
         guard
             let scene = UIApplication.shared.connectedScenes

@@ -19,7 +19,13 @@ public final class SplitHistoryViewModel {
         case failed(DomainError)
     }
 
+    public enum Category: String, CaseIterable, Hashable {
+        case active = "Active"
+        case inactive = "Inactive"
+    }
+
     public private(set) var state: State = .loading
+    public var selectedCategory: Category = .active
 
     private let splitBillRepository: ISplitBillRepository
 
@@ -51,6 +57,17 @@ public final class SplitHistoryViewModel {
                 .unknown(code: nil, message: error.localizedDescription)
             )
         }
+    }
+
+    // Both lists are already loaded together, so switching category is a
+    // local pick - no refetch needed.
+    public var visibleBills: [SplitBillListItem] {
+        guard case .loaded(let active, let settled) = state else { return [] }
+        return selectedCategory == .active ? active : settled
+    }
+
+    public func select(_ category: Category) {
+        selectedCategory = category
     }
 
     public func subtitle(for bill: SplitBillListItem) -> String {
