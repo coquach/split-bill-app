@@ -9,11 +9,11 @@ struct SplitBillDTO: Decodable, Sendable {
     let sourceTransferId: UUID
     let title: String
     let note: String?
-    let totalAmount: Int64
+    let totalAmount: PostgresNumeric
     let currency: String
     let participantCount: Int
-    let perPersonAmount: Int64
-    let requesterAmount: Int64
+    let perPersonAmount: PostgresNumeric
+    let requesterAmount: PostgresNumeric
     let requiredSlots: Int
     let paidSlots: Int
     let status: SplitBillStatus
@@ -47,11 +47,11 @@ struct SplitBillDTO: Decodable, Sendable {
             sourceTransferId: sourceTransferId,
             title: title,
             note: note,
-            totalAmount: Amount(Double(totalAmount)),
+            totalAmount: Amount(totalAmount.value),
             currency: currency,
             participantCount: participantCount,
-            perPersonAmount: Amount(Double(perPersonAmount)),
-            requesterAmount: Amount(Double(requesterAmount)),
+            perPersonAmount: Amount(perPersonAmount.value),
+            requesterAmount: Amount(requesterAmount.value),
             requiredSlots: requiredSlots,
             paidSlots: paidSlots,
             remainingSlots: max(requiredSlots - paidSlots, 0),
@@ -155,11 +155,11 @@ struct SplitBillListItemDTO: Decodable, Sendable {
     let sourceTransferId: UUID
     let title: String
     let note: String?
-    let totalAmount: Int64
+    let totalAmount: PostgresNumeric
     let currency: String
     let participantCount: Int
-    let perPersonAmount: Int64
-    let requesterAmount: Int64
+    let perPersonAmount: PostgresNumeric
+    let requesterAmount: PostgresNumeric
     let requiredSlots: Int
     let paidSlots: Int
     let status: SplitBillStatus
@@ -195,11 +195,11 @@ struct SplitBillListItemDTO: Decodable, Sendable {
             sourceTransferId: sourceTransferId,
             title: title,
             note: note,
-            totalAmount: totalAmount,
+            totalAmount: Int64(totalAmount.value.rounded()),
             currency: currency,
             participantCount: participantCount,
-            perPersonAmount: perPersonAmount,
-            requesterAmount: requesterAmount,
+            perPersonAmount: Int64(perPersonAmount.value.rounded()),
+            requesterAmount: Int64(requesterAmount.value.rounded()),
             requiredSlots: requiredSlots,
             paidSlots: paidSlots,
             status: status,
@@ -220,11 +220,11 @@ struct SplitBillDetailDTO: Decodable, Sendable {
     let sourceTransferId: UUID
     let title: String
     let note: String?
-    let totalAmount: Int64
+    let totalAmount: PostgresNumeric
     let currency: String
     let participantCount: Int
-    let perPersonAmount: Int64
-    let requesterAmount: Int64
+    let perPersonAmount: PostgresNumeric
+    let requesterAmount: PostgresNumeric
     let requiredSlots: Int
     let paidSlots: Int
     let status: SplitBillStatus
@@ -278,11 +278,11 @@ struct SplitBillDetailDTO: Decodable, Sendable {
             sourceTransferId: sourceTransferId,
             title: title,
             note: note,
-            totalAmount: Amount(Double(totalAmount)),
+            totalAmount: Amount(totalAmount.value),
             currency: currency,
             participantCount: participantCount,
-            perPersonAmount: Amount(Double(perPersonAmount)),
-            requesterAmount: Amount(Double(requesterAmount)),
+            perPersonAmount: Amount(perPersonAmount.value),
+            requesterAmount: Amount(requesterAmount.value),
             requiredSlots: requiredSlots,
             paidSlots: paidSlots,
             remainingSlots: max(requiredSlots - paidSlots, 0),

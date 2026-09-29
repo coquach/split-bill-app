@@ -10,33 +10,21 @@ import Foundation
 
 struct TransferTransactionDTO: Decodable, Sendable {
     let id: UUID
-    let senderUserId: UUID
-    let senderWalletId: UUID
-    let recipientUserId: UUID
-    let recipientWalletId: UUID
-    let amount: Int64
-    let fee: Int64
-    let currency: String
-    let description: String?
-    let status: TransferStatus
     let transactionRef: String
-    let idempotencyKey: String
+    let status: TransferStatus
+    let amount: PostgresNumeric
+    let fee: PostgresNumeric
+    let description: String?
     let completedAt: Date?
     let createdAt: Date
 
     enum CodingKeys: String, CodingKey {
         case id
-        case senderUserId = "sender_user_id"
-        case senderWalletId = "sender_wallet_id"
-        case recipientUserId = "recipient_user_id"
-        case recipientWalletId = "recipient_wallet_id"
+        case transactionRef = "transaction_ref"
+        case status
         case amount
         case fee
-        case currency
         case description
-        case status
-        case transactionRef = "transaction_ref"
-        case idempotencyKey = "idempotency_key"
         case completedAt = "completed_at"
         case createdAt = "created_at"
     }
@@ -44,17 +32,11 @@ struct TransferTransactionDTO: Decodable, Sendable {
     func toDomain() -> TransferTransaction {
         TransferTransaction(
             id: id,
-            senderUserId: senderUserId,
-            senderWalletId: senderWalletId,
-            recipientUserId: recipientUserId,
-            recipientWalletId: recipientWalletId,
-            amount: amount,
-            fee: fee,
-            currency: currency,
-            description: description,
-            status: status,
             transactionRef: transactionRef,
-            idempotencyKey: idempotencyKey,
+            status: status,
+            amount: Int64(amount.value.rounded()),
+            fee: Int64(fee.value.rounded()),
+            description: description,
             completedAt: completedAt,
             createdAt: createdAt
         )
@@ -69,11 +51,12 @@ struct TransferHistoryDTO: Decodable, Sendable {
     let senderWalletId: UUID
     let recipientUserId: UUID
     let recipientWalletId: UUID
-    let amount: Int64
-    let fee: Int64
+    let amount: PostgresNumeric
+    let fee: PostgresNumeric
     let description: String?
     let status: TransferStatus
-    let currency: String
+    // Not returned by get_transfer_history; the wallet is VND-only.
+    let currency: String?
     let counterpartyWalletNumber: String?
     let counterpartyName: String?
     let completedAt: Date?
@@ -113,11 +96,11 @@ struct TransferHistoryDTO: Decodable, Sendable {
             senderWalletId: senderWalletId,
             recipientUserId: recipientUserId,
             recipientWalletId: recipientWalletId,
-            amount: amount,
-            fee: fee,
+            amount: Int64(amount.value.rounded()),
+            fee: Int64(fee.value.rounded()),
             description: description,
             status: status,
-            currency: currency,
+            currency: currency ?? "VND",
             counterpartyWalletNumber: counterpartyWalletNumber,
             counterpartyName: counterpartyName,
             completedAt: completedAt,
@@ -134,13 +117,14 @@ struct TransferDetailDTO: Decodable, Sendable {
     let transactionRef: String
     let senderUserId: UUID
     let recipientUserId: UUID
-    let amount: Int64
-    let fee: Int64
+    let amount: PostgresNumeric
+    let fee: PostgresNumeric
     let description: String?
     let status: TransferStatus
     let completedAt: Date?
     let createdAt: Date
-    let currency: String
+    // Not returned by get_transfer_detail; the wallet is VND-only.
+    let currency: String?
     let splitBillId: UUID?
     let canCreateSplitBill: Bool
     let isSplitBillRepayment: Bool
@@ -168,13 +152,13 @@ struct TransferDetailDTO: Decodable, Sendable {
             transactionRef: transactionRef,
             senderUserId: senderUserId,
             recipientUserId: recipientUserId,
-            amount: amount,
-            fee: fee,
+            amount: Int64(amount.value.rounded()),
+            fee: Int64(fee.value.rounded()),
             description: description,
             status: status,
             completedAt: completedAt,
             createdAt: createdAt,
-            currency: currency,
+            currency: currency ?? "VND",
             splitBillId: splitBillId,
             canCreateSplitBill: canCreateSplitBill,
             isSplitBillRepayment: isSplitBillRepayment

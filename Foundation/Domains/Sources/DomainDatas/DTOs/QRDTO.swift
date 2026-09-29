@@ -59,19 +59,23 @@ struct SplitQRReviewDTO: Decodable, Sendable {
     let splitBillId: UUID
     let title: String
     let requesterName: String?
-    let amount: Int64
+    // decode_split_qr returns `total_amount`, not `amount`.
+    let totalAmount: PostgresNumeric
     let currency: String
-    let perPersonAmount: Int64
-    let remainingSlots: Int
+    let perPersonAmount: PostgresNumeric
+    // It returns the two slot counts; `remaining_slots` is derived.
+    let requiredSlots: Int
+    let paidSlots: Int
 
     enum CodingKeys: String, CodingKey {
         case splitBillId = "split_bill_id"
         case title
         case requesterName = "requester_name"
-        case amount
+        case totalAmount = "total_amount"
         case currency
         case perPersonAmount = "per_person_amount"
-        case remainingSlots = "remaining_slots"
+        case requiredSlots = "required_slots"
+        case paidSlots = "paid_slots"
     }
 
     func toDomain() -> SplitQRReview {
@@ -79,10 +83,10 @@ struct SplitQRReviewDTO: Decodable, Sendable {
             splitBillId: splitBillId,
             title: title,
             requesterName: requesterName,
-            amount: amount,
+            amount: Int64(totalAmount.value.rounded()),
             currency: currency,
-            perPersonAmount: perPersonAmount,
-            remainingSlots: remainingSlots
+            perPersonAmount: Int64(perPersonAmount.value.rounded()),
+            remainingSlots: max(requiredSlots - paidSlots, 0)
         )
     }
 }
