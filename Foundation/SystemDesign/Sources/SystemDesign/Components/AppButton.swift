@@ -12,6 +12,11 @@ public struct AppButton: View {
         case primary
         case accent
         case secondary
+        /// A secondary action that still wants to read as interactive —
+        /// filled with the info pairing rather than left white. Used for
+        /// "Edit" beside a dark primary, where a white pill would recede
+        /// into the card behind it.
+        case tinted
     }
 
     private let title: String
@@ -77,6 +82,9 @@ public struct AppButton: View {
 
         case .secondary:
             return .appSurfacePrimary
+
+        case .tinted:
+            return .appInfoBackground
         }
     }
 
@@ -90,6 +98,9 @@ public struct AppButton: View {
 
         case .secondary:
             return .appPrimary
+
+        case .tinted:
+            return .appInfo
         }
     }
 }

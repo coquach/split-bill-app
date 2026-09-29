@@ -12,20 +12,23 @@ public struct StatusBadge: View {
 
     public enum Style {
         case success   // "Paid", "Settled"
+        case neutral   // "Active", "Split active" - in progress, not a warning
         case pending   // "Pending", "Awaiting payment"
         case failed    // "Failed", "Declined"
 
         var background: Color {
             switch self {
-            case .success: return Color.appSuccess.opacity(0.15)
+            case .success: return Color.appSuccessBackground
+            case .neutral: return Color.appSurfaceSecondary
             case .pending: return Color.appPrimaryContainer
-            case .failed: return Color.appError.opacity(0.15)
+            case .failed: return Color.appErrorBackground
             }
         }
 
         var foreground: Color {
             switch self {
             case .success: return Color.appSuccess
+            case .neutral: return Color.appTextPrimary
             case .pending: return Color.appOnSurface
             case .failed: return Color.appError
             }
