@@ -11,6 +11,7 @@ import SystemDesign
 
 public struct TransactionHistoryView: View {
     @State private var viewModel: TransactionHistoryViewModel
+    @Namespace private var categoryNamespace
     private let onBack: (() -> Void)?
     private let onSelect: (TransferHistory) -> Void
 
@@ -25,15 +26,23 @@ public struct TransactionHistoryView: View {
     }
 
     public var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: AppSpacing.lg) {
-                categoryPicker
+        // categoryPicker sits outside the ScrollView so only the transaction
+        // list underneath it scrolls - the picker stays fixed at the top.
+        VStack(spacing: 0) {
+            categoryPicker
+                .padding(.horizontal, AppSpacing.lg)
+                .padding(.top, AppSpacing.lg)
+                .padding(.bottom, AppSpacing.md)
+
+            ScrollView {
                 content
+                    .padding(.horizontal, AppSpacing.lg)
+                    // Clears the tab bar and the floating scan button above it.
+                    .padding(.bottom, 140)
+                    .id(viewModel.selectedFilter)
+                    .transition(.opacity.combined(with: .move(edge: .trailing)))
             }
-            .padding(.horizontal, AppSpacing.lg)
-            .padding(.top, AppSpacing.lg)
-            // Clears the tab bar and the floating scan button above it.
-            .padding(.bottom, 140)
+            .animation(.easeInOut(duration: 0.25), value: viewModel.selectedFilter)
         }
         .background(Color.appBackground.ignoresSafeArea())
         .safeAreaInset(edge: .top, spacing: 0) {
@@ -46,6 +55,8 @@ public struct TransactionHistoryView: View {
     }
 
     // Segmented control filtering the list by All / Transfer / Repayment.
+    // The highlight capsule slides between labels via matchedGeometryEffect
+    // instead of just popping into place.
     private var categoryPicker: some View {
         HStack(spacing: AppSpacing.xxs) {
             ForEach(TransactionTypeFilter.allCases, id: \.self) { filter in
@@ -61,8 +72,13 @@ public struct TransactionHistoryView: View {
                         )
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, AppSpacing.xs)
-                        .background(isSelected ? Color.appPrimary : Color.clear)
-                        .clipShape(Capsule())
+                        .background {
+                            if isSelected {
+                                Capsule()
+                                    .fill(Color.appPrimary)
+                                    .matchedGeometryEffect(id: "selectedCategory", in: categoryNamespace)
+                            }
+                        }
                 }
                 .buttonStyle(.plain)
             }
@@ -70,6 +86,7 @@ public struct TransactionHistoryView: View {
         .padding(AppSpacing.xxs)
         .background(Color.appSurfaceSecondary)
         .clipShape(Capsule())
+        .animation(.easeInOut(duration: 0.25), value: viewModel.selectedFilter)
     }
 
     @ViewBuilder
