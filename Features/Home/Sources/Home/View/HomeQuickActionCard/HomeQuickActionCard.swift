@@ -19,7 +19,6 @@ struct HomeQuickActions: View {
             HomeQuickActionCard(
                 icon: "arrow.up.right",
                 title: "Transfer",
-                subtitle: "Send money",
                 tint: Color.appInfoBackground,
                 action: onTransfer
             )
@@ -27,8 +26,7 @@ struct HomeQuickActions: View {
             HomeQuickActionCard(
                 icon: "qrcode",
                 title: "Split",
-                subtitle: "Share a bill",
-                tint: Color.appSuccessBackground,
+                tint: Color.appInfoBackground,
                 action: onSplit
             )
         }
@@ -39,16 +37,12 @@ private struct HomeQuickActionCard: View {
 
     let icon: String
     let title: String
-    let subtitle: String
     let tint: Color
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            VStack(
-                alignment: .leading,
-                spacing: AppSpacing.sm
-            ) {
+            VStack(spacing: AppSpacing.sm) {
                 Image(systemName: icon)
                     .font(
                         .system(
@@ -62,45 +56,16 @@ private struct HomeQuickActionCard: View {
                         height: 48
                     )
                     .background(tint)
-                    .clipShape(
-                        RoundedRectangle(
-                            cornerRadius: AppRadius.md,
-                            style: .continuous
-                        )
+                    .clipShape(Circle())
+
+                Text(title)
+                    .font(AppTypography.bodyMedium)
+                    .foregroundStyle(
+                        Color.appTextPrimary
                     )
-
-                VStack(
-                    alignment: .leading,
-                    spacing: 2
-                ) {
-                    Text(title)
-                        .font(AppTypography.bodyMedium)
-                        .foregroundStyle(
-                            Color.appTextPrimary
-                        )
-
-                    Text(subtitle)
-                        .font(AppTypography.caption)
-                        .foregroundStyle(
-                            Color.appTextTertiary
-                        )
-                }
             }
-            .frame(
-                maxWidth: .infinity,
-                minHeight: 142,
-                alignment: .leading
-            )
+            .frame(maxWidth: .infinity)
             .padding(AppSpacing.md)
-            .background(
-                Color.appSurfacePrimary
-            )
-            .clipShape(
-                RoundedRectangle(
-                    cornerRadius: AppRadius.xl,
-                    style: .continuous
-                )
-            )
             .overlay {
                 RoundedRectangle(
                     cornerRadius: AppRadius.xl,

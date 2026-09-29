@@ -40,7 +40,7 @@ public struct HomeView: View {
                 Color.clear
                     .onAppear { print("[DEBUG] HomeView ZStack proposed size: \(geo.size)") }
                     .onChange(of: geo.size) { _, newValue in
-                        print("[DEBUG] HomeView ZStack proposed size changed: \(newValue)")
+
                     }
             }
         }
