@@ -26,11 +26,14 @@ public struct TransactionHistoryView: View {
 
     public var body: some View {
         ScrollView {
-            content
-                .padding(.horizontal, AppSpacing.lg)
-                .padding(.top, AppSpacing.lg)
-                // Clears the tab bar and the floating scan button above it.
-                .padding(.bottom, 140)
+            VStack(alignment: .leading, spacing: AppSpacing.lg) {
+                categoryPicker
+                content
+            }
+            .padding(.horizontal, AppSpacing.lg)
+            .padding(.top, AppSpacing.lg)
+            // Clears the tab bar and the floating scan button above it.
+            .padding(.bottom, 140)
         }
         .background(Color.appBackground.ignoresSafeArea())
         .safeAreaInset(edge: .top, spacing: 0) {
@@ -40,6 +43,33 @@ public struct TransactionHistoryView: View {
         .screenLifecycle("TransactionHistory")
         .task { await viewModel.load() }
         .refreshable { await viewModel.load() }
+    }
+
+    // Segmented control filtering the list by All / Transfer / Repayment.
+    private var categoryPicker: some View {
+        HStack(spacing: AppSpacing.xxs) {
+            ForEach(TransactionTypeFilter.allCases, id: \.self) { filter in
+                let isSelected = viewModel.selectedFilter == filter
+
+                Button {
+                    Task { await viewModel.selectFilter(filter) }
+                } label: {
+                    Text(viewModel.label(for: filter))
+                        .font(AppTypography.bodyMedium)
+                        .foregroundStyle(
+                            isSelected ? Color.appTextOnPrimary : Color.appTextSecondary
+                        )
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, AppSpacing.xs)
+                        .background(isSelected ? Color.appPrimary : Color.clear)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(AppSpacing.xxs)
+        .background(Color.appSurfaceSecondary)
+        .clipShape(Capsule())
     }
 
     @ViewBuilder

@@ -26,6 +26,7 @@ public final class TransactionHistoryViewModel {
     }
 
     public private(set) var state: State = .loading
+    public private(set) var selectedFilter: TransactionTypeFilter = .all
 
     private let transferRepository: ITransferRepository
 
@@ -40,13 +41,27 @@ public final class TransactionHistoryViewModel {
             let items = try await transferRepository.getTransfers(
                 page: 1,
                 pageSize: 50,
-                filter: .all
+                filter: selectedFilter
             )
             state = .loaded(group(items))
         } catch let error as DomainError {
             state = .failed(error)
         } catch {
             state = .failed(.unknown(code: nil, message: error.localizedDescription))
+        }
+    }
+
+    public func selectFilter(_ filter: TransactionTypeFilter) async {
+        guard filter != selectedFilter else { return }
+        selectedFilter = filter
+        await load()
+    }
+
+    public func label(for filter: TransactionTypeFilter) -> String {
+        switch filter {
+        case .all: return "All"
+        case .transfer: return "Transfer"
+        case .repayment: return "Repayment"
         }
     }
 
