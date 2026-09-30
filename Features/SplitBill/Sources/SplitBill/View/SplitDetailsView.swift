@@ -204,7 +204,7 @@ public struct SplitDetailsView: View {
                 },
                 secondary: .init(
                     title: "Edit",
-                    style: .tinted,
+                    style: .secondary,
                     icon: "pencil",
                     isEnabled: loaded.detail.canUpdate
                 ) {

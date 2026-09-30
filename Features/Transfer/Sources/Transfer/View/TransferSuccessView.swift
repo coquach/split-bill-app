@@ -62,12 +62,12 @@ public struct TransferSuccessView: View {
             BottomActionBar(
                 primary: .init(
                     title: "View Details",
-                    style: .secondary,
+                    style: .primary,
                     handler: onViewDetails
                 ),
                 secondary: .init(
                     title: "Back to Home",
-                    style: .accent,
+                    style: .secondary,
                     handler: onBackToHome
                 ),
                 // This screen sits on a gradient, so the bar must not paint

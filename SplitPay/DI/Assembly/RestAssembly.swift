@@ -23,8 +23,8 @@ final class RestAssembly: Assembly {
 
         container.register(SupabaseRestClient.self) { r in
             SupabaseRestClient(
-                baseURL: Bundle.main.apiBaseURL,
-                apiKey: Bundle.main.apiKey,
+                baseURL: Bundle.main.supabaseURL,
+                apiKey: Bundle.main.supabaseKey,
                 accessTokenProvider: r.resolve(AccessTokenProviding.self)!
             )
         }

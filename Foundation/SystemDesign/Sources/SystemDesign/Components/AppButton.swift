@@ -73,8 +73,9 @@ public struct AppButton: View {
             )
         )
         .overlay {
-            // Secondary sits on a white fill, so it needs a border to read
-            // as a button rather than blend into the surface behind it.
+            // Secondary uses a pastel white-blue fill, so it needs the theme
+            // blue border to read as a button rather than blend into the
+            // surface behind it.
             if style == .secondary {
                 RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
                     .strokeBorder(Color.appPrimary, lineWidth: 1)
@@ -92,7 +93,7 @@ public struct AppButton: View {
             return .appSubtle
 
         case .secondary:
-            return .appSurfacePrimary
+            return .appInfoBackground
 
         case .tinted:
             return .appInfoBackground
