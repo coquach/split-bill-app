@@ -115,7 +115,7 @@ public struct HomeView: View {
             // Without this the VStack hugs its children's ideal height
             // instead of claiming the screen height ZStack proposes to it,
             // so HomeRecentTransactions never gets leftover space to expand into.
-            .frame(maxHeight: .infinity)
+            .frame(maxHeight: .infinity, alignment: .top)
             .background(
                 GeometryReader { geo in
                     Color.clear

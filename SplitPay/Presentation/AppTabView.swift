@@ -188,7 +188,7 @@ private struct ScanQRButton: View {
                 .frame(width: 64, height: 64)
                 .background {
                     Circle()
-                        .fill(Color.accentColor)
+                        .fill(Color.appPrimary)
                 }
                 .overlay {
                     Circle()

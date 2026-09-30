@@ -85,7 +85,7 @@ public final class HomeViewModel {
             profile = try profileResult.get()
             wallet = try walletResult.get()
             let transfers = try transferResult.get()
-            recentTransfers = transfers.prefix(4).map { HomeTransaction(transaction: $0) }
+            recentTransfers = transfers.prefix(3).map { HomeTransaction(transaction: $0) }
         } catch {
             errorMessage = error.localizedDescription
         }

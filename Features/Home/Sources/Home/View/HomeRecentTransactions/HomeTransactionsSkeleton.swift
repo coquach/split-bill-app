@@ -39,7 +39,7 @@ struct HomeTransactionsSkeleton: View {
                 spacing: AppSpacing.md
             ) {
                 ForEach(
-                    0..<4,
+                    0..<3,
                     id: \.self
                 ) { _ in
                     TransactionRowSkeleton()

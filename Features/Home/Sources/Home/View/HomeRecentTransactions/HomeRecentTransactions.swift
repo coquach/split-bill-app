@@ -49,71 +49,71 @@ struct HomeRecentTransactions: View {
                 AppSpacing.xs
             )
 
-            // The one scrollable region on Home - everything else on the
-            // screen is fixed.
-            ScrollView(showsIndicators: false) {
-                VStack(
-                    spacing: AppSpacing.md
-                ) {
-                    if isLoading {
-                        ForEach(
-                            0..<4,
-                            id: \.self
-                        ) { _ in
-                            TransactionRowSkeleton()
+            // Same card as Transaction History: white, rows split by hairlines. Not scrollable - Home only shows the latest 3.
+            VStack(spacing: 0) {
+                if isLoading {
+                    ForEach(0..<3, id: \.self) { _ in
+                        TransactionRowSkeleton()
+                            .padding(.vertical, AppSpacing.sm)
+                    }
+                } else if transactions.isEmpty {
+                    EmptyTransactionsView()
+                } else {
+                    ForEach(transactions.indices, id: \.self) { index in
+                        if index > 0 {
+                            Rectangle()
+                                .fill(Color.appBorderDefault)
+                                .frame(height: 1)
                         }
-                    } else if transactions.isEmpty {
-                        EmptyTransactionsView()
-                    } else {
-                        ForEach(
-                            transactions
-                        ) { transaction in
-                            TransactionRow(
-                                title: transaction.title,
-                                subtitle: transaction.subtitle,
-                                amount: transaction.formattedAmount,
-                                dateText: transaction.dateText,
-                                isIncoming: transaction.isIncoming
-                            )
-                        }
+
+                        row(transactions[index])
                     }
                 }
-                .padding(AppSpacing.md)
             }
-            // ScrollView sizes to fit its content unless told otherwise -
-            // this is what actually makes the card expand, not a frame on
-            // an ancestor.
-            .frame(maxHeight: .infinity)
-            .background(
-                Color.appSurfacePrimary
-            )
+            .padding(.horizontal, AppSpacing.md)
+            .background(Color.appSurfacePrimary)
             .clipShape(
                 RoundedRectangle(
-                    cornerRadius: AppRadius.xl,
+                    cornerRadius: AppRadius.lg,
                     style: .continuous
                 )
             )
-            .overlay {
-                RoundedRectangle(
-                    cornerRadius: AppRadius.xl,
-                    style: .continuous
-                )
-                .stroke(
-                    Color.appBorderDefault,
-                    lineWidth: 1
-                )
-            }
         }
-        .frame(maxHeight: .infinity)
-        .background(
-            GeometryReader { geo in
-                Color.clear
-                    .onAppear { print("[DEBUG] HomeRecentTransactions resolved size: \(geo.size)") }
-                    .onChange(of: geo.size) { _, newValue in
-                        print("[DEBUG] HomeRecentTransactions resolved size changed: \(newValue)")
-                    }
+    }
+
+    private func row(_ transaction: HomeTransaction) -> some View {
+        HStack(spacing: AppSpacing.sm) {
+            Circle()
+                .fill(Color.appSurfaceSecondary)
+                .frame(width: 44, height: 44)
+                .overlay {
+                    Image(
+                        systemName: transaction.isIncoming
+                            ? "arrow.down.left"
+                            : "arrow.up.right"
+                    )
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Color.appTextPrimary)
+                }
+
+            VStack(alignment: .leading, spacing: AppSpacing.xxs) {
+                Text(transaction.title)
+                    .font(AppTypography.bodyMedium)
+                    .foregroundStyle(Color.appTextPrimary)
+                Text(transaction.subtitle)
+                    .font(AppTypography.caption)
+                    .foregroundStyle(Color.appTextSecondary)
             }
-        )
+
+            Spacer()
+
+            Text(transaction.formattedAmount)
+                .font(AppTypography.bodyMedium)
+                .foregroundStyle(
+                    transaction.isIncoming ? Color.appSuccess : Color.appError
+                )
+        }
+        .padding(.vertical, AppSpacing.sm)
     }
 }
 
@@ -142,7 +142,7 @@ private struct EmptyTransactionsView: View {
                     Color.appTextSecondary
                 )
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity)
         .padding(
             .vertical,
             AppSpacing.xl
