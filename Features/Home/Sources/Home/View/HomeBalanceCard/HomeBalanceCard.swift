@@ -110,6 +110,7 @@ struct HomeBalanceCard: View {
                 .foregroundStyle(Color.appTextOnPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.55)
+                .accessibilityIdentifier(UITestID.homeBalance)
 
             Text(currency)
                 .font(

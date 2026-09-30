@@ -22,6 +22,13 @@ public final class TransferFlowViewModel {
         case failed(DomainError)
     }
 
+    // MARK: - Input step
+
+    /// How long to wait after the last keystroke before looking the account
+    /// number up. Exposed so tests can wait on it instead of hardcoding
+    /// 400 ms and silently drifting when the value changes.
+    public static let accountLookupDebounce: Duration = .milliseconds(400)
+
     public var accountNumber: String = "" {
         didSet { scheduleAccountLookup() }
     }
@@ -122,7 +129,7 @@ public final class TransferFlowViewModel {
         lookupState = .loading
 
         lookupTask = Task { [walletRepository] in
-            try? await Task.sleep(for: .milliseconds(400))
+            try? await Task.sleep(for: Self.accountLookupDebounce)
             guard !Task.isCancelled else { return }
 
             do {

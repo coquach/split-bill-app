@@ -68,6 +68,8 @@ public struct TransferSuccessView: View {
                 secondary: .init(
                     title: "Back to Home",
                     style: .secondary,
+                    style: .accent,
+                    accessibilityID: UITestID.transferSuccessDone,
                     handler: onBackToHome
                 ),
                 // This screen sits on a gradient, so the bar must not paint

@@ -102,8 +102,14 @@ public struct TransactionHistoryView: View {
                 )
             } else {
                 VStack(alignment: .leading, spacing: AppSpacing.lg) {
-                    ForEach(sections) { section in
-                        sectionView(section)
+                    ForEach(Array(sections.enumerated()), id: \.element.id) { sectionIndex, section in
+                        // Rows are numbered across all sections so each
+                        // identifier stays unique within the list.
+                        sectionView(
+                            section,
+                            startingIndex: sections.prefix(sectionIndex)
+                                .reduce(0) { $0 + $1.items.count }
+                        )
                     }
                 }
             }
@@ -119,7 +125,8 @@ public struct TransactionHistoryView: View {
     }
 
     private func sectionView(
-        _ section: TransactionHistoryViewModel.Section
+        _ section: TransactionHistoryViewModel.Section,
+        startingIndex: Int
     ) -> some View {
         VStack(alignment: .leading, spacing: AppSpacing.xs) {
             Text(section.title)
@@ -127,20 +134,23 @@ public struct TransactionHistoryView: View {
                 .foregroundStyle(Color.appTextSecondary)
 
             VStack(spacing: 0) {
-                ForEach(section.items.indices, id: \.self) { index in
-                    if index > 0 {
+                ForEach(section.items.indices, id: \.self) { localIndex in
+                    let index = startingIndex + localIndex
+
+                    if localIndex > 0 {
                         Rectangle()
                             .fill(Color.appBorderDefault)
                             .frame(height: 1)
                     }
 
                     Button {
-                        onSelect(section.items[index])
+                        onSelect(section.items[localIndex])
                     } label: {
-                        row(section.items[index])
+                        row(section.items[localIndex])
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .accessibilityIdentifier("\(UITestID.historyRowPrefix).\(index)")
                 }
             }
             .padding(.horizontal, AppSpacing.md)

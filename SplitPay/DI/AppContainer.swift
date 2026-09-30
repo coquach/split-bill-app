@@ -5,6 +5,12 @@ final class AppContainer: @unchecked Sendable {
 
     init() {
         container = Container()
+        #if DEBUG
+        if UITestConfig.isEnabled {
+            Assembler([MockAppAssembly()], container: container)
+            return
+        }
+        #endif
         Assembler(
             [
                 SupabaseAssembly(),

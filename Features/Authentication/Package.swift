@@ -48,7 +48,10 @@ let package = Package(
 
         .testTarget(
             name: "AuthenticationTests",
-            dependencies: ["Authentication"]
+            dependencies: [
+                "Authentication",
+                .product(name: "Domains", package: "Domains"),
+            ]
         ),
     ]
 )

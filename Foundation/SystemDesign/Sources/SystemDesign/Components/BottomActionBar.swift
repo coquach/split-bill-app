@@ -30,6 +30,7 @@ public struct BottomActionBar: View {
         let icon: String?
         let isEnabled: Bool
         let isLoading: Bool
+        let accessibilityID: String?
         let handler: () -> Void
 
         public init(
@@ -38,6 +39,7 @@ public struct BottomActionBar: View {
             icon: String? = nil,
             isEnabled: Bool = true,
             isLoading: Bool = false,
+            accessibilityID: String? = nil,
             handler: @escaping () -> Void
         ) {
             self.title = title
@@ -45,6 +47,7 @@ public struct BottomActionBar: View {
             self.icon = icon
             self.isEnabled = isEnabled
             self.isLoading = isLoading
+            self.accessibilityID = accessibilityID
             self.handler = handler
         }
     }
@@ -134,6 +137,7 @@ public struct BottomActionBar: View {
             style: action.style,
             icon: action.icon,
             isLoading: action.isLoading,
+            accessibilityID: action.accessibilityID,
             action: action.handler
         )
         .disabled(!action.isEnabled || action.isLoading)

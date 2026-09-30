@@ -4,7 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "Domains",
-    platforms: [.iOS(.v17)],
+    platforms: [.iOS(.v17), .macOS(.v14)],
     products: [
         .library(
             name: "Domains",
@@ -19,8 +19,7 @@ let package = Package(
         .package(
             url: "https://github.com/supabase/supabase-swift.git",
             from: "2.55.2"
-        ),
-        .package(path: "../Network")
+        )
     ],
     targets: [
         .target(
@@ -31,7 +30,6 @@ let package = Package(
             name: "DomainDatas",
             dependencies: [
                 "Domains",
-                "Network",
                 .product(
                     name: "Supabase",
                     package: "supabase-swift"
@@ -42,6 +40,10 @@ let package = Package(
         .testTarget(
             name: "DomainsTests",
             dependencies: ["Domains"]
+        ),
+        .testTarget(
+            name: "DomainDatasTests",
+            dependencies: ["DomainDatas"]
         ),
     ]
 )

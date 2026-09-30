@@ -87,6 +87,7 @@ public struct TransferConfirmView: View {
                 primary: .init(
                     title: "Confirm & Send",
                     style: .primary,
+                    accessibilityID: UITestID.transferConfirm,
                     handler: onConfirm
                 ),
                 secondary: .init(

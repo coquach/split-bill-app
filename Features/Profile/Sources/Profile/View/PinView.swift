@@ -24,10 +24,12 @@ public struct PinSetupView: View {
                 SecureField("6-digit PIN", text: $pin)
                     .keyboardType(.numberPad)
                     .textContentType(.oneTimeCode)
+                    .accessibilityIdentifier(UITestID.profilePinField)
 
                 SecureField("Confirm PIN", text: $confirmation)
                     .keyboardType(.numberPad)
                     .textContentType(.oneTimeCode)
+                    .accessibilityIdentifier(UITestID.profilePinField)
             } header: {
                 Text("Transaction PIN")
             } footer: {
@@ -57,6 +59,7 @@ public struct PinSetupView: View {
                     }
                 }
                 .disabled(isSubmitting)
+                .accessibilityIdentifier(UITestID.profilePinSubmit)
             }
         }
         .navigationTitle("Set up PIN")
@@ -122,6 +125,7 @@ public struct ChangePinView: View {
                     text: $currentPin
                 )
                 .keyboardType(.numberPad)
+                .accessibilityIdentifier(UITestID.profilePinField)
             }
 
             Section("New PIN") {
@@ -130,12 +134,14 @@ public struct ChangePinView: View {
                     text: $newPin
                 )
                 .keyboardType(.numberPad)
+                .accessibilityIdentifier(UITestID.profilePinField)
 
                 SecureField(
                     "Confirm new PIN",
                     text: $confirmation
                 )
                 .keyboardType(.numberPad)
+                .accessibilityIdentifier(UITestID.profilePinField)
             }
 
             if let errorMessage {
@@ -164,6 +170,7 @@ public struct ChangePinView: View {
                     }
                 }
                 .disabled(isSubmitting)
+                .accessibilityIdentifier(UITestID.profilePinSubmit)
             }
         }
         .navigationTitle("Change PIN")

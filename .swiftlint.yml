@@ -11,3 +11,8 @@ identifier_name:
     error: 3 # only error
   excluded: # excluded via string array
     - id
+
+excluded:
+  - "*/.build"
+  - SplitPay/UITestSupport
+  - SplitPayUITests

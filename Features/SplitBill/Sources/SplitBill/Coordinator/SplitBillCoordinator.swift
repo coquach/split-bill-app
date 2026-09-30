@@ -128,6 +128,7 @@ public struct SplitBillCoordinator: View {
                 viewModel: ScanRepayViewModel(
                     splitQRRepository: dependencies.splitQRRepository
                 ),
+                mockScanPayload: dependencies.mockScanPayload,
                 onBack: onFinish,
                 onDecoded: { scanned in
                     router.navigate(to: SplitBillDestination.reviewRepayment(scanned))
@@ -249,15 +250,20 @@ extension SplitBillCoordinator {
         let splitBillRepository: ISplitBillRepository
         let splitQRRepository: ISplitQRRepository
         let repaymentRepository: IRepaymentRepository
+        // UI-test seam: a payload fed straight into ScanRepayView's decode
+        // path instead of the camera. nil in production.
+        let mockScanPayload: String?
 
         public init(
             splitBillRepository: ISplitBillRepository,
             splitQRRepository: ISplitQRRepository,
-            repaymentRepository: IRepaymentRepository
+            repaymentRepository: IRepaymentRepository,
+            mockScanPayload: String? = nil
         ) {
             self.splitBillRepository = splitBillRepository
             self.splitQRRepository = splitQRRepository
             self.repaymentRepository = repaymentRepository
+            self.mockScanPayload = mockScanPayload
         }
     }
 }

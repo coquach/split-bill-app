@@ -38,7 +38,11 @@ public struct RepaymentPinView: View {
                     .multilineTextAlignment(.center)
             }
 
-            OTPCodeInput(length: 6, code: $viewModel.pin)
+            OTPCodeInput(
+                length: 6,
+                code: $viewModel.pin,
+                accessibilityID: UITestID.repayPinInput
+            )
                 .frame(maxWidth: 340)
                 .frame(maxWidth: .infinity)
 
@@ -74,9 +78,10 @@ public struct RepaymentPinView: View {
             AppModal(
                 icon: Image(systemName: "exclamationmark.triangle.fill"),
                 title: "Payment Failed",
-                message: viewModel.errorMessage ?? "Something went wrong."
+                message: viewModel.errorMessage ?? "Something went wrong.",
+                accessibilityID: UITestID.errorModalTitle
             ) {
-                AppButton(title: "Try Again", style: .primary) {
+                AppButton(title: "Try Again", style: .primary, accessibilityID: UITestID.errorModalRetry) {
                     viewModel.retry()
                 }
             }

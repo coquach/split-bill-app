@@ -12,6 +12,7 @@ public struct AppSecureField: View {
     private let placeholder: String
     private let errorMessage: String?
     private let leadingIcon: String?
+    private let accessibilityID: String?
 
     @Binding
     private var text: String
@@ -25,12 +26,14 @@ public struct AppSecureField: View {
         text: Binding<String>,
         errorMessage: String? = nil,
         leadingIcon: String? = nil,
+        accessibilityID: String? = nil,
     ) {
         self.title = title
         self.placeholder = placeholder
         self._text = text
         self.errorMessage = errorMessage
         self.leadingIcon = leadingIcon
+        self.accessibilityID = accessibilityID
     }
 
     public var body: some View {
@@ -72,6 +75,7 @@ public struct AppSecureField: View {
                 .tint(Color.appPrimary)
                 .textInputAutocapitalization(.never)
                 .textContentType(.password)
+                .accessibilityID(accessibilityID)
 
                 Button {
                     isPasswordVisible.toggle()

@@ -17,7 +17,8 @@ public struct ProfileView: View {
                 profileCard
 
                 PinCard(
-                    hasPin: viewModel.hasPin
+                    hasPin: viewModel.hasPin,
+                    accessibilityID: UITestID.profilePinCard
                 ) {
                     if viewModel.hasPin {
                         isShowingChangePin = true
@@ -159,6 +160,7 @@ public struct ProfileView: View {
                 .stroke(Color.appError.opacity(0.25), lineWidth: 1)
             }
         }
+        .accessibilityIdentifier(UITestID.profileLogout)
         .disabled(viewModel.isSigningOut)
     }
 }

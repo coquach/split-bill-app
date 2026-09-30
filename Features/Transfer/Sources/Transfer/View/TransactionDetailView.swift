@@ -121,7 +121,11 @@ public struct TransactionDetailView: View {
         case .loaded(let detail):
             if detail.canCreateSplitBill {
                 BottomActionBar(
-                    primary: .init(title: "Split Bill", style: .primary) {
+                    primary: .init(
+                        title: "Split Bill",
+                        style: .primary,
+                        accessibilityID: UITestID.detailSplitBill
+                    ) {
                         onSplitBill(splitSource(for: detail))
                     },
                     secondary: .init(

@@ -4,12 +4,14 @@ import SwiftUI
 /// description field on TransferInput.
 public struct AppMultilineTextField: View {
     private let placeholder: String
+    private let accessibilityID: String?
     @Binding private var text: String
     @FocusState private var isFocused: Bool
 
-    public init(placeholder: String, text: Binding<String>) {
+    public init(placeholder: String, text: Binding<String>, accessibilityID: String? = nil) {
         self.placeholder = placeholder
         self._text = text
+        self.accessibilityID = accessibilityID
     }
 
     public var body: some View {
@@ -31,6 +33,7 @@ public struct AppMultilineTextField: View {
                 .padding(.horizontal, AppSpacing.sm)
                 .padding(.vertical, AppSpacing.xxs)
                 .focused($isFocused)
+                .accessibilityID(accessibilityID)
         }
         .frame(height: 88)
         .background(Color.appSurface)

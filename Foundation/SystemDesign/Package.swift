@@ -25,9 +25,5 @@ let package = Package(
                 .process("Supporting")
             ]
         ),
-        .testTarget(
-            name: "SystemDesignTests",
-            dependencies: ["SystemDesign"]
-        ),
     ]
 )

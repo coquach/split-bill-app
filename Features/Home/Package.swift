@@ -52,7 +52,11 @@ let package = Package(
         ),
         .testTarget(
             name: "HomeTests",
-            dependencies: ["Home"]
+            dependencies: [
+                "Home",
+                .product(name: "Domains", package: "Domains"),
+                .product(name: "Utils", package: "Utils"),
+            ]
         ),
     ]
 )

@@ -4,13 +4,19 @@ import SwiftUI
 /// currency label beside it. Used on TransferInput.
 public struct AmountField: View {
     private let currencyCode: String
+    private let accessibilityID: String?
     @Binding private var amountText: String
     @FocusState private var isFocused: Bool
     @State private var displayText: String = ""
 
-    public init(currencyCode: String = "VND", amountText: Binding<String>) {
+    public init(
+        currencyCode: String = "VND",
+        amountText: Binding<String>,
+        accessibilityID: String? = nil
+    ) {
         self.currencyCode = currencyCode
         self._amountText = amountText
+        self.accessibilityID = accessibilityID
     }
 
     public var body: some View {
@@ -21,6 +27,7 @@ public struct AmountField: View {
                 .foregroundStyle(Color.appError)
                 .multilineTextAlignment(.center)
                 .focused($isFocused)
+                .accessibilityID(accessibilityID)
                 .onChange(of: displayText) { _, newValue in
                     let digits = newValue.filter(\.isNumber)
                     if digits != amountText {

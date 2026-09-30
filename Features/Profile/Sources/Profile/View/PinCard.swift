@@ -11,6 +11,7 @@ import SystemDesign
 struct PinCard: View {
 
     let hasPin: Bool
+    var accessibilityID: String? = nil
     let action: () -> Void
 
     private var title: String {
@@ -99,5 +100,6 @@ struct PinCard: View {
             )
         }
         .buttonStyle(.plain)
+        .accessibilityID(accessibilityID)
     }
 }
