@@ -4,7 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "Domains",
-    platforms: [.iOS(.v17)],
+    platforms: [.iOS(.v17), .macOS(.v14)],
     products: [
         .library(
             name: "Domains",
@@ -42,6 +42,10 @@ let package = Package(
         .testTarget(
             name: "DomainsTests",
             dependencies: ["Domains"]
+        ),
+        .testTarget(
+            name: "DomainDatasTests",
+            dependencies: ["DomainDatas"]
         ),
     ]
 )

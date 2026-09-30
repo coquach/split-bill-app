@@ -29,7 +29,10 @@ let package = Package(
         ),
         .testTarget(
             name: "SplitBillTests",
-            dependencies: ["SplitBill"]
+            dependencies: [
+                "SplitBill",
+                .product(name: "Domains", package: "Domains"),
+            ]
         ),
     ]
 )
