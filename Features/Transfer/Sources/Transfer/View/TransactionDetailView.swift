@@ -126,7 +126,7 @@ public struct TransactionDetailView: View {
                     },
                     secondary: .init(
                         title: "Back to Home",
-                        style: .accent,
+                        style: .secondary,
                         handler: onBackToHome
                     )
                 )
@@ -134,7 +134,7 @@ public struct TransactionDetailView: View {
                 BottomActionBar(
                     primary: .init(
                         title: "Back to Home",
-                        style: .accent,
+                        style: .primary,
                         handler: onBackToHome
                     )
                 )
@@ -147,7 +147,7 @@ public struct TransactionDetailView: View {
                 },
                 secondary: .init(
                     title: "Back to Home",
-                    style: .accent,
+                    style: .secondary,
                     handler: onBackToHome
                 )
             )

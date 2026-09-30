@@ -158,8 +158,10 @@ public final class SupabaseRestClient: Sendable {
         let response: URLResponse
         do {
             (data, response) = try await session.data(for: request)
-        } catch {
-            throw DomainError.network
+        } catch let error as URLError where error.code == .cancelled {
+            throw CancellationError()
+        } catch let error as URLError {
+            throw RepositoryErrorMapper.map(error)
         }
 
         guard let http = response as? HTTPURLResponse else {

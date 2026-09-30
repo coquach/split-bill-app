@@ -22,8 +22,6 @@ public final class TransferFlowViewModel {
         case failed(DomainError)
     }
 
-    // MARK: - Input step
-
     public var accountNumber: String = "" {
         didSet { scheduleAccountLookup() }
     }
@@ -31,8 +29,6 @@ public final class TransferFlowViewModel {
     public var descriptionText: String = ""
 
     public private(set) var lookupState: AccountLookupState = .idle
-
-    // MARK: - Confirm / OTP step
 
     public private(set) var draft: TransferDraft?
     public var pin: String = ""
@@ -56,22 +52,14 @@ public final class TransferFlowViewModel {
         self.transferRepository = transferRepository
     }
 
-    // MARK: - Input step
-
     public var amount: Amount {
         Amount(Double(amountText) ?? 0)
     }
 
-    /// `nil` while the balance hasn't loaded — the view shows that state
-    /// rather than pretending the wallet is empty.
     public var availableBalance: Amount? {
         sessionStore.availableBalance
     }
 
-    /// Only ever true when we actually know the balance. If the fetch hasn't
-    /// landed we let the transfer through and let `create_transfer` reject
-    /// it: the server re-checks the real balance regardless, and blocking on
-    /// a number we failed to load would strand the user with no way forward.
     public var exceedsAvailableBalance: Bool {
         guard let balance = sessionStore.availableBalance else {
             return false
