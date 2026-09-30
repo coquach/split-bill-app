@@ -1,96 +1,216 @@
-# SplitPay — split-bill-app
+# SplitPay
 
-An iOS app for splitting bills: pick a past transfer, divide it among
-participants, share a QR for everyone to repay, and track who has paid.
+**SplitPay** is an iOS banking-style wallet app. A user sends money to another
+SplitPay wallet, and can then **split the cost of that transaction** among
+friends: the app generates a QR code, friends scan it and pay their share, and
+the requester tracks who has paid.
 
-## Features
+It is a native SwiftUI app with a Supabase (Postgres + Auth) backend, built as
+a modular Swift Package project with a dedicated design system, dependency
+injection, and both unit and UI test suites.
 
-- **Wallet & dashboard** — balance hero card, recent transactions, quick
-  actions (Transfer / Split Bill / Scan QR).
-- **Transfer money** — look up a receiver by wallet number or phone
-  (debounced account lookup), pick a quick amount, confirm, verify by OTP,
-  and see the receipt.
-- **Transaction history** — filter by Transfers / Repayments, drill into a
-  transaction's detail, and turn any sent transfer into a split bill.
-- **Split bills** — split an amount equally across participants with the
-  requester absorbing the remainder, share a QR code, track paid slots.
-- **Repay by QR** — scan a split-bill QR, review the repayment, verify by
-  PIN, done. (On the simulator the scanner is injected via a test seam.)
-- **Profile** — personal info, PIN setup / change, sign out.
+> **Reading guide.** Managers: read [Project at a glance](#1-project-at-a-glance),
+> [What the app does](#2-what-the-app-does), and [Known issues and open
+> decisions](#13-known-issues-and-open-decisions). Engineers: everything below
+> [Tech stack](#3-tech-stack) is the architecture and working guide.
 
-## Tech stack
+---
 
-| Layer | Choice |
+## Contents
+
+1. [Project at a glance](#1-project-at-a-glance)
+2. [What the app does](#2-what-the-app-does)
+3. [Tech stack](#3-tech-stack)
+4. [Architecture](#4-architecture)
+5. [Repository layout](#5-repository-layout)
+6. [Design system](#6-design-system)
+7. [Business rules](#7-business-rules)
+8. [Backend contract (Supabase)](#8-backend-contract-supabase)
+9. [Getting started](#9-getting-started)
+10. [Testing](#10-testing)
+11. [Code quality and tooling](#11-code-quality-and-tooling)
+12. [Project history and ownership](#12-project-history-and-ownership)
+13. [Known issues and open decisions](#13-known-issues-and-open-decisions)
+14. [Roadmap](#14-roadmap)
+15. [Glossary](#15-glossary)
+
+---
+
+## 1. Project at a glance
+
+| | |
 |---|---|
-| UI | SwiftUI (iOS 17+), design-system components in `SystemDesign` |
-| Architecture | MVVM + Coordinator, `@MainActor @Observable` view models |
-| Navigation | `NavigationPath`-based `Router` package |
-| DI | [Swinject](https://github.com/Swinject/Swinject) assemblies |
-| Backend | Supabase (Postgres + Auth) via `DomainDatas` repositories |
-| Money | `Amount` type — fractional dong, no `Int64` balance math |
-| Errors | `DomainError` — typed, user-facing messages through `LocalizedError` |
-| Tests | Swift Testing (`@Test`/`#expect`) for units, XCUITest for UI |
+| **Product** | In-app wallet: transfer money between SplitPay wallets, split a past transaction, repay a split by scanning a QR code |
+| **Platform** | iOS, native. App target deploys to **iOS 26.2** |
+| **Language / UI** | Swift 6.2 toolchain, SwiftUI |
+| **Architecture** | Feature-modular MVVM + Coordinator, one local Swift Package per feature and per shared layer |
+| **Backend** | Supabase: Postgres functions (RPC) over PostgREST, Supabase Auth |
+| **Third-party code** | Only two libraries: `supabase-swift` (auth) and `Swinject` (dependency injection) |
+| **Size** | 1 app target + 10 local packages, about 200 unit tests, 34 UI tests |
+| **Timeline** | First commit 2026-09-07, latest 2026-09-30 (about 100 commits) |
 
-## Requirements
+### Status by area
 
-- Xcode 26+ (Swift 6.2 toolchain)
-- iOS 17+ deployment target
-- An iOS simulator (iPhone 17 Pro or newer) for the feature-package and UI tests
+| Area | Status | Notes |
+|---|---|---|
+| Sign in / Sign up | Working | Email + password through Supabase Auth |
+| Home dashboard | Working | Balance, quick actions, 3 latest transactions, live refresh |
+| Transfer (send money) | Working | Receiver lookup, PIN authorization, receipt, detail |
+| Transaction history | Working | Filter, grouped by day, detail |
+| Split a bill | Working | Setup, QR, edit, cancel, details, history |
+| Repay by scanning QR | Working | Needs a real device camera (simulator uses a test seam) |
+| Profile and PIN | Working | Set up PIN, change PIN (verifies current PIN), sign out |
+| Automated tests | Working | Unit tests per package, XCUITest suite on a mock backend |
+| CI pipeline | Not present | Tests run locally through scripts |
+| Backend SQL in repo | Not present | Database functions live only in Supabase (see [section 13](#13-known-issues-and-open-decisions)) |
 
-## Getting started
+---
 
-```bash
-open SplitPay.xcodeproj     # select the SplitPay scheme, run
+## 2. What the app does
+
+### Navigation model
+
+After the launch animation the app shows one of three roots, decided by the
+auth state:
+
+```mermaid
+stateDiagram-v2
+    [*] --> Loading
+    Loading --> Unauthenticated: no valid session
+    Loading --> Authenticated: valid session
+    Unauthenticated --> Authenticated: sign in / sign up
+    Authenticated --> Unauthenticated: sign out / session expired
+    Authenticated --> Authenticated: app returns to foreground, session re-validated
 ```
 
-Secrets live in `Secrets.xcconfig` (Supabase URL + anon key) — see
-`SplitPay/Config`. Without them the real-backend build `fatalError`s at DI
-time; UI tests don't need them (they swap in the mock assembly).
+The authenticated root is a **tab bar**: **Home**, **History**, **Split**,
+**Profile**, plus a floating **Scan QR** button shown on each tab's root
+screen. Sending money and scanning open as full-screen flows on top of the tabs.
 
-## Project layout
+### Screens and flows
 
-The app is a plain Xcode project (app target: `SplitPay`) plus a set of local
-SwiftPM packages — every feature and foundation layer builds and tests on its
-own:
+**Authentication**
+- *Login* and *Register*. Register validates: name and phone required, email
+  format, password of at least 8 characters, matching confirmation.
 
-```
-├── SplitPay.xcodeproj        # App target only; thin shell over the packages
-├── SplitPay/                 # App entry point, DI wiring, UITestSupport
-├── Core/
-│   └── CommonUi/             # Shared SwiftUI pieces (AppAlert, skeletons…)
-├── Foundation/
-│   ├── Domains/              # Models, DomainError, SplitCalculator,
-│   │                         # SessionStore, I*Repository protocols
-│   │                         # (+ DomainDatas target: Supabase impls,
-│   │                         #  Postgres decoding, error mapping)
-│   ├── Router/               # NavigationPath-based routing
-│   ├── Utils/                # Formatting helpers (DateFormatting…)
-│   ├── Loggers/              # Logging
-│   └── SystemDesign/         # Design system (components, theme, UITestID)
-├── Features/
-│   ├── Authentication/       # Login / register (validators + view models)
-│   ├── Home/                 # Dashboard: profile, wallet, recent transfers
-│   ├── Transfer/             # Transfer flow, history, transaction detail
-│   ├── SplitBill/            # Split setup, QR flow, history, repay by scan
-│   └── Profile/              # Profile, PIN setup/change, sign out
-├── design/                   # Design references
-├── SplitPayUITests/          # XCUITest suite (mock backend, one launch per test)
-├── swiftgen.yml              # Generated asset constants (SystemDesign)
-└── scripts/                  # run_tests.sh (unit), run_ui_tests.sh (UI)
+**Home**
+- Greeting, balance card (balance, wallet last four digits, holder name),
+  **Transfer** and **Split** quick actions, and the **3 most recent
+  transactions** with a *See All* link to History.
+- Refreshes automatically when a transfer or repayment completes.
+
+**Transfer** (full-screen flow from Home)
+
+```mermaid
+flowchart LR
+    A["Input<br/>receiver wallet number<br/>amount · note"] --> B["Confirm"]
+    B --> C["Enter 6-digit PIN"]
+    C --> D["Success receipt"]
+    D --> E["Transaction detail"]
 ```
 
-## Architecture
+- Receiver is found by **wallet number** with a debounced lookup (400 ms). A
+  green check or red mark shows the lookup result.
+- Amount can be typed or picked from quick chips (500,000 / 1,000,000 /
+  2,000,000 / 5,000,000 VND). If the amount is above the available balance, a
+  red line says so and Continue stays disabled.
+- Confirm shows receiver, amount and note; the PIN step authorizes the
+  transfer; the server is the final authority on balance and PIN.
 
-### Layers
+**History and transaction detail** (History tab)
+- Filter **All / Transfer / Repayment**; rows grouped by day (Today,
+  Yesterday, date).
+- Detail shows status (a green check when completed), transaction ID,
+  receiver, description and date. Bottom actions depend on the transaction:
+  - not split yet and eligible: **Split Bill** opens the split setup for it
+  - already linked to a split: **View Split** opens that split's details
+  - always: **Back to Home**
+
+**Split** (Split tab)
+- Two tabs, **Your Split** (splits you created) and **Split Transfer** (splits
+  you paid into), each with an **Active / Inactive** filter.
+- *Setup*: choose 2 to 10 participants; the app shows the equal share and what
+  the requester covers. **Generate QR** creates the split.
+- *QR screen*: the code friends scan; save or share.
+- *Details*: progress, paid participants, pending count; for the creator,
+  **Get QR**, **Edit** and **Cancel Split** (cancelling makes the split
+  inactive so nobody can pay it any more).
+
+**Repay by QR** (Scan button)
+
+```mermaid
+flowchart LR
+    A["Scan QR<br/>(square scan area)"] --> B["Review split<br/>who, how much, slots left"]
+    B --> C["Enter 6-digit PIN"]
+    C --> D["Success"]
+```
+
+**Profile** (Profile tab)
+- Name, email and phone, a **Change / Set up Transaction PIN** row, and
+  **Log Out** (with a confirmation pop-up).
+- PIN flow reuses the PIN-entry look: new PIN then confirm it; when a PIN
+  already exists, the current PIN is verified first, then the new one is
+  entered and confirmed.
+
+---
+
+## 3. Tech stack
+
+| Concern | Choice | Detail |
+|---|---|---|
+| Language | Swift | Toolchain **6.2.3** (`.swift-version`); packages use tools version 6.2; the app target compiles in Swift 5 language mode with `MainActor` default isolation |
+| UI | **SwiftUI** | No UIKit screens. One `UIViewControllerRepresentable` wraps the camera scanner |
+| State | **Observation** (`@Observable`, `@MainActor`) | View models are plain observable classes; views hold them in `@State` |
+| Concurrency | Swift concurrency (`async/await`, `Task`, `AsyncStream`) | Combine is not used |
+| Architecture | **MVVM + Coordinator** | See [section 4](#4-architecture) |
+| Navigation | `NavigationStack` + a small `Router` package (`NavigationPath`) | |
+| Dependency injection | **Swinject 2.10.0** | Used only in the composition root (`SplitPay/DI`) |
+| Backend | **Supabase** | Postgres functions called through PostgREST RPC |
+| Auth | **supabase-swift 2.55.3** | `SupabaseClient`, used only by `AuthRepository` |
+| Data access | Hand-written `SupabaseRestClient` over `URLSession` | All non-auth reads and writes |
+| Camera / QR | AVFoundation (`AVCaptureMetadataOutput`) | QR images are generated with Core Image |
+| Design system | In-house `SystemDesign` package | Tokens, components, test IDs |
+| Unit tests | **Swift Testing** (`@Test`, `#expect`) | Hand-written mocks |
+| UI tests | **XCUITest** | Runs the real app against an in-memory mock backend |
+| Lint / format | SwiftLint (strict) and SwiftFormat | See [section 11](#11-code-quality-and-tooling) |
+| Secrets | `Secrets.xcconfig` (git-ignored) injected into `Info.plist` | |
+
+Third-party dependencies are deliberately minimal: two direct packages, plus
+their transitive dependencies (`swift-crypto`, `swift-http-types`,
+`swift-asn1`, `swift-clocks`, `swift-concurrency-extras`,
+`xctest-dynamic-overlay`).
+
+---
+
+## 4. Architecture
+
+### 4.1 Principles
+
+1. **Organized by feature, not by layer.** Each feature (Transfer, SplitBill,
+   Home, Profile, Authentication) is its own Swift Package, so it builds and is
+   tested alone.
+2. **Features depend on protocols, never on the backend.** Every data source is
+   an `I*Repository` protocol in `Domains`; the Supabase implementations live
+   in a separate target. A feature cannot import Supabase even by accident.
+3. **One place wires everything.** The app target is the composition root. It
+   is the only code that knows which concrete type satisfies which protocol.
+4. **Features never import each other.** Only the app target knows about
+   several features at once, and it composes them.
+5. **One view model per flow, not per screen.** For example one
+   `TransferFlowViewModel` backs Input, Confirm, PIN and Success, so the draft
+   and the result live in one place instead of being passed through every
+   screen.
+
+### 4.2 Layers
 
 ```mermaid
 flowchart TB
-    subgraph APP["App — SplitPay · composition root"]
+    subgraph APP["App target: SplitPay (composition root)"]
         UI["SplitPayApp · AppCoordinator · AppTabView"]
-        DI["AppContainer<br/>+ Swinject assemblies"]
+        DI["AppContainer + Swinject assemblies"]
     end
 
-    subgraph FEATURES["Feature packages — MVVM + Coordinator"]
+    subgraph FEATURES["Feature packages: MVVM + Coordinator"]
         AUTH["Authentication"]
         HOME["Home"]
         TRANS["Transfer"]
@@ -98,295 +218,547 @@ flowchart TB
         PROF["Profile"]
     end
 
-    subgraph DOMAIN["Domains"]
-        PROTO["I*Repository protocols<br/>models · DomainError · SplitCalculator · SessionStore"]
+    subgraph SHARED["Shared packages"]
+        SD["SystemDesign<br/>tokens · components"]
+        RT["Router"]
+        UT["Utils"]
     end
 
-    subgraph DATA["DomainDatas"]
-        IMPL["Supabase repository implementations"]
+    subgraph DOMAIN["Domains target"]
+        PROTO["I*Repository protocols · models<br/>DomainError · SplitCalculator · SessionStore"]
+    end
+
+    subgraph DATA["DomainDatas target"]
+        IMPL["Supabase repository implementations<br/>REST client · DTOs · error mapper"]
     end
 
     UI --> FEATURES
-    FEATURES -- "depends only on" --> PROTO
+    FEATURES --> PROTO
+    FEATURES --> SD
+    FEATURES --> RT
     IMPL -. "implements" .-> PROTO
-    DI -- "binds protocol → impl" --> IMPL
+    DI -- "binds protocol to implementation" --> IMPL
     DI -- "injects repositories" --> FEATURES
     IMPL --> SUPA["Supabase"]
 ```
 
-**The one rule that makes this testable:** features depend only on the
-`I*Repository` protocols declared in `Domains` — never on Supabase. The
-implementations live in `DomainDatas` and are wired up in the app target's
-`AppContainer`, so any layer above the protocols can be tested with
-hand-written mocks (and the whole app can run on in-memory mocks for UI
-tests).
+### 4.3 Inside a feature module
 
-### Dependency injection
+Every feature is shaped the same way:
 
-`AppContainer` is the **composition root** — the only place that knows which
-concrete types exist. It builds one Swinject `Container` and applies
-assemblies in order; view models receive their repositories through `resolve`
-at coordinator construction. Wiring mistakes crash at launch
-(`fatalError` on unregistered type), not at first use. All repositories are
-registered `.inObjectScope(.container)` (singletons).
-
-| Assembly | Registers |
-|---|---|
-| `SupabaseAssembly` | `SupabaseClient` (auth + PostgREST, credentials from `Secrets.xcconfig`) |
-| `RestAssembly` | `SupabaseRestClient` + `AccessTokenProviding` (bridges the session token into REST headers) |
-| `DomainDataAssembly` | the 8 `I*Repository` protocols → Supabase-backed implementations |
-| `SessionAssembly` | `SessionStore` |
-| `MockAppAssembly` (`#if DEBUG`) | the same 8 protocols + `SessionStore`, backed by `MockAppStore` / `UITestSeedData` |
-
-```mermaid
-flowchart LR
-    AC["AppContainer"]
-    AC --> SEL{"-UITest<br/>set?"}
-    SEL -- no --> REAL["SupabaseAssembly<br/>RestAssembly<br/>DomainDataAssembly<br/>SessionAssembly"]
-    SEL -- yes --> MOCK["MockAppAssembly<br/>(#if DEBUG)"]
-    REAL -- "8× I*Repository → Supabase impls<br/>SessionStore" --> FEAT["Feature view models"]
-    MOCK -- "8× I*Repository → in-memory mocks<br/>SessionStore (seeded)" --> FEAT
+```
+Features/<Feature>/Sources/<Feature>/
+├── View/         SwiftUI views. Layout only, no business logic
+├── ViewModel/    @MainActor @Observable state + actions; one per flow
+├── Coordinator/  Owns the module's navigation; builds its screens
+└── (models)      Small feature-local types
 ```
 
-#### Two Supabase clients — and why
+- **View** renders state and forwards taps. It holds no business rules.
+- **ViewModel** owns state, validation, and calls to repositories. It is where
+  the logic (and most unit tests) live.
+- **Coordinator** owns a `NavigationStack` and a `Router`, builds each screen
+  and passes it only what it needs (closures for "go back", "finish", etc.).
 
-The data layer deliberately talks to Supabase through **two clients**, split
-by what each is good at:
-
-- **`SupabaseClient` (official SDK) — auth only.** `AuthRepository` is its
-  only consumer: sign in/up/out, the `authStateChanges` stream, session
-  persistence and token refresh. Re-implementing those is not worth it.
-- **`SupabaseRestClient` (hand-rolled, in `DomainDatas/Network/`) — all data
-  reads/writes.** Its 7 repository consumers call `rpc`/`select`/`update`
-  over `URLSession` directly, which buys: a centralized JSON decoder that
-  handles Postgres `timestamptz` microseconds (`now()` carries 6 fractional
-  digits; ISO8601 parses only 3), one owned choke point that turns every
-  non-2xx PostgREST body into a typed `DomainError`, and an `URLSession`-
-  injectable client that's easy to stub in tests — none of which the SDK's
-  `PostgrestClient` surfaces cheaply.
-- **The bridge:** `RestAssembly` wires `AccessTokenProviding` around
-  `SupabaseClient.auth.session`, so the REST client only needs a token and
-  never knows who manages the session.
-
-`Foundation/Network` (a generic `APIClientService` HTTP layer) used to sit
-alongside these and duplicate 90% of `SupabaseRestClient` — nothing imported
-it, so it was deleted.
-
-### Module dependency graph
+### 4.4 Module dependency graph
 
 ```mermaid
 flowchart LR
     subgraph Features
         Auth[Authentication]
-        Home[Home]
-        Transfer[Transfer]
+        Home
+        Transfer
         Split[SplitBill]
-        Profile[Profile]
+        Profile
     end
-    subgraph Core
-        CommonUi
+    subgraph Shared
         SystemDesign
         Router
-    end
-    subgraph Foundation
-        Domains
-        DomainDatas
         Utils
         Loggers
     end
+    subgraph Data
+        Domains
+        DomainDatas
+    end
 
-    Auth --> Domains & Router & SystemDesign & CommonUi
-    Home --> Domains & Router & SystemDesign & CommonUi & Utils
+    Auth --> Domains & Router & SystemDesign
+    Home --> Domains & Router & SystemDesign & Utils
     Transfer --> Domains & Router & SystemDesign
     Split --> Domains & Router & SystemDesign
     Profile --> Domains & SystemDesign
-    CommonUi --> SystemDesign
     DomainDatas --> Domains
+    DomainDatas --> Supa["supabase-swift"]
 ```
 
-### Request → UI data flow
+`SystemDesign`, `Router`, `Utils` and `Loggers` depend on nothing in the
+project. No feature depends on another feature.
+
+### 4.5 Composition root and dependency injection
+
+`SplitPay/DI/AppContainer.swift` builds one Swinject container from
+*assemblies*, small classes that each register a group of services:
+
+| Assembly | Registers |
+|---|---|
+| `SupabaseAssembly` | `SupabaseClient` (auth), with URL and key from the bundle |
+| `RestAssembly` | `SupabaseRestClient` and an `AccessTokenProviding` bridge |
+| `DomainDataAssembly` | The 8 `I*Repository` protocols mapped to their Supabase implementations |
+| `SessionAssembly` | `SessionStore` |
+| `MockAppAssembly` (debug only) | The same protocols backed by in-memory mocks, used by UI tests |
+
+`SplitPayApp` resolves each repository once and hands them to `AppCoordinator`.
+Swinject appears **only** in this folder. Every feature receives plain
+protocol-typed values through a normal initializer, so reading a feature never
+requires knowing Swinject exists.
+
+Registering a service is required before it can be resolved. A missing
+registration crashes at launch with `Dependency not registered: ...`, not at
+first use, so wiring mistakes are caught immediately.
+
+### 4.6 App-level coordination
+
+- **`AppCoordinator`** holds the root state (`loading`, `unauthenticated`,
+  `authenticated`), listens to the `authStateChanges` stream from the auth
+  repository, and re-validates the session whenever the app returns to the
+  foreground.
+- **`AppTabView`** owns the tab bar and is the only place that knows about more
+  than one feature. It keeps a `Router` for the History and Split tabs so switching tabs can
+  reset their stacks, and presents the full-screen flows (Transfer, Scan, Split from a
+  transaction).
+- A module's coordinator never talks to another module's coordinator. When
+  Transfer needs "open the split for this transaction", it calls a closure; the
+  app target turns that into the Split flow.
+
+### 4.7 Data flow
 
 ```mermaid
 sequenceDiagram
     participant V as View (SwiftUI)
     participant VM as ViewModel (@Observable)
     participant R as I*Repository (protocol)
-    participant S as Supabase impl (DomainDatas)
+    participant S as Supabase implementation
+    participant DB as Supabase (PostgREST)
 
-    V->>VM: user intent (tap / type)
-    VM->>R: await repo.someCall()
-    R->>S: PostgREST query / RPC
-    S-->>R: rows or Postgres error
-    Note over S,R: RepositoryErrorMapper → DomainError (typed, displayable)
-    R-->>VM: domain model / DomainError
-    VM-->>V: state change → SwiftUI re-render
+    V->>VM: user action (tap, type)
+    VM->>R: await repository call
+    R->>S: same call, concrete type
+    S->>DB: POST /rest/v1/rpc/function
+    DB-->>S: rows, or error body
+    Note over S: decode DTO to domain model<br/>map any error to DomainError
+    S-->>R: domain model or DomainError
+    R-->>VM: result
+    VM-->>V: state change, SwiftUI re-renders
 ```
 
-### Key flows
+### 4.8 Two Supabase clients, on purpose
 
-**Transfer** — `History → Detail → Input (receiver lookup, amount, note) →
-Confirm → OTP → Success`. The receiver lookup is debounced
-(`TransferFlowViewModel.accountLookupDebounce`, a public constant unit tests
-sleep on). Amount exceeding the available balance disables Continue and shows
-an inline error.
+| Client | Used for | Why |
+|---|---|---|
+| `SupabaseClient` (official SDK) | Authentication only | Session persistence, token refresh and the auth-state stream are not worth re-implementing |
+| `SupabaseRestClient` (in-house, `URLSession`) | Every data call | One central place for headers, date decoding and error mapping; easy to stub |
 
-**Split bill** — from a sent transfer's detail (or the Split tab):
-`Setup (participants stepper → equal split) → QR screen → share/save`. The
-`SplitCalculator` divides to fractional dong and lets the requester absorb
-the remainder so the parts always add back to the total (40 / 3 → 13.33 +
-13.33 + 13.34).
+`SupabaseRestClient` details:
+- Calls `POST {SUPABASE_URL}/rest/v1/rpc/<function>` with a JSON body, plus
+  simple `select` / `update` for two table reads.
+- Sends `apikey` and `Authorization: Bearer <user access token>`; the server
+  derives the user from the token.
+- Decodes Postgres timestamps including microseconds, and Postgres `numeric`
+  values that may arrive as numbers or strings (`PostgresNumeric`).
+- Turns any non-2xx response body (`{message, code, details, hint}`) into a
+  typed `DomainError` through `RepositoryErrorMapper`.
 
-**Repay by QR** — `Scan QR → Review → PIN → Success`. The scanned payload is
-decoded by the view model's real `decode()` path — the UI-test scanner seam
-only injects the payload string, never a pre-decoded result, so error
-scenarios still exercise the real code.
+The access token reaches the REST client through `AccessTokenProviding`, a
+small protocol wrapped around the SDK session, so the REST client never knows
+who manages the session.
 
-## Running the tests
+### 4.9 Shared state and live refresh
 
-### Unit tests (~206 tests, 10 packages)
+- **`SessionStore`** caches the available balance after it is fetched at login.
+  Other modules read it and do not re-fetch. It is **for UX only** (for example
+  disabling Continue early); the server re-checks the real balance on submit.
+  `nil` means "unknown", which is deliberately different from zero.
+- **Live refresh.** When a transfer or repayment succeeds, its view model posts
+  `Notification.Name.transactionsDidChange` (defined in `Domains/AppEvents.swift`).
+  `HomeViewModel`, `TransactionHistoryViewModel` and `SplitHistoryViewModel`
+  listen for it and reload in place, without a spinner, so the new transaction
+  appears immediately. Home also queues a reload if one arrives while another
+  is running, so the last change is never dropped.
 
-The suite uses [Swift Testing](https://developer.apple.com/xcode/) (`@Test`,
-`#expect`) throughout — there is no XCTest.
+### 4.10 Error handling
 
-```bash
-./scripts/run_tests.sh
+- `DomainError` is the single typed error the UI sees. It has a user-facing
+  `message` and conforms to `LocalizedError`, so `error.localizedDescription`
+  is always readable.
+- `RepositoryErrorMapper` converts server errors (matched on the error text
+  such as `INVALID_PIN`, `INSUFFICIENT_BALANCE`, `SPLIT_BILL_LOCKED`) and
+  network errors into cases like `.invalidPin`, `.insufficientBalance`,
+  `.network`. Anything unrecognized becomes `.unknown(code:message:)`.
+- Authentication has its own `AuthError` (invalid credentials, email already
+  registered, weak password, rate limited, network, unknown).
+- Screens show errors in the shared `AppModal` or `AlertBanner`.
+
+### 4.11 Money
+
+Money uses `Amount`, a wrapper around `Double`. This is a deliberate team
+choice: VND has no sub-unit, so display always uses 0 fraction digits. Because
+it is a `Double`, **never compare two amounts with `==` after arithmetic**;
+compare with a small epsilon. The split calculator works on fractional values
+internally and formats the result.
+
+---
+
+## 5. Repository layout
+
+```
+split-bill-app/
+├── SplitPay.xcodeproj         Xcode project: the app target and the UI test target only
+├── SplitPay/                  App target
+│   ├── Application/           SplitPayApp (entry), AppCoordinator, config readers
+│   ├── DI/                    AppContainer + assemblies (Swinject lives only here)
+│   ├── Presentation/          AppTabView, launch screen
+│   ├── UITestSupport/         Mock backend used by UI tests (debug only)
+│   └── Config/                Debug / Release .xcconfig, Secrets.xcconfig.example
+├── Features/
+│   ├── Authentication/        Login, register, validators
+│   ├── Home/                  Dashboard, balance card, quick actions, recent transactions
+│   ├── Transfer/              Send-money flow, history, transaction detail
+│   ├── SplitBill/             Split setup, QR, details, history, scan and repay
+│   └── Profile/               Profile, PIN setup/change, sign out
+├── Foundation/
+│   ├── Domains/               Models, repository protocols, DomainError, SplitCalculator,
+│   │                          SessionStore (target: Domains)
+│   │                          + Supabase implementations, DTOs, REST client (target: DomainDatas)
+│   ├── SystemDesign/          Design tokens and reusable components
+│   ├── Router/                NavigationPath-based routing
+│   ├── Utils/                 Date formatting helpers
+│   └── Loggers/               Placeholder, not used yet
+├── SplitPayUITests/           XCUITest suite
+├── scripts/                   run_tests.sh, run_ui_tests.sh
+├── docs/                      Test-suite report
+├── design/                    Logo and brand assets
+├── swiftgen.yml               Asset constants generation config
+└── README.md                  This file
 ```
 
-This runs every package and prints a PASS/FAIL summary; it exits non-zero if
-anything failed. One failing package never stops the others.
+---
 
-- `Foundation/{Utils,Router,Domains}` test on the macOS host
-  (`swift test` — fast, no simulator needed).
-- `Core/CommonUi` and the five `Features/*` packages import `SystemDesign`,
-  so they test in the iOS simulator (`xcodebuild test`). The script picks the
-  booted simulator, falling back to the first available iPhone.
+## 6. Design system
 
-Useful variations:
+The `SystemDesign` package is the single source of truth for look and feel.
+Screens use tokens and components, not raw values.
+
+**Color tokens** (`AppColors`)
+
+| Token | Value | Use |
+|---|---|---|
+| `appPrimary` | `#346699` | Brand blue: tab tint, accents, borders, links |
+| `appPrimaryBold` | `#1E4D83` | Fill of the primary button |
+| `appSecondary` | `#5BA8CD` | Secondary accent |
+| `appSubtle` | `#C1E5E0` | Soft brand tint |
+| `appBackground` | `#F8F7F3` | Screen background (warm off-white) |
+| `appSurfacePrimary` | `#FFFFFF` | Cards |
+| `appTextPrimary` / `Secondary` | `#1C1C1E` / `#48484A` | Text |
+| `appSuccess` / `appWarning` / `appError` / `appInfo` | `#44A080` / `#DF9631` / `#D15252` / `#4A8EC5` | Status colors, each with a pale background token |
+
+**Spacing** (`AppSpacing`): 4, 8, 12, 16, 20, 24, 32, 40, 48.
+**Radius** (`AppRadius`): 8, 12, 16, 24, and full.
+**Typography** (`AppTypography`): display 32 bold, title 26 bold, body 16,
+bodyMedium 16 medium, label 14 semibold, caption 13.
+
+**Components** (all in `Foundation/SystemDesign/.../Components`): `AppButton`
+(primary, secondary, accent, tinted, destructive, destructive-secondary),
+`BottomActionBar`, `AppNavBar`, `AppModal` with `modalOverlay`, `AlertBanner`,
+`AppAlert`, `AppTextField`, `AppSecureField`, `AppIconTextField`,
+`AppMultilineTextField`, `AmountField`, `QuickAmountChipRow`, `AppStepper`,
+`OTPCodeInput` (PIN boxes), `NumericKeypadTray`, `Avatar`, `InfoCard`,
+`DividedInfoStack`, `SettingsRow`, `StatusBadge`, `SplitRow`, `ParticipantRow`,
+`PendingParticipantsRow`, `SkeletonView`, `EmptyStateView`, `QRCard`,
+`QRScannerView`, progress views, and `UITestID` (accessibility identifiers for
+tests).
+
+---
+
+## 7. Business rules
+
+| Rule | Where |
+|---|---|
+| Accounts are internal SplitPay **wallet numbers**; there is no external bank concept | Domain model |
+| The transaction **PIN is exactly 6 digits**; it is checked on the server | PIN screens, backend |
+| A transfer, a split and a repayment each carry an **idempotency key**, so a retried request cannot create a duplicate | Flow view models |
+| The client's cached balance is **never trusted**; the server re-checks balance at submit | `SessionStore`, backend |
+| A split needs **2 to 10 participants** | `SplitFlowViewModel.participantRange` |
+| The **requester is one of the participants** and pays no slot: with N participants there are N-1 paying slots | `SplitCalculator` |
+| **Equal split:** each paying participant pays the same share (rounded to 2 decimals); the **requester absorbs the remainder**, so the parts always add up to the total. Example: 40 split 3 ways is 13.33 + 13.33 + 13.34 | `SplitCalculator.equalSplit` |
+| A new split's QR **expires after 7 days** | `SplitFlowViewModel` |
+| **Cancelling** a split makes it inactive; nobody can pay it through the QR after that | `SplitFlowViewModel.cancelSplit` |
+| Only the **creator** can see Get QR, Edit and Cancel on a split | `SplitDetailsView` |
+| A completed transfer can be split once; if it already has a split, the detail screen opens that split instead | `TransactionDetailView` |
+
+---
+
+## 8. Backend contract (Supabase)
+
+The app calls **Postgres functions through PostgREST RPC**. Every call is
+`POST {SUPABASE_URL}/rest/v1/rpc/<function>` with a JSON body. The SQL itself
+is defined in the Supabase project, not in this repository.
+
+Common request headers: `apikey: <anon key>`, `Content-Type: application/json`,
+`Authorization: Bearer <user access token>`. Functions that return a table
+always send an array, even for a single row.
+
+### Split and repayment functions
+
+| Function | Request body | Response |
+|---|---|---|
+| `create_split_bill` | `p_title, p_note, p_participant_count, p_source_transfer_id, p_idempotency_key, p_expiry_days` | `[split bill]` |
+| `get_split_bills` | `p_role` (`CREATED` or `REPAID`), `p_status` (`ALL`), `p_page`, `p_page_size` | `[list item + is_requester, has_repaid, total_count]` |
+| `get_split_bill_detail` | `p_split_bill_id` | `[detail + qr_payload, can_update, can_close, can_repay, is_requester, has_repaid]` |
+| `update_split_bill` | `p_split_bill_id, p_title, p_note, p_participant_count, p_expires_at` (all always sent) | split bill |
+| `close_split_bill` | `p_split_bill_id` (also used by *Cancel Split*) | split bill |
+| `get_split_qr` | `p_split_bill_id` | `[qr code: qr_payload, is_active, expires_at, ...]` |
+| `decode_split_qr` | `p_qr_payload` | `[split_bill_id, title, requester_name, total_amount, per_person_amount, required_slots, paid_slots]` |
+| `create_qr_repayment` | `p_qr_payload, p_pin, p_note, p_idempotency_key` | `[repayment receipt: amount, paid_slots, split_bill_status, ...]` |
+
+### Transfer, wallet, PIN and profile functions
+
+| Function | Purpose |
+|---|---|
+| `create_transfer` | Send money (receiver, amount, description, PIN, idempotency key) |
+| `get_transfer_history` | Paged history, filtered by All / Transfer / Repayment |
+| `get_transfer_detail` | One transaction, including `split_bill_id`, `can_create_split_bill`, `is_split_bill_repayment` |
+| `resolve_wallet_by_number` | Look up a receiver by wallet number |
+| `setup_pin`, `verify_pin`, `change_pin`, `check_pin_status` | Transaction PIN management |
+
+Two plain table reads are also used: `repayments` (paid participants of a
+split) and `my_repayment_records`.
+
+Authentication (`signIn`, `signUp`, `signOut`, session stream) goes through the
+Supabase Auth SDK, not RPC. Sign-up sends `full_name` and `phone_number` as
+user metadata. From the server logs, a database trigger appears to copy these
+into `profiles`; that trigger is not in this repository.
+
+---
+
+## 9. Getting started
+
+### Requirements
+
+- macOS with **Xcode 26** (Swift 6.2 toolchain)
+- iOS Simulator (an iPhone 17 class device or newer) or a physical device
+- A Supabase project, or use the mock backend (UI tests do)
+- Optional: `swiftlint`, `swiftformat` (`brew install swiftlint swiftformat`)
+
+### Configure secrets
+
+Real-backend builds read three values from a git-ignored file:
 
 ```bash
-./scripts/run_tests.sh Transfer                  # only packages matching a name
-SIM_DESTINATION="platform=iOS Simulator,name=iPhone 17 Pro" ./scripts/run_tests.sh
-
-# Single package while iterating:
-cd Foundation/Domains && swift test
-cd Features/Transfer && xcodebuild test -scheme Transfer \
-    -destination "platform=iOS Simulator,name=iPhone 17 Pro"
+cp SplitPay/Config/Secrets.xcconfig.example SplitPay/Config/Secrets.xcconfig
 ```
 
-### Unit test conventions
+Then edit it:
 
-- **One file per subject**, named `XxxTests.swift`; test names are sentences
-  (`theFormIsInvalidWhenTheAmountExceedsTheBalance`), not `testXxx`.
-- **Hand-written mocks per package** in `Tests/<Pkg>Tests/Mocks/` — no shared
-  mock library (SPM has no dev-dependencies). Mocks are `final class …
-  @unchecked Sendable`, record call counts and last arguments, and can gate a
-  call behind a continuation to test reentrancy guards.
-- **Fixtures** live in a per-target `Fixtures.swift` with `makeXxx(…)`
-  builders using default arguments.
-- **Locale-safe assertions.** Formatted strings are asserted structurally
-  (sign, `"VND"` suffix, `contains`) or compared against an identically
-  configured formatter — never pinned to one locale's separators. Date
-  grouping uses an injected `Calendar`.
-- **Debounce is testable** because `TransferFlowViewModel.accountLookupDebounce`
-  is a public constant tests sleep on.
+```
+SUPABASE_URL = https:/$()/your-project.supabase.co
+SUPABASE_KEY = your-publishable-key
+API_BASE_URL = https:/$()/api.your-backend.com
+```
 
-Deliberately not tested: `qrImage` (UIImage rendering), idempotency-key
-rotation (private, no seam — noted in the relevant test files), the Supabase
-data layer over the network, and SwiftUI views (covered by the UI tests
-below).
+(`https:/$()/` is the xcconfig way to write `https://`.) Without these the app
+stops at launch with a clear `fatalError` message.
 
-## UI tests (XCUITest)
-
-The unit tests above mock the repositories; `SplitPayUITests` drives the real
-app on the simulator — navigation, forms, multi-screen flows.
+### Run
 
 ```bash
-./scripts/run_ui_tests.sh                 # whole suite (34 tests, ~8 min)
+open SplitPay.xcodeproj      # choose the SplitPay scheme, then Run
+```
+
+The first build downloads the two remote Swift Packages. If Xcode shows
+"Missing package product", use **File > Packages > Reset Package Caches**, then
+**Resolve Package Versions**.
+
+### Try it without a backend
+
+Launching with the `-UITest` argument swaps the real backend for in-memory
+mocks with seeded data (debug builds only). This is what the UI tests use.
+
+---
+
+## 10. Testing
+
+| Suite | Framework | Count | Needs |
+|---|---|---|---|
+| Unit tests (per package) | Swift Testing | about 200 | Nothing for `Domains`, `Router`, `Utils`; a simulator for the rest |
+| UI tests | XCUITest | 34 | Simulator; no network or account |
+
+### Unit tests
+
+```bash
+./scripts/run_tests.sh                   # every package, PASS/FAIL summary
+./scripts/run_tests.sh Transfer          # only packages matching a name
+cd Foundation/Domains && swift test      # one package while iterating
+```
+
+Conventions:
+- One file per subject, `XxxTests.swift`; test names are sentences, not
+  `testXxx`.
+- **Hand-written mocks** per package under `Tests/<Pkg>Tests/Mocks/`; they
+  record call counts and last arguments.
+- **Fixtures** are `makeXxx(...)` builders with default arguments.
+- Formatted strings are asserted structurally, never pinned to one locale.
+- The account-lookup debounce is a public constant, so tests wait on it rather
+  than hardcoding 400 ms.
+
+Not covered by unit tests on purpose: QR image rendering, the Supabase layer
+over the network, and SwiftUI views (the UI tests cover those).
+
+### UI tests
+
+```bash
+./scripts/run_ui_tests.sh                 # whole suite (about 8 minutes)
 ./scripts/run_ui_tests.sh TransferTests   # one class
-./scripts/run_ui_tests.sh "AuthTests/testLoginSucceedsReachesHome"
 ```
 
-The two scripts share the simulator — **run one at a time**, never both
-concurrently (device lock).
+Run the unit and UI scripts **one at a time**; they share a simulator.
 
-### How it runs
+How it works:
 
 ```mermaid
 flowchart LR
-    subgraph TEST["SplitPayUITests (test runner process)"]
-        TC["UITestCase base class<br/>launch args + env vars"]
-    end
-    subgraph APPPROC["SplitPay app process"]
-        CFG["UITestConfig<br/>(parses ProcessInfo)"]
-        ASM["AppContainer"]
-        MOCK["MockAppAssembly →<br/>8 in-memory mock repositories"]
-        SEED["UITestSeedData<br/>(deterministic datasets + magic values)"]
-        SCREENS["Real SwiftUI screens"]
-    end
-
-    TC -- "-UITest, UITEST_* env" --> CFG
-    CFG -- enabled? --> ASM
-    ASM -- "mock assembly" --> MOCK --> SEED
-    ASM -- "Supabase assemblies (normal run)" --> SUPA[Supabase]
-    SEED --> SCREENS
-    TC -- "XCUITest queries via UITestID" --> SCREENS
+    TC["UITestCase<br/>launch args + env vars"] -- "-UITest" --> CFG["UITestConfig"]
+    CFG --> ASM["AppContainer"]
+    ASM --> MOCK["MockAppAssembly<br/>8 in-memory repositories"]
+    MOCK --> SEED["UITestSeedData<br/>deterministic data"]
+    SEED --> SCREENS["Real SwiftUI screens"]
+    TC -- "queries by UITestID" --> SCREENS
 ```
 
-- **Mock backend.** Every test launches the app with `-UITest`, which swaps
-  the DI container's Supabase assemblies for in-memory mock repositories
-  (`SplitPay/UITestSupport/`, all `#if DEBUG`). No account, credentials or
-  network involved, and each test gets a fresh store.
-- **Deterministic data.** `UITestSeedData` serves two datasets (`empty`,
-  `default`) plus "magic values" the mocks react to:
+- **Mock backend:** every test launches the real app against in-memory mocks,
+  so no account or network is involved and each test starts fresh.
+- **Magic values** make mocks react deterministically:
 
-  | Magic value | Effect |
+  | Value | Effect |
   |---|---|
   | `fail@test.com` | sign in / sign up fails |
-  | `000000` as PIN | `verifyPin` fails |
-  | account `000000` | wallet lookup fails |
-  | `0123456789` → "Trần Mai" | the lookup target for transfer tests |
-  | QR `UITEST-QR` / `UITEST-QR-FAIL` | valid repay / decode-failure payloads |
+  | PIN `000000` | PIN verification fails |
+  | wallet number `000000` | receiver lookup fails |
+  | wallet number `0123456789` | resolves to the seeded receiver |
+  | QR `UITEST-QR` / `UITEST-QR-FAIL` | valid repayment / decode failure |
 
-  The tests and the seed data are one contract — change them together.
-- **Failure injection.** `UITEST_SCENARIO` (`history-fails`, `otp-fails`,
-  `qr-decode-fails`) makes individual repository calls throw, so error states
-  and retry paths are tested without a real outage.
-- **Scanner seam.** The repay flow needs a camera; under `-UITest` the
-  scanner is replaced with a canned QR payload injected through
-  `SplitBillCoordinator.Dependencies` and fed through the real decode path.
-- **Identifiers.** All queried elements expose accessibility identifiers
-  from `SystemDesign`'s `UITestID` registry (`login.email`, `tab.home`,
-  `transfer.otp`, `error.modal.title`, …) — no fragile label or coordinate
-  queries. AppModal overlays are queried by identifier (not `app.alerts`,
-  which only sees system alerts).
-- **One launch per test** via the `UITestCase` base class; waits use
-  `waitForExistence`, never sleeps.
+- **Failure scenarios** (`history-fails`, `otp-fails`, `qr-decode-fails`) make
+  chosen calls throw, to test error states and retries.
+- **Scanner seam:** under `-UITest` the camera is replaced by a canned payload
+  that still goes through the real decode path.
+- **Stable selectors:** every queried element has an identifier from
+  `UITestID`; no text or coordinate queries.
 
-### Suite map
-
-| Suite | Tests | Covers |
+| UI suite | Tests | Covers |
 |---|---|---|
-| `AuthTests` | 6 | Login render + empty-field validation, invalid credentials alert, login → Home, register navigation + happy path |
-| `HomeTests` | 4 | Seeded balance/profile, quick actions open Transfer / Split, see-all → history |
-| `TransferTests` | 8 | History + filters, row → detail → split cover, receiver lookup, amount chips, full happy path, over-balance guard |
-| `SplitTests` | 7 | Active/inactive history, detail, participant stepper, create → QR, repay happy path, wrong PIN → error modal |
-| `ProfileTests` | 4 | Seeded fields, PIN sheet cancel, change PIN, logout |
-| `ErrorTests` | 4 | History fetch fail + retry, empty dataset, OTP failure modal + retry, QR decode failure |
+| `AuthTests` | 6 | Login validation and errors, login to Home, register |
+| `HomeTests` | 4 | Seeded balance and profile, quick actions, See All |
+| `TransferTests` | 8 | History, detail, lookup, amount chips, full transfer, over-balance guard |
+| `SplitTests` | 7 | Active/inactive, detail, stepper, create to QR, repay, wrong PIN |
+| `ProfileTests` | 4 | Seeded fields, PIN sheet, change PIN, log out |
+| `ErrorTests` | 4 | Fetch failure and retry, empty data, PIN failure, QR decode failure |
+| `SmokeTests` | 1 | App launches |
 
-Two real bugs surfaced while writing the suite (both fixed):
-`Split Bill` from a Transaction Detail in the History tab presented nothing
-(its `fullScreenCover` modifier lived inside an un-presented cover), and the
-error modal's buttons were unreachable to XCUITest once the modal container
-carried an identifier (fixed with `accessibilityElement(children: .contain)`).
+A detailed write-up of the test suite is in `docs/test-suite-confluence.md`.
 
-## Code style
+---
 
-`swiftformat` + `swiftlint --strict` (config in `.swiftlint.yml`). Note the
-repo has nested `.build` directories from SwiftPM, excluded via the
-`"*/.build"` glob.
+## 11. Code quality and tooling
 
-## Roadmap ideas
+- **SwiftLint** (strict) and **SwiftFormat**; configuration in `.swiftlint.yml`
+  and `.swiftformat`. Build folders and the test-support code are excluded.
+- **SwiftGen** config (`swiftgen.yml`) for generated asset constants.
+- **Comment style:** sparse, single-line `//` comments that explain *why*, not
+  *what*.
+- **Code style:** plain control flow and explicit types over clever
+  abstractions, so every line can be followed.
 
-- Supabase-backed split-bill lifecycle (lock / close when all slots paid)
-- Biometric unlock for PIN entry (`biometricsEnabled` is seeded but unused)
-- Push notifications when a repayment lands on your bill
+---
+
+## 12. Project history and ownership
+
+- First commit **2026-09-07**; latest **2026-09-30**, about 100 commits across
+  feature branches merged into `develop`.
+- Feature work has been done on short-lived `feature/*` branches; `develop` is
+  the integration branch.
+- Module authorship (from file headers): **Transfer, SplitBill and the domain
+  models** were written by Dinh Long; **Authentication, Home, Profile and the
+  first version of the design system and data layer** by Co Quach.
+
+---
+
+## 13. Known issues and open decisions
+
+These are listed so nothing is a surprise. None block day-to-day use.
+
+**Needs a product decision**
+1. **Split rounding rule.** The code rounds each share to **2 decimals** and
+   the requester absorbs the remainder. An earlier project note describes the
+   rule as "round each share to the nearest **1,000 VND**". These differ
+   (for example 100,000 split 3 ways). Confirm which rule is intended; the
+   change is isolated to `SplitCalculator`.
+
+**Backend and operations**
+2. **Database code is not in the repository.** All RPC functions, triggers and
+   security policies live only in Supabase, so a new environment cannot be
+   recreated from this repo. Exporting them as versioned SQL migrations is
+   recommended. Past setup issues (function security mode and `search_path`,
+   password-hashing extension visibility, a PIN check that hides the real
+   error) were all server-side and looked like app bugs.
+3. **Duplicate phone number on sign-up.** The sign-up trigger fails on a unique
+   constraint and the user only sees "Something went wrong". The server should
+   return a specific error the app can map.
+4. **No CI pipeline** in the repository; tests run through local scripts.
+
+**Cleanup items**
+5. `Core/CommonUi` was merged into `SystemDesign`, but a stray
+   `Core/CommonUi/Tests/CommonUiTests/AppAlertTests.swift` and an entry in
+   `scripts/run_tests.sh` still point at the removed package. The test should
+   move to `SystemDesign`.
+6. Unused leftovers: `PinCard`, `ProfileInfoRow`, `HomeFloatingNavigation`, a
+   second `TransactionRow` in `SystemDesign`, and `[DEBUG]` prints in
+   `HomeView`.
+7. `Foundation/Loggers` is an empty placeholder.
+8. `TransferPIN.testValue` (a test PIN) lives in production source and is only
+   used by tests; it should move to the test target.
+9. **Deployment target mismatch:** the app targets iOS 26.2, but the packages
+   declare iOS 17 as their minimum. Decide on one supported range.
+10. The app target compiles in Swift 5 language mode while the packages use
+    tools version 6.2. Moving the app to Swift 6 mode is a follow-up.
+
+---
+
+## 14. Roadmap
+
+- Move database functions into versioned SQL migrations in the repo
+- Resolve the split rounding rule with product
+- Clean up the items in section 13
+- Add a CI workflow to run the unit and UI suites on every pull request
+- Return specific sign-up errors (duplicate phone or email) from the server
+- Refresh Split lists live when a split is created or edited (currently only
+  transfers and repayments trigger a live refresh)
+- Biometric unlock for PIN entry
+- Push notification when someone pays your split
+
+---
+
+## 15. Glossary
+
+| Term | Meaning |
+|---|---|
+| **Wallet** | A user's SplitPay account that holds a balance; identified by a wallet number |
+| **Transfer** | Sending money from your wallet to another wallet |
+| **Split bill** | A record created from a past transfer that divides its cost among participants |
+| **Requester** | The person who created the split and is owed money |
+| **Participant / payer** | Someone who pays a share of a split |
+| **Slot** | One paying share in a split; with N participants there are N-1 slots |
+| **Repayment** | A participant's payment of their share, made by scanning the split's QR |
+| **Per-person amount** | The equal share each paying participant owes |
+| **PIN** | The 6-digit code that authorizes a transfer or repayment |
+| **Composition root** | The one place in the app that decides which concrete class satisfies each protocol |
+| **Repository** | A protocol-defined gateway to data; the app talks to these, never to the database directly |
+| **RPC** | A call to a named Postgres function through Supabase's API |

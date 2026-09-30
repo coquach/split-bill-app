@@ -13,29 +13,45 @@ public struct ScanRepayView: View {
     @State private var viewModel: ScanRepayViewModel
     private let onBack: () -> Void
     private let onDecoded: (ScannedRepayment) -> Void
+    // UI-test seam: when non-nil the camera is skipped and this payload goes through the same decode path a real scan would (see SplitBillCoordinator.Dependencies)
+    private let mockScanPayload: String?
 
     public init(
         viewModel: ScanRepayViewModel,
+        mockScanPayload: String? = nil,
         onBack: @escaping () -> Void,
         onDecoded: @escaping (ScannedRepayment) -> Void
     ) {
         _viewModel = State(initialValue: viewModel)
+        self.mockScanPayload = mockScanPayload
         self.onBack = onBack
         self.onDecoded = onDecoded
     }
 
     public var body: some View {
         ZStack {
-            QRScannerView(isFailed: viewModel.errorMessage != nil) { payload in
-                Task {
-                    if let scanned = await viewModel.decode(payload) {
-                        onDecoded(scanned)
+            if let payload = mockScanPayload {
+                // No camera in UI tests - a black stand-in that decodes after a short beat, like a real scan settling
+                Color.black.ignoresSafeArea()
+                    .task {
+                        try? await Task.sleep(for: .milliseconds(300))
+                        guard !Task.isCancelled else { return }
+                        if let scanned = await viewModel.decode(payload) {
+                            onDecoded(scanned)
+                        }
+                    }
+            } else {
+                QRScannerView(isFailed: viewModel.errorMessage != nil) { payload in
+                    Task {
+                        if let scanned = await viewModel.decode(payload) {
+                            onDecoded(scanned)
+                        }
                     }
                 }
-            }
-            .ignoresSafeArea()
+                .ignoresSafeArea()
 
-            scanFrame
+                scanFrame
+            }
 
             VStack {
                 Spacer()
