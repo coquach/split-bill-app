@@ -8,225 +8,212 @@
 import SwiftUI
 import SystemDesign
 
+// First-time setup: enter a new PIN, then enter it again to confirm.
 public struct PinSetupView: View {
-    @Environment(\.dismiss) private var dismiss
-
-    @State private var pin = ""
-    @State private var confirmation = ""
-    @State private var isSubmitting = false
-    @State private var errorMessage: String?
-
     let onSubmit: (String) async -> Bool
 
     public var body: some View {
-        Form {
-            Section {
-                SecureField("6-digit PIN", text: $pin)
-                    .keyboardType(.numberPad)
-                    .textContentType(.oneTimeCode)
-                    .accessibilityIdentifier(UITestID.profilePinField)
-
-                SecureField("Confirm PIN", text: $confirmation)
-                    .keyboardType(.numberPad)
-                    .textContentType(.oneTimeCode)
-                    .accessibilityIdentifier(UITestID.profilePinField)
-            } header: {
-                Text("Transaction PIN")
-            } footer: {
-                Text("Use exactly 6 digits. This PIN is used to authorize protected transactions.")
-            }
-
-            if let errorMessage {
-                Section {
-                    Text(errorMessage)
-                        .foregroundStyle(Color.appError)
-                }
-            }
-
-            Section {
-                Button {
-                    Task { await submit() }
-                } label: {
-                    HStack {
-                        Spacer()
-                        if isSubmitting {
-                            ProgressView()
-                        } else {
-                            Text("Set PIN")
-                                .font(AppTypography.bodyMedium)
-                        }
-                        Spacer()
-                    }
-                }
-                .disabled(isSubmitting)
-                .accessibilityIdentifier(UITestID.profilePinSubmit)
-            }
-        }
-        .navigationTitle("Set up PIN")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button("Cancel") {
-                    dismiss()
-                }
-            }
-        }
-    }
-
-    private func submit() async {
-        let normalizedPin = pin.trimmingCharacters(in: .whitespacesAndNewlines)
-        let normalizedConfirmation = confirmation.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        guard normalizedPin.count == 6,
-              normalizedPin.allSatisfy(\.isNumber) else {
-            errorMessage = "PIN must be exactly 6 digits."
-            return
-        }
-
-        guard normalizedPin == normalizedConfirmation else {
-            errorMessage = "PIN confirmation does not match."
-            return
-        }
-
-        isSubmitting = true
-        errorMessage = nil
-        defer { isSubmitting = false }
-
-        if await onSubmit(normalizedPin) {
-            dismiss()
-        } else {
-            errorMessage = "Unable to set up PIN. Please try again."
-        }
+        PinFlowView(
+            requiresCurrentPin: false,
+            onVerifyCurrent: { _ in true },
+            onSubmit: { _, newPin in await onSubmit(newPin) }
+        )
     }
 }
 
+// Change PIN: enter the current PIN, then a new PIN, then the new PIN again.
 public struct ChangePinView: View {
-
-    @Environment(\.dismiss)
-    private var dismiss
-
-    @State private var currentPin = ""
-    @State private var newPin = ""
-    @State private var confirmation = ""
-
-    @State private var isSubmitting = false
-    @State private var errorMessage: String?
-
-    let onSubmit: (
-        String,
-        String
-    ) async -> Bool
+    let onVerifyCurrent: (String) async -> Bool
+    let onSubmit: (String, String) async -> Bool
 
     public var body: some View {
-        Form {
-            Section("Current PIN") {
-                SecureField(
-                    "6-digit PIN",
-                    text: $currentPin
-                )
-                .keyboardType(.numberPad)
-                .accessibilityIdentifier(UITestID.profilePinField)
+        PinFlowView(
+            requiresCurrentPin: true,
+            onVerifyCurrent: onVerifyCurrent,
+            onSubmit: onSubmit
+        )
+    }
+}
+
+// One screen that walks through the PIN steps, using the same PIN boxes as the transfer PIN screen.
+private struct PinFlowView: View {
+    private enum Step {
+        case current
+        case new
+        case confirm
+    }
+
+    @Environment(\.dismiss) private var dismiss
+
+    let requiresCurrentPin: Bool
+    let onVerifyCurrent: (String) async -> Bool
+    let onSubmit: (String, String) async -> Bool
+
+    @State private var step: Step
+    // What the user is typing right now; moved into currentPin/newPin when they continue.
+    @State private var entry = ""
+    @State private var currentPin = ""
+    @State private var newPin = ""
+    @State private var isWorking = false
+    @State private var errorMessage: String?
+
+    private let pinLength = 6
+
+    init(
+        requiresCurrentPin: Bool,
+        onVerifyCurrent: @escaping (String) async -> Bool,
+        onSubmit: @escaping (String, String) async -> Bool
+    ) {
+        self.requiresCurrentPin = requiresCurrentPin
+        self.onVerifyCurrent = onVerifyCurrent
+        self.onSubmit = onSubmit
+        _step = State(initialValue: requiresCurrentPin ? .current : .new)
+    }
+
+    var body: some View {
+        VStack(spacing: AppSpacing.xl) {
+            iconBadge
+
+            VStack(spacing: AppSpacing.xs) {
+                Text(title)
+                    .font(AppTypography.title)
+                    .foregroundStyle(Color.appOnSurface)
+                Text(subtitle)
+                    .font(AppTypography.caption)
+                    .foregroundStyle(Color.appTextSecondary)
+                    .multilineTextAlignment(.center)
             }
 
-            Section("New PIN") {
-                SecureField(
-                    "New PIN",
-                    text: $newPin
-                )
-                .keyboardType(.numberPad)
-                .accessibilityIdentifier(UITestID.profilePinField)
-
-                SecureField(
-                    "Confirm new PIN",
-                    text: $confirmation
-                )
-                .keyboardType(.numberPad)
-                .accessibilityIdentifier(UITestID.profilePinField)
-            }
+            OTPCodeInput(length: pinLength, code: $entry)
+                .frame(maxWidth: 340)
+                .frame(maxWidth: .infinity)
 
             if let errorMessage {
-                Section {
-                    Text(errorMessage)
-                        .foregroundStyle(Color.appError)
-                }
+                AlertBanner(message: errorMessage, style: .error)
             }
 
-            Section {
-                Button {
-                    Task {
-                        await submit()
-                    }
-                } label: {
-                    HStack {
-                        Spacer()
-
-                        if isSubmitting {
-                            ProgressView()
-                        } else {
-                            Text("Change PIN")
-                        }
-
-                        Spacer()
-                    }
-                }
-                .disabled(isSubmitting)
-                .accessibilityIdentifier(UITestID.profilePinSubmit)
-            }
+            Spacer()
         }
-        .navigationTitle("Change PIN")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(
-                placement: .topBarLeading
-            ) {
-                Button("Cancel") {
-                    dismiss()
+        .padding(AppSpacing.lg)
+        .padding(.top, AppSpacing.xl)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Color.appBackground.ignoresSafeArea())
+        .safeAreaInset(edge: .top, spacing: 0) {
+            // A sheet has no top safe area, so add space to keep the bar off the edge
+            AppNavBar(title: navTitle, onBack: goBack)
+                .padding(.top, AppSpacing.lg)
+                .background(Color.appBackground)
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            BottomActionBar(
+                primary: .init(
+                    title: step == .confirm ? "Confirm" : "Continue",
+                    style: .primary,
+                    isEnabled: entry.count == pinLength,
+                    isLoading: isWorking
+                ) {
+                    Task { await advance() }
                 }
+            )
+        }
+        .navigationBarHidden(true)
+    }
+
+    private var iconBadge: some View {
+        Circle()
+            .fill(Color.appIconBadge)
+            .frame(width: 72, height: 72)
+            .overlay {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 28))
+                    .foregroundStyle(Color.appOnSurface)
             }
+    }
+
+    private var navTitle: String {
+        requiresCurrentPin ? "Change PIN" : "Set up PIN"
+    }
+
+    private var title: String {
+        switch step {
+        case .current: return "Enter Current PIN"
+        case .new: return "Enter New PIN"
+        case .confirm: return "Confirm New PIN"
         }
     }
 
-    private func submit() async {
-        guard currentPin.count == 6,
-              currentPin.allSatisfy(\.isNumber)
-        else {
-            errorMessage = "Current PIN must be exactly 6 digits."
-            return
+    private var subtitle: String {
+        switch step {
+        case .current: return "Enter your current 6-digit PIN to continue"
+        case .new: return "Choose a new 6-digit PIN to authorize your transactions"
+        case .confirm: return "Enter the new PIN again to confirm"
         }
+    }
 
-        guard newPin.count == 6,
-              newPin.allSatisfy(\.isNumber)
-        else {
-            errorMessage = "New PIN must be exactly 6 digits."
-            return
+    // Back steps to the previous PIN entry; on the first step it closes the screen.
+    private func goBack() {
+        errorMessage = nil
+        entry = ""
+
+        switch step {
+        case .current:
+            dismiss()
+        case .new:
+            if requiresCurrentPin {
+                step = .current
+            } else {
+                dismiss()
+            }
+        case .confirm:
+            step = .new
         }
+    }
 
-        guard newPin == confirmation else {
-            errorMessage = "PIN confirmation does not match."
-            return
-        }
-
-        guard currentPin != newPin else {
-            errorMessage = "New PIN must be different from current PIN."
-            return
-        }
-
-        isSubmitting = true
+    private func advance() async {
         errorMessage = nil
 
-        defer {
-            isSubmitting = false
-        }
+        switch step {
+        case .current:
+            isWorking = true
+            let isCorrect = await onVerifyCurrent(entry)
+            isWorking = false
 
-        let success = await onSubmit(
-            currentPin,
-            newPin
-        )
+            guard isCorrect else {
+                errorMessage = "Current PIN is incorrect."
+                entry = ""
+                return
+            }
+            currentPin = entry
+            entry = ""
+            step = .new
 
-        if success {
-            dismiss()
-        } else {
-            errorMessage = "Unable to change PIN."
+        case .new:
+            if requiresCurrentPin && entry == currentPin {
+                errorMessage = "New PIN must be different from your current PIN."
+                entry = ""
+                return
+            }
+            newPin = entry
+            entry = ""
+            step = .confirm
+
+        case .confirm:
+            guard entry == newPin else {
+                errorMessage = "PINs don't match. Try again."
+                entry = ""
+                return
+            }
+
+            isWorking = true
+            let didSucceed = await onSubmit(currentPin, newPin)
+            isWorking = false
+
+            if didSucceed {
+                dismiss()
+            } else {
+                errorMessage = "Unable to save your PIN. Please try again."
+                entry = ""
+            }
         }
     }
 }

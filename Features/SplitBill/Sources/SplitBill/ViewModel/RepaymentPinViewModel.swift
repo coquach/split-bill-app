@@ -56,6 +56,7 @@ public final class RepaymentPinViewModel {
         do {
             receipt = try await repaymentRepository.createQRRepayment(command)
             state = .idle
+            NotificationCenter.default.post(name: .transactionsDidChange, object: nil)
         } catch let error as DomainError {
             handleFailure(error)
         } catch {

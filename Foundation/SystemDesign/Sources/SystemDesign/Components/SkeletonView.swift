@@ -1,12 +1,11 @@
 //
-//  SekeletonView.swift
-//  CommonUi
+//  SkeletonView.swift
+//  SystemDesign
 //
 //  Created by Co Quach on 28/9/26.
 //
 
 import SwiftUI
-import SystemDesign
 
 public struct SkeletonView: View {
 

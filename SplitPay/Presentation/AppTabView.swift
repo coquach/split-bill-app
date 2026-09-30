@@ -35,7 +35,10 @@ struct AppTabView: View {
 
     // Non-nil while Split is open on a specific transaction, reached from
     // Transaction Detail inside the Transfer tab.
-    @State private var splitSource: SplitSource?
+    @State private var splitSource: SplitPresentation?
+
+    // Same idea, but for Transaction Detail opened from the History tab, where the Transfer cover above isn't showing.
+    @State private var historySplitSource: SplitPresentation?
 
     private var splitDependencies: SplitBillCoordinator.Dependencies {
         .init(
@@ -97,7 +100,12 @@ struct AppTabView: View {
                         transferRepository: coordinator.transferRepository
                     ),
                     onFinish: { selectedTab = .home },
-                    onSplitBill: { source in splitSource = source }
+                    onSplitBill: { source in
+                        historySplitSource = SplitPresentation(entry: .create(source))
+                    },
+                    onViewSplit: { id in
+                        historySplitSource = SplitPresentation(entry: .details(id))
+                    }
                 )
                 .tabItem {
                     Label("History", systemImage: "arrow.left.arrow.right")
@@ -169,11 +177,16 @@ struct AppTabView: View {
                     isTransferPresented = false
                     coordinator.refreshBalance()
                 },
-                onSplitBill: { source in splitSource = source }
+                onSplitBill: { source in
+                    splitSource = SplitPresentation(entry: .create(source))
+                },
+                onViewSplit: { id in
+                    splitSource = SplitPresentation(entry: .details(id))
+                }
             )
-            .fullScreenCover(item: $splitSource) { source in
+            .fullScreenCover(item: $splitSource) { presentation in
                 SplitBillCoordinator(
-                    entry: .create(source),
+                    entry: presentation.entry,
                     dependencies: splitDependencies,
                     // Dismiss both covers so Home on the Split QR screen lands
                     // on the Home tab, not back on the Transfer flow underneath.
@@ -185,6 +198,18 @@ struct AppTabView: View {
                     }
                 )
             }
+        }
+        .fullScreenCover(item: $historySplitSource) { presentation in
+            SplitBillCoordinator(
+                entry: presentation.entry,
+                dependencies: splitDependencies,
+                // Close the cover and land on Home once the split is done
+                onFinish: {
+                    historySplitSource = nil
+                    selectedTab = .home
+                    coordinator.refreshBalance()
+                }
+            )
         }
         .fullScreenCover(isPresented: $isShowingScanner) {
             SplitBillCoordinator(
@@ -217,6 +242,13 @@ struct AppTabView: View {
     }
 }
 
+// What to open in the Split flow from a transaction: set it up (create), or view the split it already has (details)
+private struct SplitPresentation: Identifiable {
+    let entry: SplitBillEntry
+
+    var id: SplitBillEntry { entry }
+}
+
 private struct ScanQRButton: View {
     let action: () -> Void
 
@@ -228,7 +260,7 @@ private struct ScanQRButton: View {
                 .frame(width: 64, height: 64)
                 .background {
                     Circle()
-                        .fill(Color.accentColor)
+                        .fill(Color.appPrimary)
                 }
                 .overlay {
                     Circle()

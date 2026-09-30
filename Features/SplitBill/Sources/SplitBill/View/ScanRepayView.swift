@@ -32,29 +32,16 @@ public struct ScanRepayView: View {
 
     public var body: some View {
         ZStack {
-            if let payload = mockScanPayload {
-                // No camera in UI tests — a bare black stand-in that fires
-                // the decode after a beat, like a real scan settling.
-                Color.black.ignoresSafeArea()
-                    .task {
-                        try? await Task.sleep(for: .milliseconds(300))
-                        guard !Task.isCancelled else { return }
-                        Task {
-                            if let scanned = await viewModel.decode(payload) {
-                                onDecoded(scanned)
-                            }
-                        }
-                    }
-            } else {
-                QRScannerView { payload in
-                    Task {
-                        if let scanned = await viewModel.decode(payload) {
-                            onDecoded(scanned)
-                        }
+            QRScannerView(isFailed: viewModel.errorMessage != nil) { payload in
+                Task {
+                    if let scanned = await viewModel.decode(payload) {
+                        onDecoded(scanned)
                     }
                 }
-                .ignoresSafeArea()
             }
+            .ignoresSafeArea()
+
+            scanFrame
 
             VStack {
                 Spacer()
@@ -109,5 +96,31 @@ public struct ScanRepayView: View {
                 }
             }
         }
+    }
+
+    // Dims everything outside the square, then outlines the square that is actually scanned
+    private var scanFrame: some View {
+        let side = QRScannerView.scanAreaSize
+        let shape = RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+
+        return ZStack {
+            Color.black.opacity(0.5)
+                .mask {
+                    // destinationOut punches a hole where the square is
+                    Rectangle()
+                        .overlay {
+                            shape
+                                .frame(width: side, height: side)
+                                .blendMode(.destinationOut)
+                        }
+                        .compositingGroup()
+                }
+
+            shape
+                .strokeBorder(Color.white, lineWidth: 3)
+                .frame(width: side, height: side)
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
     }
 }

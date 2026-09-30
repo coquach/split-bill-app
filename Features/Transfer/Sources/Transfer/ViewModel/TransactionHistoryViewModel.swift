@@ -38,11 +38,24 @@ public final class TransactionHistoryViewModel {
         calendar: Calendar = .current
     ) {
         self.transferRepository = transferRepository
-        self.calendar = calendar
+
+        // Reload as soon as a transfer or repayment finishes; weak self, so it does nothing once this view model is gone
+        NotificationCenter.default.addObserver(
+            forName: .transactionsDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                await self?.load(showsSpinner: false)
+            }
+        }
     }
 
-    public func load() async {
-        state = .loading
+    // showsSpinner: false keeps the current list on screen while the new one loads, so the reload isn't visible as a flash
+    public func load(showsSpinner: Bool = true) async {
+        if showsSpinner {
+            state = .loading
+        }
 
         do {
             let items = try await transferRepository.getTransfers(
@@ -52,9 +65,12 @@ public final class TransactionHistoryViewModel {
             )
             state = .loaded(group(items))
         } catch let error as DomainError {
-            state = .failed(error)
+            // A background reload that fails shouldn't replace a good list with an error screen
+            if showsSpinner { state = .failed(error) }
         } catch {
-            state = .failed(.unknown(code: nil, message: error.localizedDescription))
+            if showsSpinner {
+                state = .failed(.unknown(code: nil, message: error.localizedDescription))
+            }
         }
     }
 

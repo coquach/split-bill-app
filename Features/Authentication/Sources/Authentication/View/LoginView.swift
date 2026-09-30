@@ -1,4 +1,3 @@
-import CommonUi
 //
 //  LoginView.swift
 //  Authentication

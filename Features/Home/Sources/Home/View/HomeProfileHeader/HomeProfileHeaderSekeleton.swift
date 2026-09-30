@@ -7,7 +7,6 @@
 
 import SwiftUI
 import SystemDesign
-import CommonUi
 
 struct HomeProfileHeaderSkeleton: View {
 

@@ -23,18 +23,20 @@ struct HomeBalanceCard: View {
 
             topRow
 
-            Spacer(minLength: AppSpacing.xxl)
+            Spacer(minLength: AppSpacing.sm)
 
             balanceAmount
 
-            Spacer(minLength: AppSpacing.xxl)
+            Spacer(minLength: AppSpacing.sm)
 
             bottomRow
         }
         .padding(AppSpacing.xl)
+        // Fixed height so the card can't stretch to fill leftover screen space
         .frame(
             maxWidth: .infinity,
-            minHeight: 200
+            minHeight: 170,
+            maxHeight: 170
         )
         .background(background)
         .clipShape(

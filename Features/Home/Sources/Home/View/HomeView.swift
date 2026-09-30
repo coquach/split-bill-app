@@ -98,16 +98,23 @@ public struct HomeView: View {
                     holderName: viewModel.walletHolderName
                 )
 
-                HomeQuickActions(
-                    onTransfer: onNavigateTransfer,
-                    onSplit: onNavigateSplitBill
-                )
+                // Grouped so these two sit close together; the buttons' own padding already leaves some room
+                VStack(
+                    alignment: .leading,
+                    spacing: 0
+                ) {
+                    HomeQuickActions(
+                        onTransfer: onNavigateTransfer,
+                        onSplit: onNavigateSplitBill
+                    )
 
-                HomeRecentTransactions(
-                    transactions: viewModel.recentTransfers,
-                    isLoading: viewModel.isLoading,
-                    onSeeAll: onNavigateTransactionHistory
-                )
+                    HomeRecentTransactions(
+                        transactions: viewModel.recentTransfers,
+                        // Skeleton only on the first load; later reloads swap the rows in place without flashing
+                    isLoading: viewModel.isLoading && viewModel.recentTransfers.isEmpty,
+                        onSeeAll: onNavigateTransactionHistory
+                    )
+                }
             }
             .padding(.horizontal, AppSpacing.xl)
             .padding(.top, AppSpacing.sm)
@@ -115,7 +122,7 @@ public struct HomeView: View {
             // Without this the VStack hugs its children's ideal height
             // instead of claiming the screen height ZStack proposes to it,
             // so HomeRecentTransactions never gets leftover space to expand into.
-            .frame(maxHeight: .infinity)
+            .frame(maxHeight: .infinity, alignment: .top)
             .background(
                 GeometryReader { geo in
                     Color.clear
