@@ -45,6 +45,7 @@ public enum DomainError:
         message: String
     )
 
+    // Without this, `error.localizedDescription` renders as "The operation couldn't be completed (Domains.DomainError error 0)"
     public var errorDescription: String? {
         message
     }

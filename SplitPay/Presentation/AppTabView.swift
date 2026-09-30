@@ -218,27 +218,6 @@ struct AppTabView: View {
                 onFinish: { isShowingScanner = false }
             )
         }
-        // "Split Bill" opened from a Transaction Detail in the History tab.
-        // A fullScreenCover modifier only exists in the hierarchy while the
-        // cover it's attached to is presented, so the nested one inside the
-        // Transfer-flow cover above can't fire from here — this outer one
-        // handles the tab path (inactive while the Transfer flow is up, so
-        // the two never fight over the presentation).
-        .fullScreenCover(
-            item: Binding(
-                get: { isTransferPresented ? nil : splitSource },
-                set: { splitSource = $0 }
-            )
-        ) { source in
-            SplitBillCoordinator(
-                entry: .create(source),
-                dependencies: splitDependencies,
-                onFinish: {
-                    splitSource = nil
-                    coordinator.refreshBalance()
-                }
-            )
-        }
     }
 }
 

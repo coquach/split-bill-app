@@ -38,6 +38,7 @@ public final class TransactionHistoryViewModel {
         calendar: Calendar = .current
     ) {
         self.transferRepository = transferRepository
+        self.calendar = calendar
 
         // Reload as soon as a transfer or repayment finishes; weak self, so it does nothing once this view model is gone
         NotificationCenter.default.addObserver(

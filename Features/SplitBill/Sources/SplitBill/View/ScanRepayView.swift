@@ -32,16 +32,28 @@ public struct ScanRepayView: View {
 
     public var body: some View {
         ZStack {
-            QRScannerView(isFailed: viewModel.errorMessage != nil) { payload in
-                Task {
-                    if let scanned = await viewModel.decode(payload) {
-                        onDecoded(scanned)
+            if let payload = mockScanPayload {
+                // No camera in UI tests - a black stand-in that decodes after a short beat, like a real scan settling
+                Color.black.ignoresSafeArea()
+                    .task {
+                        try? await Task.sleep(for: .milliseconds(300))
+                        guard !Task.isCancelled else { return }
+                        if let scanned = await viewModel.decode(payload) {
+                            onDecoded(scanned)
+                        }
+                    }
+            } else {
+                QRScannerView(isFailed: viewModel.errorMessage != nil) { payload in
+                    Task {
+                        if let scanned = await viewModel.decode(payload) {
+                            onDecoded(scanned)
+                        }
                     }
                 }
-            }
-            .ignoresSafeArea()
+                .ignoresSafeArea()
 
-            scanFrame
+                scanFrame
+            }
 
             VStack {
                 Spacer()

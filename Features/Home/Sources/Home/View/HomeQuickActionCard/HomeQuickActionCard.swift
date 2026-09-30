@@ -20,16 +20,16 @@ struct HomeQuickActions: View {
             HomeQuickActionCard(
                 icon: "arrow.up.right",
                 title: "Transfer",
-                accessibilityID: UITestID.homeTransferAction,
                 tint: Color.appPrimary,
+                accessibilityID: UITestID.homeTransferAction,
                 action: onTransfer
             )
 
             HomeQuickActionCard(
                 icon: "person.2.fill",
                 title: "Split",
-                accessibilityID: UITestID.homeSplitAction,
                 tint: Color.appPrimary,
+                accessibilityID: UITestID.homeSplitAction,
                 action: onSplit
             )
         }
