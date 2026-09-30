@@ -19,7 +19,6 @@ let package = Package(
         .package(path: "../../Foundation/Domains"),
         .package(path: "../../Foundation/Router"),
         .package(path: "../../Foundation/SystemDesign"),
-        .package(path: "../../Core/CommonUi"),
         .package(path: "../../Foundation/Utils")
     ],
     targets: [
@@ -39,10 +38,6 @@ let package = Package(
                 .product(
                     name: "SystemDesign",
                     package: "SystemDesign"
-                ),
-                .product(
-                    name: "CommonUi",
-                    package: "CommonUi"
                 ),
                 .product(
                     name: "Utils",

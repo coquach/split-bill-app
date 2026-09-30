@@ -1,4 +1,3 @@
-import CommonUi
 //
 //  RegisterView.swift
 //  Authentication

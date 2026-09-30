@@ -31,6 +31,17 @@ public final class HomeViewModel {
         self.walletRepository = walletRepository
         self.transferRepository = transferRepository
         self.profile = nil
+
+        // Reload as soon as a transfer or repayment finishes; the observer holds self weakly, so it does nothing once this view model is gone
+        NotificationCenter.default.addObserver(
+            forName: .transactionsDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                await self?.load()
+            }
+        }
     }
 
     var displayName: String {
@@ -65,11 +76,26 @@ public final class HomeViewModel {
         return String(number.suffix(4))
     }
 
+    // Set when a reload is asked for while one is already running, so that request isn't lost
+    private var needsReload = false
+
     func load() async {
-        guard !isLoading else { return }
+        guard !isLoading else {
+            needsReload = true
+            return
+        }
+
         isLoading = true
+        // Runs again if something changed mid-load, so the screen ends up with the newest data
+        repeat {
+            needsReload = false
+            await fetch()
+        } while needsReload
+        isLoading = false
+    }
+
+    private func fetch() async {
         errorMessage = nil
-        defer { isLoading = false }
 
         async let profileTask = capture { try await profileRepository.getCurrentProfile() }
         async let walletTask = capture { try await walletRepository.getDefaultWallet() }

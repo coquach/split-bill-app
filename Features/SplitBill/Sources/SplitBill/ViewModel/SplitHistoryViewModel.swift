@@ -39,10 +39,24 @@ public final class SplitHistoryViewModel {
 
     public init(splitBillRepository: ISplitBillRepository) {
         self.splitBillRepository = splitBillRepository
+
+        // Paying into a split changes its paid slots, so reload when a repayment finishes
+        NotificationCenter.default.addObserver(
+            forName: .transactionsDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                await self?.load(showsSpinner: false)
+            }
+        }
     }
 
-    public func load() async {
-        state = .loading
+    // showsSpinner: false keeps the current lists on screen while the new ones load
+    public func load(showsSpinner: Bool = true) async {
+        if showsSpinner {
+            state = .loading
+        }
 
         do {
             // Both requests start together; each one asks for a different role.
@@ -63,11 +77,13 @@ public final class SplitHistoryViewModel {
 
             state = .loaded(created: created.items, transferred: transferred.items)
         } catch let error as DomainError {
-            state = .failed(error)
+            if showsSpinner { state = .failed(error) }
         } catch {
-            state = .failed(
-                .unknown(code: nil, message: error.localizedDescription)
-            )
+            if showsSpinner {
+                state = .failed(
+                    .unknown(code: nil, message: error.localizedDescription)
+                )
+            }
         }
     }
 

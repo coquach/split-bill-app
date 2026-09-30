@@ -110,7 +110,8 @@ public struct HomeView: View {
 
                     HomeRecentTransactions(
                         transactions: viewModel.recentTransfers,
-                        isLoading: viewModel.isLoading,
+                        // Skeleton only on the first load; later reloads swap the rows in place without flashing
+                    isLoading: viewModel.isLoading && viewModel.recentTransfers.isEmpty,
                         onSeeAll: onNavigateTransactionHistory
                     )
                 }

@@ -175,6 +175,8 @@ public final class TransferFlowViewModel {
             let transaction = try await transferRepository.createTransfer(command)
             receipt = TransferReceipt(transaction: transaction, draft: draft)
             state = .idle
+            // Tell Home and History to reload now, instead of waiting for the next time they appear
+            NotificationCenter.default.post(name: .transactionsDidChange, object: nil)
         } catch let error as DomainError {
             handleFailure(error)
         } catch {
