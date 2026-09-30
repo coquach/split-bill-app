@@ -65,9 +65,5 @@
         func getRepayments(splitBillId: UUID) async throws -> [Repayment] {
             store.repayments.filter { $0.splitBillId == splitBillId }
         }
-
-        func getMyRepaymentRecords() async throws -> [RepaymentRecord] {
-            store.repayments.map { RepaymentRecord(repayment: $0, splitBill: nil) }
-        }
     }
 #endif

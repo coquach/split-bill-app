@@ -53,16 +53,4 @@ public final class RepaymentRepository: IRepaymentRepository {
             throw RepositoryErrorMapper.map(error)
         }
     }
-
-    public func getMyRepaymentRecords() async throws -> [RepaymentRecord] {
-        do {
-            let dtos: [RepaymentRecordDTO] = try await client.select(
-                table: "my_repayment_records"
-            )
-
-            return dtos.map { $0.toDomain() }
-        } catch {
-            throw RepositoryErrorMapper.map(error)
-        }
-    }
 }
