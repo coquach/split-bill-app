@@ -25,5 +25,8 @@ final class DomainDataAssembly: Assembly {
         container.register(ISplitBillRepository.self) { r in SplitBillRepository(client: r.resolve(SupabaseRestClient.self)!) }.inObjectScope(.container)
         container.register(ISplitQRRepository.self) { r in SplitQRRepository(client: r.resolve(SupabaseRestClient.self)!) }.inObjectScope(.container)
         container.register(IRepaymentRepository.self) { r in RepaymentRepository(client: r.resolve(SupabaseRestClient.self)!) }.inObjectScope(.container)
+        container.register(SessionStore.self) { r in
+            SessionStore(walletRepository: r.resolve(IWalletRepository.self)!)
+        }.inObjectScope(.container)
     }
 }
