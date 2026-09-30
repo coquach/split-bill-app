@@ -107,8 +107,8 @@ public struct TransactionDetailView: View {
             EmptyView()
 
         case .loaded(let detail):
-            // Already split by this user: jump to that split instead of creating another
-            if let splitBillId = detail.splitBillId, !detail.isSplitBillRepayment {
+            // Linked to a split, either one you created or one you paid into: open it instead of creating another
+            if let splitBillId = detail.splitBillId {
                 BottomActionBar(
                     primary: .init(title: "View Split", style: .primary) {
                         onViewSplit(splitBillId)
