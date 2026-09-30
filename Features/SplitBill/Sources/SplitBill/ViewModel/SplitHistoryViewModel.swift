@@ -15,17 +15,25 @@ public final class SplitHistoryViewModel {
 
     public enum State: Equatable {
         case loading
-        case loaded(active: [SplitBillListItem], settled: [SplitBillListItem])
+        case loaded(created: [SplitBillListItem], transferred: [SplitBillListItem])
         case failed(DomainError)
     }
 
-    public enum Category: String, CaseIterable, Hashable {
+    // The two main tabs: splits you created, and splits you paid into by scanning their QR.
+    public enum Kind: String, CaseIterable, Hashable {
+        case yourSplit = "Your Split"
+        case splitTransfer = "Split Transfer"
+    }
+
+    // The filter under the tabs. Inactive = settled, expired or cancelled.
+    public enum Filter: String, CaseIterable, Hashable {
         case active = "Active"
         case inactive = "Inactive"
     }
 
     public private(set) var state: State = .loading
-    public var selectedCategory: Category = .active
+    public var selectedKind: Kind = .yourSplit
+    public var selectedFilter: Filter = .active
 
     private let splitBillRepository: ISplitBillRepository
 
@@ -37,19 +45,23 @@ public final class SplitHistoryViewModel {
         state = .loading
 
         do {
-            // `.created` = splits this user requested, not ones they paid into.
-            let page = try await splitBillRepository.getSplitBills(
+            // Both requests start together; each one asks for a different role.
+            async let createdPage = splitBillRepository.getSplitBills(
                 role: .created,
                 status: .all,
                 page: 1,
                 pageSize: 50
             )
-            let bills = page.items
+            async let transferredPage = splitBillRepository.getSplitBills(
+                role: .repaid,
+                status: .all,
+                page: 1,
+                pageSize: 50
+            )
 
-            let active = bills.filter { $0.status == .active }
-            let settled = bills.filter { $0.status != .active }
+            let (created, transferred) = try await (createdPage, transferredPage)
 
-            state = .loaded(active: active, settled: settled)
+            state = .loaded(created: created.items, transferred: transferred.items)
         } catch let error as DomainError {
             state = .failed(error)
         } catch {
@@ -59,15 +71,26 @@ public final class SplitHistoryViewModel {
         }
     }
 
-    // Both lists are already loaded together, so switching category is a
-    // local pick - no refetch needed.
+    // Everything is already loaded, so switching tab or filter is a local pick - no refetch needed.
     public var visibleBills: [SplitBillListItem] {
-        guard case .loaded(let active, let settled) = state else { return [] }
-        return selectedCategory == .active ? active : settled
+        guard case .loaded(let created, let transferred) = state else { return [] }
+
+        let bills = selectedKind == .yourSplit ? created : transferred
+
+        switch selectedFilter {
+        case .active:
+            return bills.filter { $0.status == .active }
+        case .inactive:
+            return bills.filter { $0.status != .active }
+        }
     }
 
-    public func select(_ category: Category) {
-        selectedCategory = category
+    public func select(_ kind: Kind) {
+        selectedKind = kind
+    }
+
+    public func select(_ filter: Filter) {
+        selectedFilter = filter
     }
 
     public func subtitle(for bill: SplitBillListItem) -> String {

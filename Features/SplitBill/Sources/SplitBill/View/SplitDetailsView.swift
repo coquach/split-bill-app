@@ -193,7 +193,8 @@ public struct SplitDetailsView: View {
 
     @ViewBuilder
     private var bottomActions: some View {
-        if case .loaded(let loaded) = viewModel.state {
+        // Get QR and Edit belong to whoever created the split, not to people who paid into it
+        if case .loaded(let loaded) = viewModel.state, loaded.detail.isRequester {
             BottomActionBar(
                 primary: .init(
                     title: "Get QR",

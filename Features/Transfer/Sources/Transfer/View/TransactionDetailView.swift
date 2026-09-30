@@ -13,17 +13,20 @@ public struct TransactionDetailView: View {
     @State private var viewModel: TransactionDetailViewModel
     private let onBack: () -> Void
     private let onSplitBill: (SplitSource) -> Void
+    private let onViewSplit: (UUID) -> Void
     private let onBackToHome: () -> Void
 
     public init(
         viewModel: TransactionDetailViewModel,
         onBack: @escaping () -> Void,
         onSplitBill: @escaping (SplitSource) -> Void,
+        onViewSplit: @escaping (UUID) -> Void,
         onBackToHome: @escaping () -> Void
     ) {
         _viewModel = State(initialValue: viewModel)
         self.onBack = onBack
         self.onSplitBill = onSplitBill
+        self.onViewSplit = onViewSplit
         self.onBackToHome = onBackToHome
     }
 
@@ -57,8 +60,6 @@ public struct TransactionDetailView: View {
         .task { await viewModel.load() }
     }
 
-    // MARK: - Loaded
-
     private func loadedContent(_ detail: TransferDetail) -> some View {
         VStack(spacing: AppSpacing.lg) {
             statusIndicator(detail.status)
@@ -79,8 +80,6 @@ public struct TransactionDetailView: View {
 
                     row(
                         label: "Description",
-                        // An em dash reads better than a blank gap when the
-                        // user sent the transfer without a note.
                         value: detail.description.flatMap {
                             $0.isEmpty ? nil : $0
                         } ?? "—"
@@ -97,18 +96,10 @@ public struct TransactionDetailView: View {
         }
     }
 
-    // MARK: - Failed
-
     private func failedContent(message: String) -> some View {
         AlertBanner(message: message, style: .error)
     }
 
-    // MARK: - Bottom actions
-
-    /// One button or two, depending on what the backend allows: Split Bill
-    /// only appears when `canCreateSplitBill` is set, so this screen is the
-    /// reason BottomActionBar takes an optional second action rather than
-    /// always expecting a pair.
     @ViewBuilder
     private var bottomActions: some View {
         switch viewModel.state {
@@ -116,7 +107,19 @@ public struct TransactionDetailView: View {
             EmptyView()
 
         case .loaded(let detail):
-            if detail.canCreateSplitBill {
+            // Already split by this user: jump to that split instead of creating another
+            if let splitBillId = detail.splitBillId, !detail.isSplitBillRepayment {
+                BottomActionBar(
+                    primary: .init(title: "View Split", style: .primary) {
+                        onViewSplit(splitBillId)
+                    },
+                    secondary: .init(
+                        title: "Back to Home",
+                        style: .secondary,
+                        handler: onBackToHome
+                    )
+                )
+            } else if detail.canCreateSplitBill {
                 BottomActionBar(
                     primary: .init(title: "Split Bill", style: .primary) {
                         onSplitBill(splitSource(for: detail))

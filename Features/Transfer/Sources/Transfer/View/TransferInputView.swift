@@ -127,10 +127,12 @@ public struct TransferInputView: View {
 
             if let balance = viewModel.availableBalance,
                viewModel.exceedsAvailableBalance {
-                AlertBanner(
-                    message: "This exceeds your available balance of \(balance.formatted) VND.",
-                    style: .warning
-                )
+                // Plain red text, only while the amount is actually over the balance
+                Text("This exceeds your available balance of \(balance.formatted) VND.")
+                    .font(AppTypography.caption)
+                    .foregroundStyle(Color.appError)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .multilineTextAlignment(.center)
             }
         }
     }

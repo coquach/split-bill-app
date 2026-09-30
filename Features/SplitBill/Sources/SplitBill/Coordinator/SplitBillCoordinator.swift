@@ -17,6 +17,8 @@ public enum SplitBillEntry: Hashable {
     case history
     // From the floating scan button
     case repay
+    // From Transaction Detail of a transaction that already has a split
+    case details(UUID)
 }
 
 public enum SplitBillDestination: Hashable {
@@ -56,7 +58,7 @@ public struct SplitBillCoordinator: View {
                         qrView(flowViewModel)
 
                     case .details(let id):
-                        detailsView(id)
+                        detailsView(id, onBack: { router.navigateBack() })
 
                     case .edit(let id, let source, let participantCount):
                         setupView(
@@ -123,6 +125,10 @@ public struct SplitBillCoordinator: View {
                 }
             )
 
+        case .details(let id):
+            // It's the first screen here, so Back closes the whole flow
+            detailsView(id, onBack: onFinish)
+
         case .repay:
             ScanRepayView(
                 viewModel: ScanRepayViewModel(
@@ -172,14 +178,17 @@ public struct SplitBillCoordinator: View {
         )
     }
 
-    private func detailsView(_ id: UUID) -> some View {
+    private func detailsView(
+        _ id: UUID,
+        onBack: @escaping () -> Void
+    ) -> some View {
         SplitDetailsView(
             viewModel: SplitDetailsViewModel(
                 splitBillId: id,
                 splitBillRepository: dependencies.splitBillRepository,
                 repaymentRepository: dependencies.repaymentRepository
             ),
-            onBack: { router.navigateBack() },
+            onBack: onBack,
             onDownloadQR: { splitBillId in
                 Task {
                     if let flowViewModel = await loadQRFlowViewModel(splitBillId) {

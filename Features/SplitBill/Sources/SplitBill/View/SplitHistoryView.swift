@@ -26,22 +26,27 @@ public struct SplitHistoryView: View {
     }
 
     public var body: some View {
-        // categoryPicker sits outside the ScrollView so only the split list
-        // underneath it scrolls - the picker stays fixed at the top.
+        // The tabs and the filter sit outside the ScrollView so only the split list
+        // underneath them scrolls - they stay fixed at the top.
         VStack(spacing: 0) {
             categoryPicker
                 .padding(.horizontal, AppSpacing.lg)
                 .padding(.top, AppSpacing.lg)
+                .padding(.bottom, AppSpacing.sm)
+
+            filterChips
+                .padding(.horizontal, AppSpacing.lg)
                 .padding(.bottom, AppSpacing.md)
 
             ScrollView {
                 content
                     .padding(.horizontal, AppSpacing.lg)
                     .padding(.bottom, AppSpacing.xxl)
-                    .id(viewModel.selectedCategory)
+                    .id("\(viewModel.selectedKind.rawValue)-\(viewModel.selectedFilter.rawValue)")
                     .transition(.opacity.combined(with: .move(edge: .trailing)))
             }
-            .animation(.easeInOut(duration: 0.25), value: viewModel.selectedCategory)
+            .animation(.easeInOut(duration: 0.25), value: viewModel.selectedKind)
+            .animation(.easeInOut(duration: 0.25), value: viewModel.selectedFilter)
         }
         .background(Color.appBackground.ignoresSafeArea())
         .safeAreaInset(edge: .top, spacing: 0) {
@@ -52,18 +57,17 @@ public struct SplitHistoryView: View {
         .task { await viewModel.load() }
     }
 
-    // Segmented control filtering the list by Active / Inactive. The
-    // highlight capsule slides between labels via matchedGeometryEffect
-    // instead of just popping into place.
+    // Main tabs: Your Split / Split Transfer. The highlight capsule slides
+    // between labels via matchedGeometryEffect instead of just popping into place.
     private var categoryPicker: some View {
         HStack(spacing: AppSpacing.xxs) {
-            ForEach(SplitHistoryViewModel.Category.allCases, id: \.self) { category in
-                let isSelected = viewModel.selectedCategory == category
+            ForEach(SplitHistoryViewModel.Kind.allCases, id: \.self) { kind in
+                let isSelected = viewModel.selectedKind == kind
 
                 Button {
-                    viewModel.select(category)
+                    viewModel.select(kind)
                 } label: {
-                    Text(category.rawValue)
+                    Text(kind.rawValue)
                         .font(AppTypography.bodyMedium)
                         .foregroundStyle(
                             isSelected ? Color.appTextOnPrimary : Color.appTextSecondary
@@ -87,7 +91,43 @@ public struct SplitHistoryView: View {
         .overlay {
             Capsule().strokeBorder(Color.appPrimary, lineWidth: 1)
         }
-        .animation(.easeInOut(duration: 0.25), value: viewModel.selectedCategory)
+        .animation(.easeInOut(duration: 0.25), value: viewModel.selectedKind)
+    }
+
+    // Small chips under the tabs to show only Active or Inactive splits.
+    private var filterChips: some View {
+        HStack(spacing: AppSpacing.xs) {
+            ForEach(SplitHistoryViewModel.Filter.allCases, id: \.self) { filter in
+                let isSelected = viewModel.selectedFilter == filter
+
+                Button {
+                    viewModel.select(filter)
+                } label: {
+                    Text(filter.rawValue)
+                        .font(AppTypography.label)
+                        .foregroundStyle(
+                            isSelected ? Color.appTextOnPrimary : Color.appTextSecondary
+                        )
+                        .padding(.horizontal, AppSpacing.md)
+                        .padding(.vertical, AppSpacing.xs)
+                        .background(
+                            Capsule().fill(
+                                isSelected ? Color.appPrimary : Color.appSurfacePrimary
+                            )
+                        )
+                        .overlay {
+                            Capsule().strokeBorder(
+                                isSelected ? Color.appPrimary : Color.appBorderStrong,
+                                lineWidth: 1
+                            )
+                        }
+                }
+                .buttonStyle(.plain)
+            }
+
+            Spacer()
+        }
+        .animation(.easeInOut(duration: 0.2), value: viewModel.selectedFilter)
     }
 
     @ViewBuilder
@@ -103,12 +143,8 @@ public struct SplitHistoryView: View {
             if bills.isEmpty {
                 EmptyStateView(
                     icon: "person.2",
-                    title: viewModel.selectedCategory == .active
-                        ? "No active splits"
-                        : "No inactive splits",
-                    message: viewModel.selectedCategory == .active
-                        ? "Split a completed transaction to start collecting from the people you paid for."
-                        : "Splits that are settled, expired, or cancelled will show up here."
+                    title: emptyTitle,
+                    message: emptyMessage
                 )
             } else {
                 billsList(bills)
@@ -121,6 +157,32 @@ public struct SplitHistoryView: View {
                     Task { await viewModel.load() }
                 }
             }
+        }
+    }
+
+    private var emptyTitle: String {
+        let isActive = viewModel.selectedFilter == .active
+
+        switch viewModel.selectedKind {
+        case .yourSplit:
+            return isActive ? "No active splits" : "No inactive splits"
+        case .splitTransfer:
+            return isActive ? "No active split transfers" : "No inactive split transfers"
+        }
+    }
+
+    private var emptyMessage: String {
+        let isActive = viewModel.selectedFilter == .active
+
+        switch viewModel.selectedKind {
+        case .yourSplit:
+            return isActive
+                ? "Split a completed transaction to start collecting from the people you paid for."
+                : "Splits that are settled, expired, or cancelled will show up here."
+        case .splitTransfer:
+            return isActive
+                ? "Splits you pay by scanning a QR code will show up here while they're open."
+                : "Splits you paid that are settled, expired, or cancelled will show up here."
         }
     }
 

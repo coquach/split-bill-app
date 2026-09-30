@@ -29,6 +29,7 @@ public struct TransferCoordinator: View {
     private let dependencies: Dependencies
     private let onFinish: () -> Void
     private let onSplitBill: (SplitSource) -> Void
+    private let onViewSplit: (UUID) -> Void
 
     // Shared across Input, Confirm and OTP so the draft and submission result
     // only ever live in one place - see TransferFlowViewModel.
@@ -39,13 +40,15 @@ public struct TransferCoordinator: View {
         router: Router = Router(),
         dependencies: Dependencies,
         onFinish: @escaping () -> Void,
-        onSplitBill: @escaping (SplitSource) -> Void
+        onSplitBill: @escaping (SplitSource) -> Void,
+        onViewSplit: @escaping (UUID) -> Void
     ) {
         self.entry = entry
         self.router = router
         self.dependencies = dependencies
         self.onFinish = onFinish
         self.onSplitBill = onSplitBill
+        self.onViewSplit = onViewSplit
         _flowViewModel = State(
             initialValue: TransferFlowViewModel(
                 walletRepository: dependencies.walletRepository,
@@ -105,6 +108,7 @@ public struct TransferCoordinator: View {
                         ),
                         onBack: { router.navigateBack() },
                         onSplitBill: onSplitBill,
+                        onViewSplit: onViewSplit,
                         onBackToHome: onFinish
                     )
                 }
