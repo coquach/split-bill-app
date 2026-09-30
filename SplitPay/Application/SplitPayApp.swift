@@ -27,7 +27,12 @@ struct SplitPayApp: App {
     }
 
     var body: some Scene {
-        WindowGroup {
+        LaunchScreen(config: .init(forceHideLogo: false)) {
+            Image("AppIcon")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 150, height: 150)
+        } rootContent: {
             AppRootView()
                 .environment(coordinator)
         }
