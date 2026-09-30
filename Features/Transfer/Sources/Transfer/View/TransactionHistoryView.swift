@@ -26,8 +26,6 @@ public struct TransactionHistoryView: View {
     }
 
     public var body: some View {
-        // categoryPicker sits outside the ScrollView so only the transaction
-        // list underneath it scrolls - the picker stays fixed at the top.
         VStack(spacing: 0) {
             categoryPicker
                 .padding(.horizontal, AppSpacing.lg)
@@ -54,9 +52,7 @@ public struct TransactionHistoryView: View {
         .refreshable { await viewModel.load() }
     }
 
-    // Segmented control filtering the list by All / Transfer / Repayment.
-    // The highlight capsule slides between labels via matchedGeometryEffect
-    // instead of just popping into place.
+
     private var categoryPicker: some View {
         HStack(spacing: AppSpacing.xxs) {
             ForEach(TransactionTypeFilter.allCases, id: \.self) { filter in
