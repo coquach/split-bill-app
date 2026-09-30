@@ -71,28 +71,30 @@ public final class HomeViewModel {
         errorMessage = nil
         defer { isLoading = false }
 
+        async let profileTask = capture { try await profileRepository.getCurrentProfile() }
+        async let walletTask = capture { try await walletRepository.getDefaultWallet() }
+        async let transferTask = capture {
+            try await transferRepository.getTransfers(page: 1, pageSize: 10, filter: .all)
+        }
+
+        let (profileResult, walletResult, transferResult) = await (
+            profileTask, walletTask, transferTask
+        )
+
         do {
-            async let profileTask = profileRepository.getCurrentProfile()
-            async let walletTask = walletRepository.getDefaultWallet()
-            async let transferTask = transferRepository.getTransfers(page: 1, pageSize: 10, filter: .all)
-
-            let (
-                loadedProfile,
-                loadedWallet,
-                transfers
-            ) = try await (
-                profileTask,
-                walletTask,
-                transferTask
-            )
-
-            profile = loadedProfile
-            wallet = loadedWallet
-            
+            profile = try profileResult.get()
+            wallet = try walletResult.get()
+            let transfers = try transferResult.get()
             recentTransfers = transfers.prefix(4).map { HomeTransaction(transaction: $0) }
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    /// Captures a throw as a Result so one failing request doesn't cancel its
+    /// siblings (which would surface as a misleading "unable to connect").
+    private func capture<T>(_ work: () async throws -> T) async -> Result<T, Error> {
+        do { return .success(try await work()) } catch { return .failure(error) }
     }
 
     func clearError() {

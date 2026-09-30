@@ -92,7 +92,7 @@ public struct TransferConfirmView: View {
                 ),
                 secondary: .init(
                     title: "Cancel",
-                    style: .accent,
+                    style: .secondary,
                     handler: onCancel
                 )
             )

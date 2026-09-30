@@ -119,3 +119,10 @@ public enum DomainError:
         }
     }
 }
+
+/// Without this, `error.localizedDescription` on a DomainError renders as
+/// "The operation couldn't be completed (Domains.DomainError error 0)",
+/// hiding the real message from any screen that displays it.
+extension DomainError: LocalizedError {
+    public var errorDescription: String? { message }
+}

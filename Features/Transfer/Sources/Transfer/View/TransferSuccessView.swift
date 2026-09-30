@@ -62,11 +62,12 @@ public struct TransferSuccessView: View {
             BottomActionBar(
                 primary: .init(
                     title: "View Details",
-                    style: .secondary,
+                    style: .primary,
                     handler: onViewDetails
                 ),
                 secondary: .init(
                     title: "Back to Home",
+                    style: .secondary,
                     style: .accent,
                     accessibilityID: UITestID.transferSuccessDone,
                     handler: onBackToHome

@@ -17,10 +17,14 @@ enum RepositoryErrorMapper {
 
         if let urlError = error as? URLError {
             switch urlError.code {
-            case .notConnectedToInternet, .networkConnectionLost, .timedOut:
+            case .notConnectedToInternet, .networkConnectionLost, .timedOut,
+                .cannotConnectToHost, .cannotFindHost, .dnsLookupFailed:
                 return .network
             default:
-                return .network
+                return .unknown(
+                    code: "\(urlError.code.rawValue)",
+                    message: urlError.localizedDescription
+                )
             }
         }
 
