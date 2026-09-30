@@ -6,6 +6,7 @@ public struct ProfileView: View {
     @State private var viewModel: ProfileViewModel
     @State private var isShowingPinSetup = false
     @State private var isShowingChangePin = false
+    @State private var isShowingLogoutConfirmation = false
 
     public init(viewModel: ProfileViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -33,6 +34,27 @@ public struct ProfileView: View {
             .padding(.bottom, AppSpacing.xxxl)
         }
         .background(Color.appBackground.ignoresSafeArea())
+        .modalOverlay(isPresented: isShowingLogoutConfirmation) {
+            AppModal(
+                icon: Image(systemName: "rectangle.portrait.and.arrow.right"),
+                title: "Log Out?",
+                message: "Are you sure you want to log out?"
+            ) {
+                // Back closes the modal and stays signed in; Confirm closes it and signs out
+                HStack(spacing: AppSpacing.sm) {
+                    AppButton(title: "Back", style: .secondary) {
+                        isShowingLogoutConfirmation = false
+                    }
+
+                    AppButton(title: "Confirm", style: .destructive) {
+                        isShowingLogoutConfirmation = false
+                        Task {
+                            await viewModel.signOut()
+                        }
+                    }
+                }
+            }
+        }
         .task {
             await viewModel.load()
         }
@@ -48,12 +70,17 @@ public struct ProfileView: View {
         }
         .sheet(isPresented: $isShowingChangePin) {
             NavigationStack {
-                ChangePinView { currentPin, newPin in
-                    await viewModel.changePin(
-                        currentPin: currentPin,
-                        newPin: newPin
-                    )
-                }
+                ChangePinView(
+                    onVerifyCurrent: { currentPin in
+                        await viewModel.verifyPin(currentPin)
+                    },
+                    onSubmit: { currentPin, newPin in
+                        await viewModel.changePin(
+                            currentPin: currentPin,
+                            newPin: newPin
+                        )
+                    }
+                )
             }
         }
         .alert(
@@ -126,9 +153,7 @@ public struct ProfileView: View {
 
     private var logoutButton: some View {
         Button {
-            Task {
-                await viewModel.signOut()
-            }
+            isShowingLogoutConfirmation = true
         } label: {
             HStack {
                 if viewModel.isSigningOut {
