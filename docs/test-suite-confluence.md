@@ -1,6 +1,8 @@
 # Bổ sung Unit Test — SplitPay iOS
 
 > Branch: `test/setup-testcase` · Framework: **Swift Testing** · Tổng cộng: **~206 test / 10 package — 100% PASS**
+>
+> *Cập nhật sau: package `Foundation/Network` (dead code, không ai import — 5 test) đã bị xoá trong đợt dọn DI; suite còn 9 package. Các số liệu trong tài liệu này giữ nguyên như thời điểm báo cáo.*
 
 ---
 

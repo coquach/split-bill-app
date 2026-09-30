@@ -22,7 +22,6 @@ cd "$ROOT"
 
 SWIFT_PACKAGES=(
     "Foundation/Utils"
-    "Foundation/Network"
     "Foundation/Router"
     "Foundation/Domains"
 )
