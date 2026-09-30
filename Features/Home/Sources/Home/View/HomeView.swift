@@ -98,16 +98,22 @@ public struct HomeView: View {
                     holderName: viewModel.walletHolderName
                 )
 
-                HomeQuickActions(
-                    onTransfer: onNavigateTransfer,
-                    onSplit: onNavigateSplitBill
-                )
+                // Grouped so these two sit close together; the buttons' own padding already leaves some room
+                VStack(
+                    alignment: .leading,
+                    spacing: 0
+                ) {
+                    HomeQuickActions(
+                        onTransfer: onNavigateTransfer,
+                        onSplit: onNavigateSplitBill
+                    )
 
-                HomeRecentTransactions(
-                    transactions: viewModel.recentTransfers,
-                    isLoading: viewModel.isLoading,
-                    onSeeAll: onNavigateTransactionHistory
-                )
+                    HomeRecentTransactions(
+                        transactions: viewModel.recentTransfers,
+                        isLoading: viewModel.isLoading,
+                        onSeeAll: onNavigateTransactionHistory
+                    )
+                }
             }
             .padding(.horizontal, AppSpacing.xl)
             .padding(.top, AppSpacing.sm)
