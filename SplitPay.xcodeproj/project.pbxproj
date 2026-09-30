@@ -182,7 +182,6 @@
 			mainGroup = 6A67E9523062C6FD005289DA;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				6A67E9B630642DB1005289DA /* XCLocalSwiftPackageReference "Core/CommonUi" */,
 				AE2EF6B5734DC2123D6FF15F /* XCLocalSwiftPackageReference "Features/Authentication" */,
 				7F9188783472FC449C2CFCE0 /* XCLocalSwiftPackageReference "Features/Home" */,
 				4BBE510D6FC71260F2515FD0 /* XCLocalSwiftPackageReference "Foundation/Domains" */,
@@ -371,7 +370,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 4H6FCCBG9H;
+				DEVELOPMENT_TEAM = U62LXS4PHV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = SplitPay/Info.plist;
@@ -404,7 +403,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 4H6FCCBG9H;
+				DEVELOPMENT_TEAM = U62LXS4PHV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = SplitPay/Info.plist;
@@ -519,10 +518,6 @@
 		4BBE510D6FC71260F2515FD0 /* XCLocalSwiftPackageReference "Foundation/Domains" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Foundation/Domains;
-		};
-		6A67E9B630642DB1005289DA /* XCLocalSwiftPackageReference "Core/CommonUi" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = Core/CommonUi;
 		};
 		7F9188783472FC449C2CFCE0 /* XCLocalSwiftPackageReference "Features/Home" */ = {
 			isa = XCLocalSwiftPackageReference;

@@ -29,20 +29,27 @@ public final class TransactionHistoryViewModel {
     public private(set) var selectedFilter: TransactionTypeFilter = .all
 
     private let transferRepository: ITransferRepository
-    // Injected so tests can pin the calendar instead of racing the real
-    // clock (midnight boundaries, timezone drift). Defaults to .current.
-    private let calendar: Calendar
 
-    public init(
-        transferRepository: ITransferRepository,
-        calendar: Calendar = .current
-    ) {
+    public init(transferRepository: ITransferRepository) {
         self.transferRepository = transferRepository
-        self.calendar = calendar
+
+        // Reload as soon as a transfer or repayment finishes; weak self, so it does nothing once this view model is gone
+        NotificationCenter.default.addObserver(
+            forName: .transactionsDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                await self?.load(showsSpinner: false)
+            }
+        }
     }
 
-    public func load() async {
-        state = .loading
+    // showsSpinner: false keeps the current list on screen while the new one loads, so the reload isn't visible as a flash
+    public func load(showsSpinner: Bool = true) async {
+        if showsSpinner {
+            state = .loading
+        }
 
         do {
             let items = try await transferRepository.getTransfers(
@@ -52,9 +59,12 @@ public final class TransactionHistoryViewModel {
             )
             state = .loaded(group(items))
         } catch let error as DomainError {
-            state = .failed(error)
+            // A background reload that fails shouldn't replace a good list with an error screen
+            if showsSpinner { state = .failed(error) }
         } catch {
-            state = .failed(.unknown(code: nil, message: error.localizedDescription))
+            if showsSpinner {
+                state = .failed(.unknown(code: nil, message: error.localizedDescription))
+            }
         }
     }
 
@@ -74,6 +84,7 @@ public final class TransactionHistoryViewModel {
 
     // Groups by calendar day, newest first, preserving the server's ordering.
     private func group(_ items: [TransferHistory]) -> [Section] {
+        let calendar = Calendar.current
         var order: [Date] = []
         var buckets: [Date: [TransferHistory]] = [:]
 
@@ -90,6 +101,7 @@ public final class TransactionHistoryViewModel {
     }
 
     private func title(for day: Date) -> String {
+        let calendar = Calendar.current
         if calendar.isDateInToday(day) { return "Today" }
         if calendar.isDateInYesterday(day) { return "Yesterday" }
         return Self.dayFormatter.string(from: day)

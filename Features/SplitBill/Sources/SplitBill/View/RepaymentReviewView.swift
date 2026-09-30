@@ -59,11 +59,6 @@ public struct RepaymentReviewView: View {
                         ])
                     }
                 }
-
-                AlertBanner(
-                    message: "Confirm this is the split you intend to pay into. This cannot be reversed.",
-                    style: .error
-                )
             }
             .padding(.horizontal, AppSpacing.lg)
             .padding(.top, AppSpacing.lg)

@@ -14,12 +14,14 @@ public struct Avatar: View {
         case small   // 32pt — compact rows / split participant list
         case medium  // 44pt — standard list rows, transaction history
         case large   // 64pt — screen headers,transfer confirm
+        case xlarge  // 96pt — profile hero
 
         var diameter: CGFloat {
             switch self {
             case .small: return 32
             case .medium: return 44
             case .large: return 64
+            case .xlarge: return 96
             }
         }
 
@@ -29,6 +31,7 @@ public struct Avatar: View {
             case .small: return AppTypography.caption
             case .medium: return AppTypography.label
             case .large: return AppTypography.title
+            case .xlarge: return .system(size: 34, weight: .bold)
             }
         }
     }

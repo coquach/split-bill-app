@@ -20,6 +20,9 @@ public struct AppButton: View {
         /// A destructive action, e.g. "Cancel Split" - filled with the error
         /// pairing so it reads as dangerous rather than a normal secondary action.
         case destructive
+        /// The one deliberate destructive action on a screen, e.g. "Log Out" -
+        /// white fill with error-colored text and icon, rather than a red fill.
+        case destructiveSecondary
     }
 
     private let title: String
@@ -78,33 +81,41 @@ public struct AppButton: View {
             )
         )
         .overlay {
-            // Secondary uses a pastel white-blue fill, so it needs the theme
-            // blue border to read as a button rather than blend into the
-            // surface behind it.
+            // White fill needs the blue border to read as a button
             if style == .secondary {
                 RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
                     .strokeBorder(Color.appPrimary, lineWidth: 1)
             }
         }
+        // Soft shadow stands in for the border on the white destructive button
+        .shadow(
+            color: style == .destructiveSecondary ? Color.black.opacity(0.08) : Color.clear,
+            radius: 6,
+            x: 0,
+            y: 2
+        )
         .disabled(isLoading)
     }
 
     private var backgroundColor: Color {
         switch style {
         case .primary:
-            return .appPrimary
+            return .appPrimaryBold
 
         case .accent:
             return .appSubtle
 
         case .secondary:
-            return .appInfoBackground
+            return .appSurfacePrimary
 
         case .tinted:
             return .appInfoBackground
 
         case .destructive:
             return .appError
+
+        case .destructiveSecondary:
+            return .appSurfacePrimary
         }
     }
 
@@ -124,6 +135,9 @@ public struct AppButton: View {
 
         case .destructive:
             return .appTextOnPrimary
+
+        case .destructiveSecondary:
+            return .appError
         }
     }
 }

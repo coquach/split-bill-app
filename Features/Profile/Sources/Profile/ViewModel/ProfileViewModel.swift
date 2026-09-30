@@ -102,6 +102,15 @@ public final class ProfileViewModel {
         }
     }
 
+    // Used by Change PIN to check the current PIN before the user types a new one.
+    func verifyPin(_ pin: String) async -> Bool {
+        do {
+            return try await pinRepository.verifyPin(pin)
+        } catch {
+            return false
+        }
+    }
+
     func changePin(
         currentPin: String,
         newPin: String

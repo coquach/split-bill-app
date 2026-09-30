@@ -1,6 +1,6 @@
 //
 //  AppAlert.swift
-//  CommonUi
+//  SystemDesign
 //
 //  Created by Co Quach on 18/9/26.
 //

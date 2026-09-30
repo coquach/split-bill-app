@@ -13,17 +13,20 @@ public struct TransactionDetailView: View {
     @State private var viewModel: TransactionDetailViewModel
     private let onBack: () -> Void
     private let onSplitBill: (SplitSource) -> Void
+    private let onViewSplit: (UUID) -> Void
     private let onBackToHome: () -> Void
 
     public init(
         viewModel: TransactionDetailViewModel,
         onBack: @escaping () -> Void,
         onSplitBill: @escaping (SplitSource) -> Void,
+        onViewSplit: @escaping (UUID) -> Void,
         onBackToHome: @escaping () -> Void
     ) {
         _viewModel = State(initialValue: viewModel)
         self.onBack = onBack
         self.onSplitBill = onSplitBill
+        self.onViewSplit = onViewSplit
         self.onBackToHome = onBackToHome
     }
 
@@ -57,14 +60,9 @@ public struct TransactionDetailView: View {
         .task { await viewModel.load() }
     }
 
-    // MARK: - Loaded
-
     private func loadedContent(_ detail: TransferDetail) -> some View {
         VStack(spacing: AppSpacing.lg) {
-            StatusBadge(
-                text: statusText(detail.status),
-                style: statusStyle(detail.status)
-            )
+            statusIndicator(detail.status)
 
             Text(viewModel.formattedOutgoingAmount(detail.amount))
                 .font(AppTypography.display)
@@ -82,8 +80,6 @@ public struct TransactionDetailView: View {
 
                     row(
                         label: "Description",
-                        // An em dash reads better than a blank gap when the
-                        // user sent the transfer without a note.
                         value: detail.description.flatMap {
                             $0.isEmpty ? nil : $0
                         } ?? "—"
@@ -100,18 +96,10 @@ public struct TransactionDetailView: View {
         }
     }
 
-    // MARK: - Failed
-
     private func failedContent(message: String) -> some View {
         AlertBanner(message: message, style: .error)
     }
 
-    // MARK: - Bottom actions
-
-    /// One button or two, depending on what the backend allows: Split Bill
-    /// only appears when `canCreateSplitBill` is set, so this screen is the
-    /// reason BottomActionBar takes an optional second action rather than
-    /// always expecting a pair.
     @ViewBuilder
     private var bottomActions: some View {
         switch viewModel.state {
@@ -119,7 +107,19 @@ public struct TransactionDetailView: View {
             EmptyView()
 
         case .loaded(let detail):
-            if detail.canCreateSplitBill {
+            // Linked to a split, either one you created or one you paid into: open it instead of creating another
+            if let splitBillId = detail.splitBillId {
+                BottomActionBar(
+                    primary: .init(title: "View Split", style: .primary) {
+                        onViewSplit(splitBillId)
+                    },
+                    secondary: .init(
+                        title: "Back to Home",
+                        style: .secondary,
+                        handler: onBackToHome
+                    )
+                )
+            } else if detail.canCreateSplitBill {
                 BottomActionBar(
                     primary: .init(
                         title: "Split Bill",
@@ -194,6 +194,28 @@ public struct TransactionDetailView: View {
             date: detail.createdAt,
             totalAmount: Amount(Double(detail.amount))
         )
+    }
+
+    // A completed transfer shows just the green check; pending and failed keep their text badge
+    @ViewBuilder
+    private func statusIndicator(_ status: TransferStatus) -> some View {
+        if status == .success {
+            ZStack {
+                Circle()
+                    .fill(Color.appSuccess)
+                    .frame(width: 72, height: 72)
+                Image(systemName: "checkmark")
+                    .font(.system(size: 30, weight: .bold))
+                    .foregroundStyle(Color.white)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Completed")
+        } else {
+            StatusBadge(
+                text: statusText(status),
+                style: statusStyle(status)
+            )
+        }
     }
 
     private func statusText(_ status: TransferStatus) -> String {

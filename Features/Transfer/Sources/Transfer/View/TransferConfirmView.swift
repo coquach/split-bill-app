@@ -70,11 +70,6 @@ public struct TransferConfirmView: View {
                     }
                 }
             }
-
-            AlertBanner(
-                message: "Check the receiver details. Transfers cannot be reversed once sent.",
-                style: .error
-            )
         }
         .padding(AppSpacing.lg)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
