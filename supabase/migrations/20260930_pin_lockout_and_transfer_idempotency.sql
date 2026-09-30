@@ -79,7 +79,7 @@ begin
         update public.profiles
         set
             pin_failed_attempts = 0,
-            pin_locked_until = now() + interval '15 minutes',
+            pin_locked_until = now() + interval '10 minutes',
             updated_at = now()
         where id = auth.uid();
 
@@ -143,7 +143,7 @@ BEGIN
             UPDATE public.profiles
             SET
                 pin_failed_attempts = 0,
-                pin_locked_until = now() + interval '15 minutes',
+                pin_locked_until = now() + interval '10 minutes',
                 updated_at = now()
             WHERE id = auth.uid();
         ELSE
