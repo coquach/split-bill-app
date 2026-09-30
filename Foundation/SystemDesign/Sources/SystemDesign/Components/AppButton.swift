@@ -8,7 +8,7 @@ import SwiftUI
 
 public struct AppButton: View {
 
-    public enum Style {
+    public enum Style: Equatable {
         case primary
         case accent
         case secondary
@@ -17,6 +17,9 @@ public struct AppButton: View {
         /// "Edit" beside a dark primary, where a white pill would recede
         /// into the card behind it.
         case tinted
+        /// A destructive action, e.g. "Cancel Split" - filled with the error
+        /// pairing so it reads as dangerous rather than a normal secondary action.
+        case destructive
     }
 
     private let title: String
@@ -69,6 +72,14 @@ public struct AppButton: View {
                 style: .continuous
             )
         )
+        .overlay {
+            // Secondary sits on a white fill, so it needs a border to read
+            // as a button rather than blend into the surface behind it.
+            if style == .secondary {
+                RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                    .strokeBorder(Color.appPrimary, lineWidth: 1)
+            }
+        }
         .disabled(isLoading)
     }
 
@@ -85,6 +96,9 @@ public struct AppButton: View {
 
         case .tinted:
             return .appInfoBackground
+
+        case .destructive:
+            return .appError
         }
     }
 
@@ -101,6 +115,9 @@ public struct AppButton: View {
 
         case .tinted:
             return .appInfo
+
+        case .destructive:
+            return .appTextOnPrimary
         }
     }
 }

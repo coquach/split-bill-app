@@ -20,7 +20,7 @@ public enum SplitBillEntry: Hashable {
 }
 
 public enum SplitBillDestination: Hashable {
-    case qr(SplitQRContext)
+    case qr(SplitFlowViewModel)
     case details(UUID)
     case edit(splitBillId: UUID, source: SplitSource, participantCount: Int)
     case reviewRepayment(ScannedRepayment)
@@ -29,17 +29,20 @@ public enum SplitBillDestination: Hashable {
 }
 
 public struct SplitBillCoordinator: View {
-    @State private var router = Router()
+    // Injectable so a parent tab view can hold the same instance across tab switches and reset it to root.
+    @Bindable private var router: Router
     private let entry: SplitBillEntry
     private let dependencies: Dependencies
     private let onFinish: () -> Void
 
     public init(
         entry: SplitBillEntry,
+        router: Router = Router(),
         dependencies: Dependencies,
         onFinish: @escaping () -> Void
     ) {
         self.entry = entry
+        self.router = router
         self.dependencies = dependencies
         self.onFinish = onFinish
     }
@@ -49,8 +52,8 @@ public struct SplitBillCoordinator: View {
             root
                 .navigationDestination(for: SplitBillDestination.self) { destination in
                     switch destination {
-                    case .qr(let context):
-                        qrView(context)
+                    case .qr(let flowViewModel):
+                        qrView(flowViewModel)
 
                     case .details(let id):
                         detailsView(id)
@@ -93,6 +96,8 @@ public struct SplitBillCoordinator: View {
                     }
                 }
         }
+        // Tab bar only shows on this tab's entry screen, not on anything pushed on top.
+        .toolbar(router.navPath.isEmpty ? .visible : .hidden, for: .tabBar)
         .environment(router)
     }
 
@@ -137,24 +142,31 @@ public struct SplitBillCoordinator: View {
         participantCount: Int,
         onBack: @escaping () -> Void
     ) -> some View {
-        SplitSetupView(
-            viewModel: SplitSetupViewModel(
-                source: source,
-                splitBillRepository: dependencies.splitBillRepository,
-                splitQRRepository: dependencies.splitQRRepository,
-                editingSplitBillId: editingSplitBillId,
-                participantCount: participantCount
-            ),
+        // Created once here and carried forward to the QR screen via the
+        // destination payload, so Setup and QR share the same instance.
+        let flowViewModel = SplitFlowViewModel(
+            source: source,
+            splitBillRepository: dependencies.splitBillRepository,
+            splitQRRepository: dependencies.splitQRRepository,
+            editingSplitBillId: editingSplitBillId,
+            participantCount: participantCount
+        )
+
+        return SplitSetupView(
+            viewModel: flowViewModel,
             onBack: onBack,
-            onGenerated: { context in
-                router.navigate(to: SplitBillDestination.qr(context))
+            onGenerated: {
+                router.navigate(to: SplitBillDestination.qr(flowViewModel))
+            },
+            onCancelled: {
+                router.navigateToRoot()
             }
         )
     }
 
-    private func qrView(_ context: SplitQRContext) -> some View {
+    private func qrView(_ flowViewModel: SplitFlowViewModel) -> some View {
         SplitQRView(
-            viewModel: SplitQRViewModel(context: context),
+            viewModel: flowViewModel,
             onBack: { router.navigateBack() },
             onDone: onFinish
         )
@@ -170,8 +182,8 @@ public struct SplitBillCoordinator: View {
             onBack: { router.navigateBack() },
             onDownloadQR: { splitBillId in
                 Task {
-                    if let context = await loadQRContext(splitBillId) {
-                        router.navigate(to: SplitBillDestination.qr(context))
+                    if let flowViewModel = await loadQRFlowViewModel(splitBillId) {
+                        router.navigate(to: SplitBillDestination.qr(flowViewModel))
                     }
                 }
             },
@@ -185,26 +197,37 @@ public struct SplitBillCoordinator: View {
                 )
             }
         )
-        // Pins its own bottom bar, which the tab bar would sit on top of.
-        .toolbar(.hidden, for: .tabBar)
     }
 
 
-    private func loadQRContext(_ splitBillId: UUID) async -> SplitQRContext? {
+    // "Download QR" already has everything it needs from Details, so this
+    // builds a flow VM pre-loaded with the context rather than routing
+    // through Setup's create/update round-trip.
+    private func loadQRFlowViewModel(_ splitBillId: UUID) async -> SplitFlowViewModel? {
         do {
             let bill = try await dependencies.splitBillRepository
                 .getSplitBillDetail(id: splitBillId)
             let qr = try await dependencies.splitQRRepository
                 .getQR(splitBillId: splitBillId)
 
-            return SplitQRContext(
-                splitBillId: splitBillId,
-                title: bill.splitBill.title,
-                counterpartyName: bill.splitBill.title,
-                participantCount: bill.splitBill.participantCount,
-                perPersonAmount: bill.splitBill.perPersonAmount,
-                qrPayload: qr.qrPayload
+            let flowViewModel = SplitFlowViewModel(
+                source: source(from: bill),
+                splitBillRepository: dependencies.splitBillRepository,
+                splitQRRepository: dependencies.splitQRRepository,
+                editingSplitBillId: splitBillId,
+                participantCount: bill.splitBill.participantCount
             )
+            flowViewModel.setResolvedContext(
+                SplitQRContext(
+                    splitBillId: splitBillId,
+                    title: bill.splitBill.title,
+                    counterpartyName: bill.splitBill.title,
+                    participantCount: bill.splitBill.participantCount,
+                    perPersonAmount: bill.splitBill.perPersonAmount,
+                    qrPayload: qr.qrPayload
+                )
+            )
+            return flowViewModel
         } catch {
             return nil
         }

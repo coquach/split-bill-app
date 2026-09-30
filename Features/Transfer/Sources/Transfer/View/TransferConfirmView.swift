@@ -5,17 +5,18 @@
 //  Created by Dinh Long on 26/9/26.
 //
 
+import Domains
 import SwiftUI
 import SystemDesign
 
 public struct TransferConfirmView: View {
-    @State private var viewModel: TransferConfirmViewModel
+    @State private var viewModel: TransferFlowViewModel
     private let onBack: () -> Void
     private let onConfirm: () -> Void
     private let onCancel: () -> Void
 
     public init(
-        viewModel: TransferConfirmViewModel,
+        viewModel: TransferFlowViewModel,
         onBack: @escaping () -> Void,
         onConfirm: @escaping () -> Void,
         onCancel: @escaping () -> Void
@@ -36,7 +37,7 @@ public struct TransferConfirmView: View {
                             .foregroundStyle(Color.appOnSurface.opacity(0.5))
 
                         HStack(alignment: .firstTextBaseline, spacing: AppSpacing.xxs) {
-                            Text(viewModel.draft.amount.formatted)
+                            Text(draft.amount.formatted)
                                 .font(AppTypography.display)
                             Text("VND")
                                 .font(AppTypography.bodyMedium)
@@ -49,7 +50,7 @@ public struct TransferConfirmView: View {
 
                     row(label: "Receiver") {
                         VStack(alignment: .trailing, spacing: AppSpacing.xxs) {
-                            Text(viewModel.draft.receiverHolderName)
+                            Text(draft.receiverHolderName)
                             Text(viewModel.maskedAccountNumber)
                                 .font(AppTypography.caption)
                                 .foregroundStyle(Color.appOnSurface.opacity(0.5))
@@ -65,7 +66,7 @@ public struct TransferConfirmView: View {
                     Divider()
 
                     row(label: "Description") {
-                        Text(viewModel.draft.description.isEmpty ? "—" : viewModel.draft.description)
+                        Text(draft.description.isEmpty ? "—" : draft.description)
                     }
                 }
             }
@@ -97,6 +98,12 @@ public struct TransferConfirmView: View {
         }
         .navigationBarHidden(true)
         .screenLifecycle("TransferConfirm")
+    }
+
+    // Confirm is only ever pushed right after TransferFlowViewModel.confirmInput()
+    // stores a draft, so it's always set by the time this screen appears.
+    private var draft: TransferDraft {
+        viewModel.draft!
     }
 
     @ViewBuilder

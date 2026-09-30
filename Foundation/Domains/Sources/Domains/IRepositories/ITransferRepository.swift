@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum TransactionTypeFilter : String, Encodable, Sendable, Equatable {
+public enum TransactionTypeFilter : String, Encodable, Sendable, Equatable, Hashable, CaseIterable {
     case all = "ALL";
     case transfer = "TRANSFER";
     case repayment = "REPAYMENT"

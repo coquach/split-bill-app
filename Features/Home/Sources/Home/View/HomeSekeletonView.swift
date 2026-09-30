@@ -37,7 +37,7 @@ struct HomeSkeletonView: View {
             )
             .padding(
                 .bottom,
-                140
+                AppSpacing.huge
             )
         }
         .background(

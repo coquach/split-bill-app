@@ -89,9 +89,7 @@ public final class HomeViewModel {
             profile = loadedProfile
             wallet = loadedWallet
             
-            recentTransfers = transfers.prefix(4).map {
-                HomeTransaction(transaction: $0, currentUserId: loadedProfile.id)
-            }
+            recentTransfers = transfers.prefix(4).map { HomeTransaction(transaction: $0) }
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -115,17 +113,17 @@ public struct HomeTransaction: Identifiable, Sendable, Equatable {
     public let title: String
     public let subtitle: String
     public let amount: Int64
-    public let currency: String
     public let createdAt: Date
 
-    public init(transaction: TransferHistory, currentUserId: UUID) {
+    public init(transaction: TransferHistory) {
         id = transaction.id
-        title = "Transfer"
-        subtitle = transaction.transactionRef
-        amount =
-            transaction.senderUserId == currentUserId
-            ? -transaction.amount : transaction.amount
-        currency = transaction.currency
+        title = transaction.counterpartyName
+            ?? transaction.counterpartyWalletNumber
+            ?? "Unknown"
+        subtitle = transaction.isRepayment ? "Split payment" : "Transfer"
+        amount = transaction.direction == .received
+            ? transaction.amount
+            : -transaction.amount
         createdAt = transaction.createdAt
     }
 
@@ -135,7 +133,9 @@ public struct HomeTransaction: Identifiable, Sendable, Equatable {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         let value = formatter.string(from: NSNumber(value: abs(amount))) ?? "0"
-        return "\(isIncoming ? "+" : "-")\(value) \(currency)"
+        // The app only ever deals in VND - always show that instead of the
+        // raw currency column, which has held stray non-code values.
+        return "\(isIncoming ? "+" : "-")\(value) VND"
     }
 
     var dateText: String {

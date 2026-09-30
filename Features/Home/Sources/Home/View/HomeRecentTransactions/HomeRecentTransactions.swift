@@ -49,33 +49,41 @@ struct HomeRecentTransactions: View {
                 AppSpacing.xs
             )
 
-            VStack(
-                spacing: AppSpacing.md
-            ) {
-                if isLoading {
-                    ForEach(
-                        0..<4,
-                        id: \.self
-                    ) { _ in
-                        TransactionRowSkeleton()
-                    }
-                } else if transactions.isEmpty {
-                    EmptyTransactionsView()
-                } else {
-                    ForEach(
-                        transactions
-                    ) { transaction in
-                        TransactionRow(
-                            title: transaction.title,
-                            subtitle: transaction.subtitle,
-                            amount: transaction.formattedAmount,
-                            dateText: transaction.dateText,
-                            isIncoming: transaction.isIncoming
-                        )
+            // The one scrollable region on Home - everything else on the
+            // screen is fixed.
+            ScrollView(showsIndicators: false) {
+                VStack(
+                    spacing: AppSpacing.md
+                ) {
+                    if isLoading {
+                        ForEach(
+                            0..<4,
+                            id: \.self
+                        ) { _ in
+                            TransactionRowSkeleton()
+                        }
+                    } else if transactions.isEmpty {
+                        EmptyTransactionsView()
+                    } else {
+                        ForEach(
+                            transactions
+                        ) { transaction in
+                            TransactionRow(
+                                title: transaction.title,
+                                subtitle: transaction.subtitle,
+                                amount: transaction.formattedAmount,
+                                dateText: transaction.dateText,
+                                isIncoming: transaction.isIncoming
+                            )
+                        }
                     }
                 }
+                .padding(AppSpacing.md)
             }
-            .padding(AppSpacing.md)
+            // ScrollView sizes to fit its content unless told otherwise -
+            // this is what actually makes the card expand, not a frame on
+            // an ancestor.
+            .frame(maxHeight: .infinity)
             .background(
                 Color.appSurfacePrimary
             )
@@ -96,6 +104,16 @@ struct HomeRecentTransactions: View {
                 )
             }
         }
+        .frame(maxHeight: .infinity)
+        .background(
+            GeometryReader { geo in
+                Color.clear
+                    .onAppear { print("[DEBUG] HomeRecentTransactions resolved size: \(geo.size)") }
+                    .onChange(of: geo.size) { _, newValue in
+                        print("[DEBUG] HomeRecentTransactions resolved size changed: \(newValue)")
+                    }
+            }
+        )
     }
 }
 
@@ -124,7 +142,7 @@ private struct EmptyTransactionsView: View {
                     Color.appTextSecondary
                 )
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(
             .vertical,
             AppSpacing.xl
