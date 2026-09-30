@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>LSApplicationCategoryType</key>
+	<string></string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
@@ -33,6 +35,11 @@
 	<key>NSCameraUsageDescription</key>
 	<string>SplitPay uses your camera to scan a Split Bill QR code so you can pay your share.</string>
 	<key>UILaunchScreen</key>
-	<dict/>
+	<dict>
+		<key>UIImageName</key>
+		<string>AppIcon</string>
+		<key>UIColorName</key>
+		<string>LaunchScreenBG</string>
+	</dict>
 </dict>
 </plist>
