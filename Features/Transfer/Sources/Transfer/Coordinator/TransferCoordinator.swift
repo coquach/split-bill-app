@@ -16,30 +16,43 @@ public enum TransferEntry: Hashable {
 }
 
 public enum TransferDestination: Hashable {
-    case input
-    case confirm(TransferDraft)
-    case otp(TransferDraft)
-    case success(TransferReceipt)
+    case confirm
+    case otp
+    case success
     case detail(transactionId: UUID, receiverName: String)
 }
 
 public struct TransferCoordinator: View {
-    @State private var router = Router()
+    // Injectable so a parent tab view can hold the same instance across tab switches and reset it to root.
+    @Bindable private var router: Router
     private let entry: TransferEntry
     private let dependencies: Dependencies
     private let onFinish: () -> Void
     private let onSplitBill: (SplitSource) -> Void
 
+    // Shared across Input, Confirm and OTP so the draft and submission result
+    // only ever live in one place - see TransferFlowViewModel.
+    @State private var flowViewModel: TransferFlowViewModel
+
     public init(
         entry: TransferEntry = .flow,
+        router: Router = Router(),
         dependencies: Dependencies,
         onFinish: @escaping () -> Void,
         onSplitBill: @escaping (SplitSource) -> Void
     ) {
         self.entry = entry
+        self.router = router
         self.dependencies = dependencies
         self.onFinish = onFinish
         self.onSplitBill = onSplitBill
+        _flowViewModel = State(
+            initialValue: TransferFlowViewModel(
+                walletRepository: dependencies.walletRepository,
+                sessionStore: dependencies.sessionStore,
+                transferRepository: dependencies.transferRepository
+            )
+        )
     }
 
     public var body: some View {
@@ -47,53 +60,41 @@ public struct TransferCoordinator: View {
             root
             .navigationDestination(for: TransferDestination.self) { destination in
                 switch destination {
-                case .input:
-                    TransferInputView(
-                        viewModel: TransferInputViewModel(
-                            walletRepository: dependencies.walletRepository,
-                            sessionStore: dependencies.sessionStore
-                        ),
-                        onBack: { router.navigateBack() },
-                        onContinue: { draft in
-                            router.navigate(to: TransferDestination.confirm(draft))
-                        }
-                    )
-
-                case .confirm(let draft):
+                case .confirm:
                     TransferConfirmView(
-                        viewModel: TransferConfirmViewModel(draft: draft),
+                        viewModel: flowViewModel,
                         onBack: { router.navigateBack() },
                         onConfirm: {
-                            router.navigate(to: TransferDestination.otp(draft))
+                            router.navigate(to: TransferDestination.otp)
                         },
                         onCancel: onFinish
                     )
 
-                case .otp(let draft):
+                case .otp:
                     OTPVerificationView(
-                        viewModel: OTPVerificationViewModel(
-                            draft: draft,
-                            transferRepository: dependencies.transferRepository
-                        ),
+                        viewModel: flowViewModel,
                         onBack: { router.navigateBack() },
-                        onSuccess: { receipt in
-                            router.navigate(to: TransferDestination.success(receipt))
+                        onSuccess: {
+                            router.navigate(to: TransferDestination.success)
                         }
                     )
 
-                case .success(let receipt):
-                    TransferSuccessView(
-                        receipt: receipt,
-                        onViewDetails: {
-                            router.navigate(
-                                to: TransferDestination.detail(
-                                    transactionId: receipt.id,
-                                    receiverName: receipt.receiverHolderName
+                case .success:
+                    // Only reached right after submitOTP() sets the receipt.
+                    if let receipt = flowViewModel.receipt {
+                        TransferSuccessView(
+                            receipt: receipt,
+                            onViewDetails: {
+                                router.navigate(
+                                    to: TransferDestination.detail(
+                                        transactionId: receipt.id,
+                                        receiverName: receipt.receiverHolderName
+                                    )
                                 )
-                            )
-                        },
-                        onBackToHome: onFinish
-                    )
+                            },
+                            onBackToHome: onFinish
+                        )
+                    }
 
                 case .detail(let transactionId, let receiverName):
                     TransactionDetailView(
@@ -106,12 +107,11 @@ public struct TransferCoordinator: View {
                         onSplitBill: onSplitBill,
                         onBackToHome: onFinish
                     )
-                    // The detail screen pins its own bottom bar, which the tab
-                    // bar would otherwise sit on top of.
-                    .toolbar(.hidden, for: .tabBar)
                 }
             }
         }
+        // Tab bar only shows on this tab's entry screen, not on anything pushed on top.
+        .toolbar(router.navPath.isEmpty ? .visible : .hidden, for: .tabBar)
         .environment(router)
     }
 }
@@ -121,10 +121,12 @@ extension TransferCoordinator {
     fileprivate var root: some View {
         switch entry {
         case .flow:
-            TransferPinGateView(
-                viewModel: PinGateViewModel(),
-                onVerified: { router.navigate(to: TransferDestination.input) },
-                onCancel: onFinish
+            TransferInputView(
+                viewModel: flowViewModel,
+                onBack: onFinish,
+                onContinue: {
+                    router.navigate(to: TransferDestination.confirm)
+                }
             )
 
         case .history:

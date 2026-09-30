@@ -22,36 +22,15 @@ struct HomeQuickActionsSkeleton: View {
     }
 
     private var card: some View {
-        VStack(
-            alignment: .leading,
-            spacing: AppSpacing.sm
-        ) {
+        VStack(spacing: AppSpacing.sm) {
+            SkeletonCircle(size: 48)
+
             SkeletonView(
-                width: 48,
-                height: 48,
-                cornerRadius: AppRadius.md
+                width: 80,
+                height: 18
             )
-
-            VStack(
-                alignment: .leading,
-                spacing: 4
-            ) {
-                SkeletonView(
-                    width: 80,
-                    height: 18
-                )
-
-                SkeletonView(
-                    width: 95,
-                    height: 14
-                )
-            }
         }
-        .frame(
-            maxWidth: .infinity,
-            minHeight: 142,
-            alignment: .leading
-        )
+        .frame(maxWidth: .infinity)
         .padding(AppSpacing.md)
         .background(
             Color.appSurfacePrimary

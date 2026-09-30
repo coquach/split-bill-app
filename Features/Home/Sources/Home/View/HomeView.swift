@@ -36,6 +36,13 @@ public struct HomeView: View {
     public var body: some View {
         ZStack(alignment: .bottom) {
             content
+            GeometryReader { geo in
+                Color.clear
+                    .onAppear { print("[DEBUG] HomeView ZStack proposed size: \(geo.size)") }
+                    .onChange(of: geo.size) { _, newValue in
+
+                    }
+            }
         }
         .background(
             Color.appBackground
@@ -73,39 +80,51 @@ public struct HomeView: View {
         if viewModel.isLoading && viewModel.wallet == nil {
             HomeSkeletonView()
         } else {
-            ScrollView(showsIndicators: false) {
-                VStack(
-                    alignment: .leading,
-                    spacing: AppSpacing.xl
-                ) {
-                    HomeProfileHeader(
-                        displayName: viewModel.displayName,
-//                        onSettings: onSettings
-                    )
+            // Only HomeRecentTransactions scrolls internally - everything
+            // above it is fixed, so the page itself never scrolls as a whole.
+            VStack(
+                alignment: .leading,
+                spacing: AppSpacing.xl
+            ) {
+                HomeProfileHeader(
+                    displayName: viewModel.displayName,
+//                    onSettings: onSettings
+                )
 
-                    HomeBalanceCard(
-                        balance: viewModel.formattedBalance,
-                        currency: viewModel.currency,
-                        lastFourDigits: viewModel.lastFourWalletDigits,
-                        holderName: viewModel.walletHolderName
-                    )
+                HomeBalanceCard(
+                    balance: viewModel.formattedBalance,
+                    currency: viewModel.currency,
+                    lastFourDigits: viewModel.lastFourWalletDigits,
+                    holderName: viewModel.walletHolderName
+                )
 
-                    HomeQuickActions(
-                        onTransfer: onNavigateTransfer,
-                        onSplit: onNavigateSplitBill
-                    )
+                HomeQuickActions(
+                    onTransfer: onNavigateTransfer,
+                    onSplit: onNavigateSplitBill
+                )
 
-                    HomeRecentTransactions(
-                        transactions: viewModel.recentTransfers,
-                        isLoading: viewModel.isLoading,
-                        onSeeAll: onNavigateTransactionHistory
-                    )
-                }
-                .padding(.horizontal, AppSpacing.xl)
-                .padding(.top, AppSpacing.sm)
-                .padding(.bottom, 140)
+                HomeRecentTransactions(
+                    transactions: viewModel.recentTransfers,
+                    isLoading: viewModel.isLoading,
+                    onSeeAll: onNavigateTransactionHistory
+                )
             }
-            .scrollIndicators(.hidden)
+            .padding(.horizontal, AppSpacing.xl)
+            .padding(.top, AppSpacing.sm)
+            .padding(.bottom, AppSpacing.huge)
+            // Without this the VStack hugs its children's ideal height
+            // instead of claiming the screen height ZStack proposes to it,
+            // so HomeRecentTransactions never gets leftover space to expand into.
+            .frame(maxHeight: .infinity)
+            .background(
+                GeometryReader { geo in
+                    Color.clear
+                        .onAppear { print("[DEBUG] content VStack resolved size: \(geo.size)") }
+                        .onChange(of: geo.size) { _, newValue in
+                            print("[DEBUG] content VStack resolved size changed: \(newValue)")
+                        }
+                }
+            )
         }
     }
 }

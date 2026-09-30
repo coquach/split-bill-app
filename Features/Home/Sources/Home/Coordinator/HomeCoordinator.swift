@@ -6,17 +6,9 @@
 //
 
 import Domains
-import Router
 import SwiftUI
 
-public enum HomeDestination: Hashable {
-    case splitBill
-    case transfer
-    case transactionHistory
-}
-
 public struct HomeCoordinator: View {
-    @State private var router = Router()
     private let dependencies: Dependencies
     private let onTransfer: () -> Void
     private let onSplitBill: () -> Void
@@ -35,7 +27,7 @@ public struct HomeCoordinator: View {
     }
 
     public var body: some View {
-        NavigationStack(path: $router.navPath) {
+        NavigationStack {
             HomeView(
                 viewModel: HomeViewModel(
                     profileRepository: dependencies.profileRepository,
@@ -46,18 +38,7 @@ public struct HomeCoordinator: View {
                 onNavigateSplitBill: onSplitBill,
                 onNavigateTransactionHistory: onTransactionHistory
             )
-            .navigationDestination(for: HomeDestination.self) { destination in
-                switch destination {
-                case .splitBill:
-                    EmptyView()
-                    
-                case .transfer:
-                    EmptyView()
-                case .transactionHistory:
-                    EmptyView()
-                }
-            }}
-        .environment(router)
+        }
     }
 }
 

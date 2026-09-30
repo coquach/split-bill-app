@@ -1,17 +1,28 @@
 //
-//  TransferInputViewModel.swift
+//  TransferFlowViewModel.swift
 //  Transfer
 //
-//  Created by Dinh Long on 26/9/26.
+//  Created by Dinh Long on 30/9/26.
 //
 
 import Domains
 import Foundation
 import Observation
 
+// One ViewModel for the whole Input -> Confirm -> OTP -> Success flow.
+// The draft and the submission result live here once, so nothing needs to
+// re-pass them through each screen's initializer.
 @MainActor
 @Observable
-public final class TransferInputViewModel {
+public final class TransferFlowViewModel {
+
+    public enum SubmissionState: Equatable {
+        case idle
+        case verifying
+        case failed(DomainError)
+    }
+
+    // MARK: - Input step
 
     public var accountNumber: String = "" {
         didSet { scheduleAccountLookup() }
@@ -21,15 +32,31 @@ public final class TransferInputViewModel {
 
     public private(set) var lookupState: AccountLookupState = .idle
 
+    // MARK: - Confirm / OTP step
+
+    public private(set) var draft: TransferDraft?
+    public var pin: String = ""
+    public private(set) var state: SubmissionState = .idle
+    public private(set) var receipt: TransferReceipt?
+
     private let walletRepository: IWalletRepository
     private let sessionStore: SessionStore
+    private let transferRepository: ITransferRepository
 
     private var lookupTask: Task<Void, Never>?
+    private var idempotencyKey = UUID().uuidString
 
-    public init(walletRepository: IWalletRepository, sessionStore: SessionStore) {
+    public init(
+        walletRepository: IWalletRepository,
+        sessionStore: SessionStore,
+        transferRepository: ITransferRepository
+    ) {
         self.walletRepository = walletRepository
         self.sessionStore = sessionStore
+        self.transferRepository = transferRepository
     }
+
+    // MARK: - Input step
 
     public var amount: Amount {
         Amount(Double(amountText) ?? 0)
@@ -69,9 +96,13 @@ public final class TransferInputViewModel {
         lookupTask?.cancel()
     }
 
-    public func makeDraft() -> TransferDraft? {
-        guard case .found(let recipient) = lookupState else { return nil }
-        return TransferDraft(
+    // Builds the draft from the current input and stores it on the VM, so
+    // Confirm and OTP read it from here instead of receiving their own copy.
+    @discardableResult
+    public func confirmInput() -> Bool {
+        guard case .found(let recipient) = lookupState else { return false }
+
+        draft = TransferDraft(
             // The wallet id from the lookup, not the number the user typed —
             // it's what `create_transfer` actually takes.
             receiverWalletId: recipient.walletId,
@@ -82,6 +113,7 @@ public final class TransferInputViewModel {
                 in: .whitespacesAndNewlines
             )
         )
+        return true
     }
 
     private func scheduleAccountLookup() {
@@ -118,5 +150,64 @@ public final class TransferInputViewModel {
                 lookupState = .failed("Couldn't look up this account. Check your connection and try again.")
             }
         }
+    }
+
+    // MARK: - Confirm step
+
+    public var maskedAccountNumber: String {
+        guard let draft else { return "" }
+        return "•••• \(draft.receiverAccountNumber.suffix(4))"
+    }
+
+    // MARK: - OTP step
+
+    public var isPinComplete: Bool {
+        pin.count == TransferPIN.length
+    }
+
+    public var errorMessage: String? {
+        guard case .failed(let error) = state else { return nil }
+        return error.message
+    }
+
+    public func submitOTP() async {
+        guard let draft, isPinComplete, state != .verifying else { return }
+
+        state = .verifying
+
+        let command = CreateTransferCommand(
+            recipientWalletId: draft.receiverWalletId,
+            amount: Int64(draft.amount.amount.rounded()),
+            description: draft.description.isEmpty ? nil : draft.description,
+            pin: pin,
+            idempotencyKey: idempotencyKey
+        )
+
+        do {
+            let transaction = try await transferRepository.createTransfer(command)
+            receipt = TransferReceipt(transaction: transaction, draft: draft)
+            state = .idle
+        } catch let error as DomainError {
+            handleFailure(error)
+        } catch {
+            handleFailure(.unknown(code: nil, message: error.localizedDescription))
+        }
+    }
+
+    private func handleFailure(_ error: DomainError) {
+        switch error {
+        case .invalidPin, .invalidPinFormat, .pinLocked, .validation,
+             .insufficientBalance:
+            idempotencyKey = UUID().uuidString
+        default:
+            break
+        }
+
+        state = .failed(error)
+    }
+
+    public func retry() {
+        pin = ""
+        state = .idle
     }
 }
