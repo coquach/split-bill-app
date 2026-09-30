@@ -37,8 +37,9 @@ own:
 │   ├── SplitBill/            # Split setup, QR flow, history, repay by scan
 │   └── Profile/              # Profile, PIN setup/change, sign out
 ├── design/                   # Design references
+├── SplitPayUITests/          # XCUITest suite (mock backend, one launch per test)
 ├── swiftgen.yml              # Generated asset constants (SystemDesign)
-└── scripts/run_tests.sh      # Runs the whole test suite
+└── scripts/                  # run_tests.sh (unit), run_ui_tests.sh (UI)
 ```
 
 ### Architecture notes
@@ -106,3 +107,41 @@ cd Features/Transfer && xcodebuild test -scheme Transfer \
 Deliberately not tested: `qrImage` (UIImage rendering), idempotency-key
 rotation (private, no seam — noted in the relevant test files), the
 Supabase data layer over the network, and SwiftUI views.
+
+## UI tests (XCUITest)
+
+The unit tests above mock the view models; `SplitPayUITests` drives the real
+app on the simulator — navigation, forms, multi-screen flows.
+
+```bash
+./scripts/run_ui_tests.sh                 # whole suite
+./scripts/run_ui_tests.sh TransferTests   # one class
+```
+
+### How it runs
+
+- **Mock backend.** Every test launches the app with `-UITest`, which swaps
+  the DI container's Supabase assemblies for in-memory mock repositories
+  (`SplitPay/UITestSupport/`, all `#if DEBUG`). No account, credentials or
+  network involved, and each test gets a fresh store.
+- **Deterministic data.** `UITestSeedData` serves two datasets (`empty`,
+  `default`) plus "magic values" the mocks react to: `fail@test.com` fails
+  auth, `000000` fails PIN verification, account `000000` fails wallet
+  lookup. The tests and the seed data are one contract — change them
+  together.
+- **Failure injection.** `UITEST_SCENARIO` (`history-fails`, `otp-fails`,
+  `qr-decode-fails`) makes individual repository calls throw.
+- **Scanner seam.** The repay flow needs a camera; under `-UITest` the
+  scanner is replaced with a canned QR payload injected through
+  `SplitBillCoordinator.Dependencies` and fed through the real decode path.
+- **Identifiers.** All queried elements expose accessibility identifiers
+  from `SystemDesign`'s `UITestID` registry; AppModal overlays are queried
+  by identifier (not `app.alerts`, which only sees system alerts).
+- **One launch per test** via the `UITestCase` base class; waits use
+  `waitForExistence`, never sleeps.
+
+Two real bugs surfaced while writing the suite (both fixed):
+`Split Bill` from a Transaction Detail in the History tab presented nothing
+(its `fullScreenCover` modifier lived inside an un-presented cover), and the
+error modal's buttons were unreachable to XCUITest once the modal container
+carried an identifier (fixed with `accessibilityElement(children: .contain)`).

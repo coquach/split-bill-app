@@ -48,7 +48,8 @@ public struct SplitSetupView: View {
                     title: viewModel.primaryActionTitle,
                     style: .primary,
                     icon: "qrcode",
-                    isLoading: viewModel.isCreating
+                    isLoading: viewModel.isCreating,
+                    accessibilityID: UITestID.splitCreate
                 ) {
                     Task {
                         if await viewModel.generateQR() {
@@ -74,9 +75,10 @@ public struct SplitSetupView: View {
             AppModal(
                 icon: Image(systemName: "exclamationmark.triangle.fill"),
                 title: "Couldn't Create Split",
-                message: viewModel.errorMessage ?? "Something went wrong."
+                message: viewModel.errorMessage ?? "Something went wrong.",
+                accessibilityID: UITestID.errorModalTitle
             ) {
-                AppButton(title: "Try Again", style: .primary) {
+                AppButton(title: "Try Again", style: .primary, accessibilityID: UITestID.errorModalRetry) {
                     viewModel.dismissError()
                 }
             }
@@ -85,7 +87,8 @@ public struct SplitSetupView: View {
             AppModal(
                 icon: Image(systemName: "exclamationmark.triangle.fill"),
                 title: "Cancel This Split?",
-                message: "The split will become inactive and no one will be able to pay it through the QR code anymore."
+                message: "The split will become inactive and no one will be able to pay it through the QR code anymore.",
+                accessibilityID: UITestID.errorModalTitle
             ) {
                 VStack(spacing: AppSpacing.sm) {
                     AppButton(
@@ -154,7 +157,9 @@ public struct SplitSetupView: View {
 
             AppStepper(
                 value: $viewModel.participantCount,
-                range: SplitFlowViewModel.participantRange
+                range: SplitFlowViewModel.participantRange,
+                decrementID: UITestID.splitParticipantsMinus,
+                incrementID: UITestID.splitParticipantsPlus
             )
         }
     }

@@ -5,10 +5,19 @@ import SwiftUI
 public struct AppStepper: View {
     @Binding private var value: Int
     private let range: ClosedRange<Int>
+    private let decrementID: String?
+    private let incrementID: String?
 
-    public init(value: Binding<Int>, range: ClosedRange<Int> = 1...20) {
+    public init(
+        value: Binding<Int>,
+        range: ClosedRange<Int> = 1...20,
+        decrementID: String? = nil,
+        incrementID: String? = nil
+    ) {
         self._value = value
         self.range = range
+        self.decrementID = decrementID
+        self.incrementID = incrementID
     }
 
     public var body: some View {
@@ -22,6 +31,7 @@ public struct AppStepper: View {
                     .background(Color.appSurface)
                     .clipShape(Circle())
             }
+            .accessibilityID(decrementID)
             .disabled(value <= range.lowerBound)
 
             Text("\(value)")
@@ -38,6 +48,7 @@ public struct AppStepper: View {
                     .background(Color.appSurface)
                     .clipShape(Circle())
             }
+            .accessibilityID(incrementID)
             .disabled(value >= range.upperBound)
         }
     }

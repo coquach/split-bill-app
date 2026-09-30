@@ -3,13 +3,20 @@ import SwiftUI
 public struct OTPCodeInput: View {
     private let length: Int
     private let isKeyboardDriven: Bool
+    private let accessibilityID: String?
     @Binding private var code: String
     @FocusState private var isFocused: Bool
 
-    public init(length: Int = 6, code: Binding<String>, isKeyboardDriven: Bool = true) {
+    public init(
+        length: Int = 6,
+        code: Binding<String>,
+        isKeyboardDriven: Bool = true,
+        accessibilityID: String? = nil
+    ) {
         self.length = length
         self._code = code
         self.isKeyboardDriven = isKeyboardDriven
+        self.accessibilityID = accessibilityID
     }
 
     public var body: some View {
@@ -27,6 +34,7 @@ public struct OTPCodeInput: View {
                     .foregroundStyle(.clear)
                     .tint(.clear)
                     .focused($isFocused)
+                    .accessibilityID(accessibilityID)
                     .onChange(of: code) { _, newValue in
                         // Keep digits only, then clamp to `length`. The
                         // numberPad can't produce anything else, but a

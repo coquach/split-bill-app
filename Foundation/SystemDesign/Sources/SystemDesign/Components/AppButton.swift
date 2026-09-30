@@ -26,21 +26,25 @@ public struct AppButton: View {
     private let style: Style
     private let icon: String?
     private let isLoading: Bool
+    private let accessibilityID: String?
     private let action: () -> Void
 
     /// - Parameter icon: optional SF Symbol drawn before the label, e.g.
     ///   "qrcode" on Generate QR or "square.and.arrow.up" on Share.
+    /// - Parameter accessibilityID: optional identifier XCUITest selects on.
     public init(
         title: String,
         style: Style = .primary,
         icon: String? = nil,
         isLoading: Bool = false,
+        accessibilityID: String? = nil,
         action: @escaping () -> Void
     ) {
         self.title = title
         self.style = style
         self.icon = icon
         self.isLoading = isLoading
+        self.accessibilityID = accessibilityID
         self.action = action
     }
 
@@ -64,6 +68,7 @@ public struct AppButton: View {
             .frame(maxWidth: .infinity)
             .frame(height: 52)
         }
+        .accessibilityID(accessibilityID)
         .foregroundStyle(foregroundColor)
         .background(backgroundColor)
         .clipShape(

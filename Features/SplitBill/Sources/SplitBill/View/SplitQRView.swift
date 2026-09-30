@@ -59,7 +59,8 @@ public struct SplitQRView: View {
                     primary: .init(
                         title: "Save",
                         style: .primary,
-                        icon: "square.and.arrow.down"
+                        icon: "square.and.arrow.down",
+                        accessibilityID: UITestID.splitQRSave
                     ) {
                         save(image)
                     },

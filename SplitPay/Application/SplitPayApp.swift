@@ -26,8 +26,21 @@ struct SplitPayApp: App {
 
     }
 
+    /// UI tests skip the ~1.45s splash animation so launches are fast and
+    /// XCUITest queries don't race the overlay window.
+    private var launchScreenConfig: LaunchScreenConfig {
+        var config = LaunchScreenConfig(forceHideLogo: false)
+        #if DEBUG
+        if UITestConfig.isEnabled {
+            config.initialDelay = 0
+            config.animation = .smooth(duration: 0.05, extraBounce: 0)
+        }
+        #endif
+        return config
+    }
+
     var body: some Scene {
-        LaunchScreen(config: .init(forceHideLogo: false)) {
+        LaunchScreen(config: launchScreenConfig) {
             Image("AppIcon")
                 .resizable()
                 .scaledToFit()

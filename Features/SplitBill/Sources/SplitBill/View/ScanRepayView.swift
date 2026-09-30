@@ -13,27 +13,48 @@ public struct ScanRepayView: View {
     @State private var viewModel: ScanRepayViewModel
     private let onBack: () -> Void
     private let onDecoded: (ScannedRepayment) -> Void
+    // UI-test seam: when non-nil the camera is skipped entirely and this
+    // payload is fed through the same decode path a real scan would take
+    // (see SplitBillCoordinator.Dependencies).
+    private let mockScanPayload: String?
 
     public init(
         viewModel: ScanRepayViewModel,
+        mockScanPayload: String? = nil,
         onBack: @escaping () -> Void,
         onDecoded: @escaping (ScannedRepayment) -> Void
     ) {
         _viewModel = State(initialValue: viewModel)
+        self.mockScanPayload = mockScanPayload
         self.onBack = onBack
         self.onDecoded = onDecoded
     }
 
     public var body: some View {
         ZStack {
-            QRScannerView { payload in
-                Task {
-                    if let scanned = await viewModel.decode(payload) {
-                        onDecoded(scanned)
+            if let payload = mockScanPayload {
+                // No camera in UI tests — a bare black stand-in that fires
+                // the decode after a beat, like a real scan settling.
+                Color.black.ignoresSafeArea()
+                    .task {
+                        try? await Task.sleep(for: .milliseconds(300))
+                        guard !Task.isCancelled else { return }
+                        Task {
+                            if let scanned = await viewModel.decode(payload) {
+                                onDecoded(scanned)
+                            }
+                        }
+                    }
+            } else {
+                QRScannerView { payload in
+                    Task {
+                        if let scanned = await viewModel.decode(payload) {
+                            onDecoded(scanned)
+                        }
                     }
                 }
+                .ignoresSafeArea()
             }
-            .ignoresSafeArea()
 
             VStack {
                 Spacer()
@@ -66,6 +87,7 @@ public struct ScanRepayView: View {
                             .background(.black.opacity(0.6))
                             .clipShape(Circle())
                     }
+                    .accessibilityIdentifier(UITestID.scanClose)
                     .padding(AppSpacing.lg)
 
                     Spacer()
@@ -79,9 +101,10 @@ public struct ScanRepayView: View {
             AppModal(
                 icon: Image(systemName: "exclamationmark.triangle.fill"),
                 title: "Couldn't Read QR Code",
-                message: viewModel.errorMessage ?? "Something went wrong."
+                message: viewModel.errorMessage ?? "Something went wrong.",
+                accessibilityID: UITestID.errorModalTitle
             ) {
-                AppButton(title: "Try Again", style: .primary) {
+                AppButton(title: "Try Again", style: .primary, accessibilityID: UITestID.errorModalRetry) {
                     viewModel.retry()
                 }
             }

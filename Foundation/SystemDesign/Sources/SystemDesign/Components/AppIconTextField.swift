@@ -10,15 +10,22 @@ import SwiftUI
 public struct AppIconTextField: View {
     private let icon: String?
     private let placeholder: String
+    private let accessibilityID: String?
 
     @Binding private var text: String
 
     @FocusState private var isFocused: Bool
 
-    public init(icon: String? = nil, placeholder: String, text: Binding<String>) {
+    public init(
+        icon: String? = nil,
+        placeholder: String,
+        text: Binding<String>,
+        accessibilityID: String? = nil
+    ) {
         self.icon = icon
         self.placeholder = placeholder
         self._text = text
+        self.accessibilityID = accessibilityID
     }
 
     public var body: some View {
@@ -32,6 +39,7 @@ public struct AppIconTextField: View {
                 .font(AppTypography.body)
                 .foregroundStyle(Color.appOnSurface)
                 .focused($isFocused)
+                .accessibilityID(accessibilityID)
         }
         .padding(.horizontal, AppSpacing.md)
         .frame(height: 52)

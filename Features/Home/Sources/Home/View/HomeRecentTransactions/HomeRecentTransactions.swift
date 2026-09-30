@@ -34,6 +34,7 @@ struct HomeRecentTransactions: View {
                     "See All",
                     action: onSeeAll
                 )
+                .accessibilityIdentifier(UITestID.homeSeeAll)
                 .font(
                     .system(
                         size: 12,

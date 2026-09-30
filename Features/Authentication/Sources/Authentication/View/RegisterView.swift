@@ -112,13 +112,15 @@ struct RegisterView: View {
                 title: "Full name",
                 placeholder: "Your full name",
                 text: $viewModel.fullName,
-                errorMessage: viewModel.fullNameError
+                errorMessage: viewModel.fullNameError,
+                accessibilityID: UITestID.registerFullName
             )
             AppTextField(
                 title: "Phone number",
                 placeholder: "0123456789",
                 text: $viewModel.phone,
-                errorMessage: viewModel.phoneError
+                errorMessage: viewModel.phoneError,
+                accessibilityID: UITestID.registerPhone
             ).textInputAutocapitalization(.never)
                 .keyboardType(.namePhonePad)
                 .autocorrectionDisabled()
@@ -127,7 +129,8 @@ struct RegisterView: View {
                 title: "Email",
                 placeholder: "name@example.com",
                 text: $viewModel.email,
-                errorMessage: viewModel.emailError
+                errorMessage: viewModel.emailError,
+                accessibilityID: UITestID.registerEmail
             ).textInputAutocapitalization(.never)
                 .keyboardType(.emailAddress)
                 .autocorrectionDisabled()
@@ -136,18 +139,21 @@ struct RegisterView: View {
                 title: "Password",
                 placeholder: "••••••••••••",
                 text: $viewModel.password,
-                errorMessage: viewModel.passwordError
+                errorMessage: viewModel.passwordError,
+                accessibilityID: UITestID.registerPassword
             )
             AppSecureField(
                 title: "Confirm Password",
                 placeholder: "••••••••••••",
                 text: $viewModel.confirmPassword,
-                errorMessage: viewModel.confirmPasswordError
+                errorMessage: viewModel.confirmPasswordError,
+                accessibilityID: UITestID.registerConfirmPassword
             )
 
             AppButton(
                 title: "Sign Up",
-                isLoading: viewModel.state == .submitting
+                isLoading: viewModel.state == .submitting,
+                accessibilityID: UITestID.registerSubmit
             ) {
                 Task {
                     await viewModel.signUp()

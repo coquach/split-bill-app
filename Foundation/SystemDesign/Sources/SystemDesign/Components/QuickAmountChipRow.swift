@@ -5,11 +5,18 @@ import SwiftUI
 public struct QuickAmountChipRow: View {
     private let amounts: [Int]
     private let selectedAmount: Int?
+    private let accessibilityIDPrefix: String?
     private let onSelect: (Int) -> Void
 
-    public init(amounts: [Int], selectedAmount: Int? = nil, onSelect: @escaping (Int) -> Void) {
+    public init(
+        amounts: [Int],
+        selectedAmount: Int? = nil,
+        accessibilityIDPrefix: String? = nil,
+        onSelect: @escaping (Int) -> Void
+    ) {
         self.amounts = amounts
         self.selectedAmount = selectedAmount
+        self.accessibilityIDPrefix = accessibilityIDPrefix
         self.onSelect = onSelect
     }
 
@@ -31,6 +38,7 @@ public struct QuickAmountChipRow: View {
                             .clipShape(Capsule())
                             .shadow(color: .black.opacity(isSelected ? 0 : 0.05), radius: 4, x: 0, y: 2)
                     }
+                    .accessibilityID(accessibilityIDPrefix.map { "\($0).\(formatted(amount))" })
                     .buttonStyle(.plain)
                 }
             }

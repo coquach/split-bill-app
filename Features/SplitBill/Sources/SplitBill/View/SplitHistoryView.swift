@@ -143,6 +143,7 @@ public struct SplitHistoryView: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier("\(UITestID.splitHistoryRowPrefix).\(index)")
             }
         }
         .padding(.horizontal, AppSpacing.md)

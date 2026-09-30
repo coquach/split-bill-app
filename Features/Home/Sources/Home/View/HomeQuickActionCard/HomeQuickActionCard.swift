@@ -20,6 +20,7 @@ struct HomeQuickActions: View {
                 icon: "arrow.up.right",
                 title: "Transfer",
                 tint: Color.appInfoBackground,
+                accessibilityID: UITestID.homeTransferAction,
                 action: onTransfer
             )
 
@@ -27,6 +28,7 @@ struct HomeQuickActions: View {
                 icon: "qrcode",
                 title: "Split",
                 tint: Color.appInfoBackground,
+                accessibilityID: UITestID.homeSplitAction,
                 action: onSplit
             )
         }
@@ -38,6 +40,7 @@ private struct HomeQuickActionCard: View {
     let icon: String
     let title: String
     let tint: Color
+    var accessibilityID: String? = nil
     let action: () -> Void
 
     var body: some View {
@@ -78,5 +81,6 @@ private struct HomeQuickActionCard: View {
             }
         }
         .buttonStyle(.plain)
+        .accessibilityID(accessibilityID)
     }
 }

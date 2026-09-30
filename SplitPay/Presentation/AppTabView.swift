@@ -41,9 +41,24 @@ struct AppTabView: View {
         .init(
             splitBillRepository: coordinator.splitBillRepository,
             splitQRRepository: coordinator.splitQRRepository,
-            repaymentRepository: coordinator.repaymentRepository
+            repaymentRepository: coordinator.repaymentRepository,
+            mockScanPayload: mockScanPayload
         )
     }
+
+    // UI-test seam: under -UITest the scan flow skips the camera and decodes
+    // a canned payload — the failing one when the qr-decode-fails scenario is
+    // injected, so the decode-error path stays exercised.
+    #if DEBUG
+    private var mockScanPayload: String? {
+        guard UITestConfig.isEnabled else { return nil }
+        return UITestConfig.scenario == .qrDecodeFails
+            ? UITestSeedData.failingQRPayload
+            : UITestSeedData.validQRPayload
+    }
+    #else
+    private var mockScanPayload: String? { nil }
+    #endif
 
     // Home and Profile never push, so they're always at their root.
     private var isSelectedTabAtRoot: Bool {
@@ -69,6 +84,7 @@ struct AppTabView: View {
                 )
                 .tabItem {
                     Label("Home", systemImage: "house.fill")
+                        .accessibilityIdentifier(UITestID.tabHome)
                 }
                 .tag(Tab.home)
 
@@ -85,6 +101,7 @@ struct AppTabView: View {
                 )
                 .tabItem {
                     Label("History", systemImage: "arrow.left.arrow.right")
+                        .accessibilityIdentifier(UITestID.tabHistory)
                 }
                 .tag(Tab.transfer)
 
@@ -96,6 +113,7 @@ struct AppTabView: View {
                 )
                 .tabItem {
                     Label("Split", systemImage: "person.2.fill")
+                        .accessibilityIdentifier(UITestID.tabSplit)
                 }
                 .tag(Tab.splitBill)
 
@@ -108,6 +126,7 @@ struct AppTabView: View {
                 )
                 .tabItem {
                     Label("Profile", systemImage: "person.fill")
+                        .accessibilityIdentifier(UITestID.tabProfile)
                 }
                 .tag(Tab.profile)
             }
@@ -174,6 +193,27 @@ struct AppTabView: View {
                 onFinish: { isShowingScanner = false }
             )
         }
+        // "Split Bill" opened from a Transaction Detail in the History tab.
+        // A fullScreenCover modifier only exists in the hierarchy while the
+        // cover it's attached to is presented, so the nested one inside the
+        // Transfer-flow cover above can't fire from here — this outer one
+        // handles the tab path (inactive while the Transfer flow is up, so
+        // the two never fight over the presentation).
+        .fullScreenCover(
+            item: Binding(
+                get: { isTransferPresented ? nil : splitSource },
+                set: { splitSource = $0 }
+            )
+        ) { source in
+            SplitBillCoordinator(
+                entry: .create(source),
+                dependencies: splitDependencies,
+                onFinish: {
+                    splitSource = nil
+                    coordinator.refreshBalance()
+                }
+            )
+        }
     }
 }
 
@@ -201,5 +241,6 @@ private struct ScanQRButton: View {
                 )
         }
         .accessibilityLabel("Scan QR")
+        .accessibilityIdentifier(UITestID.scanQR)
     }
 }

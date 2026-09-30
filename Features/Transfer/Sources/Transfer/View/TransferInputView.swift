@@ -44,7 +44,8 @@ public struct TransferInputView: View {
                 primary: .init(
                     title: "Continue",
                     style: .primary,
-                    isEnabled: viewModel.isFormValid
+                    isEnabled: viewModel.isFormValid,
+                    accessibilityID: UITestID.transferContinue
                 ) {
                     if viewModel.confirmInput() {
                         onContinue()
@@ -65,7 +66,8 @@ public struct TransferInputView: View {
             AppIconTextField(
                 icon: "creditcard",
                 placeholder: "SP-1D533AB6FC",
-                text: $viewModel.accountNumber
+                text: $viewModel.accountNumber,
+                accessibilityID: UITestID.transferReceiverField
             )
             .keyboardType(.asciiCapable)
             .textInputAutocapitalization(.characters)
@@ -114,7 +116,10 @@ public struct TransferInputView: View {
                 .font(AppTypography.caption)
                 .foregroundStyle(Color.appSecondary)
 
-            AmountField(amountText: $viewModel.amountText)
+            AmountField(
+                amountText: $viewModel.amountText,
+                accessibilityID: UITestID.transferAmountField
+            )
 
             balancePill
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -122,6 +127,7 @@ public struct TransferInputView: View {
             QuickAmountChipRow(
                 amounts: [500_000, 1_000_000, 2_000_000, 5_000_000],
                 selectedAmount: Int(viewModel.amountText),
+                accessibilityIDPrefix: "transfer.chip",
                 onSelect: viewModel.selectQuickAmount
             )
 
@@ -176,7 +182,11 @@ public struct TransferInputView: View {
             .font(AppTypography.caption)
             .foregroundStyle(Color.appSecondary)
 
-            AppMultilineTextField(placeholder: "Add a note", text: $viewModel.descriptionText)
+            AppMultilineTextField(
+                placeholder: "Add a note",
+                text: $viewModel.descriptionText,
+                accessibilityID: UITestID.transferNoteField
+            )
         }
     }
 }

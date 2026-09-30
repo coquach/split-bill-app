@@ -86,7 +86,8 @@ struct LoginView: View {
                 title: "Email",
                 placeholder: "name@example.com",
                 text: $viewModel.email,
-                errorMessage: viewModel.emailError
+                errorMessage: viewModel.emailError,
+                accessibilityID: UITestID.loginEmail
             ).textInputAutocapitalization(.never)
                 .keyboardType(.emailAddress)
                 .autocorrectionDisabled()
@@ -95,12 +96,14 @@ struct LoginView: View {
                 title: "Password",
                 placeholder: "••••••••••••",
                 text: $viewModel.password,
-                errorMessage: viewModel.passwordError
+                errorMessage: viewModel.passwordError,
+                accessibilityID: UITestID.loginPassword
             )
 
             AppButton(
                 title: "Sign in",
-                isLoading: viewModel.state == .submitting
+                isLoading: viewModel.state == .submitting,
+                accessibilityID: UITestID.loginSubmit
             ) {
                 Task {
                     await viewModel.signIn()
@@ -124,6 +127,7 @@ struct LoginView: View {
                 Button("Sign Up") {
                     onNavigateToRegister()
                 }
+                .accessibilityIdentifier(UITestID.loginSignUpLink)
                 .fontWeight(.bold)
                 .foregroundStyle(Color.appPrimary)
             }

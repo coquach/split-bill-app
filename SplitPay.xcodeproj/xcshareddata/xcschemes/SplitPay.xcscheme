@@ -31,22 +31,10 @@
       shouldAutocreateTestPlan = "YES">
       <Testables>
          <TestableReference
-            skipped = "NO"
-            parallelizable = "YES">
+            skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "6A67E9673062C6FE005289DA"
-               BuildableName = "SplitPayTests.xctest"
-               BlueprintName = "SplitPayTests"
-               ReferencedContainer = "container:SplitPay.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "6A67E9713062C6FE005289DA"
+               BlueprintIdentifier = "A1B2C3D50000000000000001"
                BuildableName = "SplitPayUITests.xctest"
                BlueprintName = "SplitPayUITests"
                ReferencedContainer = "container:SplitPay.xcodeproj">
