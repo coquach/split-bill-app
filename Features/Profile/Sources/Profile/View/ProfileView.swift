@@ -15,25 +15,25 @@ public struct ProfileView: View {
     public var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: AppSpacing.xl) {
-                profileCard
+                Text("Profile")
+                    .font(AppTypography.title)
+                    .foregroundStyle(Color.appTextPrimary)
 
-                PinCard(
-                    hasPin: viewModel.hasPin
-                ) {
-                    if viewModel.hasPin {
-                        isShowingChangePin = true
-                    } else {
-                        isShowingPinSetup = true
-                    }
-                }
+                profileHeader
+
+                contactCard
+
+                settingsCard
 
                 logoutButton
             }
             .padding(.horizontal, AppSpacing.xl)
             .padding(.top, AppSpacing.md)
-            .padding(.bottom, AppSpacing.xxxl)
+            .padding(.bottom, AppSpacing.xl)
         }
         .background(Color.appBackground.ignoresSafeArea())
+        // Root tab screen: the title above replaces the system navigation bar
+        .toolbar(.hidden, for: .navigationBar)
         .modalOverlay(isPresented: isShowingLogoutConfirmation) {
             AppModal(
                 icon: Image(systemName: "rectangle.portrait.and.arrow.right"),
@@ -98,94 +98,62 @@ public struct ProfileView: View {
         }
     }
 
-
-
-    private var profileCard: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.lg) {
-            HStack(spacing: AppSpacing.md) {
-                ZStack {
-                    Circle()
-                        .fill(Color.appSubtle)
-
-                    Image(systemName: "person.fill")
-                        .font(.system(size: 24, weight: .semibold))
-                        .foregroundStyle(Color.appPrimary)
-                }
-                .frame(width: 56, height: 56)
-
-                VStack(alignment: .leading, spacing: AppSpacing.xxs) {
-                    Text(viewModel.displayName)
-                        .font(AppTypography.bodyMedium)
-                        .foregroundStyle(Color.appTextPrimary)
-
-                    Text(viewModel.statusText)
-                        .font(AppTypography.caption)
-                        .foregroundStyle(Color.appSuccess)
-                }
-
-                Spacer()
-            }
-
-            Divider()
-
-            ProfileInfoRow(
-                icon: "envelope.fill",
-                title: "Email",
-                value: viewModel.email
+    // Centered on the page background, not boxed in a card
+    private var profileHeader: some View {
+        VStack(spacing: AppSpacing.xxs) {
+            Avatar(
+                name: viewModel.profile?.fullName ?? viewModel.displayName,
+                size: .xlarge
             )
+            .padding(.bottom, AppSpacing.sm)
 
-            ProfileInfoRow(
-                icon: "phone.fill",
-                title: "Phone",
-                value: viewModel.phoneNumber
-            )
+            Text(viewModel.displayName)
+                .font(.system(size: 28, weight: .bold))
+                .foregroundStyle(Color.appTextPrimary)
+                .multilineTextAlignment(.center)
         }
-        .padding(AppSpacing.lg)
-        .background(Color.appSurfacePrimary)
-        .clipShape(
-            RoundedRectangle(
-                cornerRadius: AppRadius.xl,
-                style: .continuous
-            )
-        )
+        .frame(maxWidth: .infinity)
+        .padding(.top, AppSpacing.sm)
     }
 
+    // Email and phone as a small table: label on the left, value on the right
+    private var contactCard: some View {
+        InfoCard {
+            DividedInfoStack([
+                .init(label: "Email", value: viewModel.email),
+                .init(label: "Phone", value: viewModel.phoneNumber),
+            ])
+        }
+        .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 3)
+    }
+
+    // One row today; more SettingsRow entries can be stacked inside later
+    private var settingsCard: some View {
+        InfoCard {
+            SettingsRow(
+                icon: viewModel.hasPin ? "key.fill" : "lock.fill",
+                title: viewModel.hasPin
+                    ? "Change Transaction PIN"
+                    : "Set Up Transaction PIN"
+            ) {
+                if viewModel.hasPin {
+                    isShowingChangePin = true
+                } else {
+                    isShowingPinSetup = true
+                }
+            }
+        }
+        .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 3)
+    }
 
     private var logoutButton: some View {
-        Button {
+        AppButton(
+            title: "Log Out",
+            style: .destructiveSecondary,
+            icon: "rectangle.portrait.and.arrow.right",
+            isLoading: viewModel.isSigningOut
+        ) {
             isShowingLogoutConfirmation = true
-        } label: {
-            HStack {
-                if viewModel.isSigningOut {
-                    ProgressView()
-                        .tint(Color.appError)
-                } else {
-                    Image(systemName: "rectangle.portrait.and.arrow.right")
-                }
-
-                Text("Log out")
-            }
-            .font(AppTypography.bodyMedium)
-            .foregroundStyle(Color.appSurfacePrimary)
-            .frame(maxWidth: .infinity)
-            .frame(height: 52)
-            .background(Color.appError)
-            .clipShape(
-                RoundedRectangle(
-                    cornerRadius: AppRadius.lg,
-                    style: .continuous
-                )
-            )
-            .overlay {
-                RoundedRectangle(
-                    cornerRadius: AppRadius.lg,
-                    style: .continuous
-                )
-                .stroke(Color.appError.opacity(0.25), lineWidth: 1)
-            }
         }
-        .disabled(viewModel.isSigningOut)
     }
 }
-
-

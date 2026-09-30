@@ -20,6 +20,9 @@ public struct AppButton: View {
         /// A destructive action, e.g. "Cancel Split" - filled with the error
         /// pairing so it reads as dangerous rather than a normal secondary action.
         case destructive
+        /// The one deliberate destructive action on a screen, e.g. "Log Out" -
+        /// white fill with error-colored text and icon, rather than a red fill.
+        case destructiveSecondary
     }
 
     private let title: String
@@ -79,6 +82,13 @@ public struct AppButton: View {
                     .strokeBorder(Color.appPrimary, lineWidth: 1)
             }
         }
+        // Soft shadow stands in for the border on the white destructive button
+        .shadow(
+            color: style == .destructiveSecondary ? Color.black.opacity(0.08) : Color.clear,
+            radius: 6,
+            x: 0,
+            y: 2
+        )
         .disabled(isLoading)
     }
 
@@ -98,6 +108,9 @@ public struct AppButton: View {
 
         case .destructive:
             return .appError
+
+        case .destructiveSecondary:
+            return .appSurfacePrimary
         }
     }
 
@@ -117,6 +130,9 @@ public struct AppButton: View {
 
         case .destructive:
             return .appTextOnPrimary
+
+        case .destructiveSecondary:
+            return .appError
         }
     }
 }
