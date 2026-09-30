@@ -10,32 +10,35 @@ public extension Color {
 
     // MARK: - Brand
 
-    /// #3368A0
-    static let appPrimary = Color(hex: 0x3368A0)
+    /// #4B7AAB
+    static let appPrimary = Color(hex: 0x4B7AAB)
 
-    /// #66A3BF
-    static let appSecondary = Color(hex: 0x66A3BF)
+    /// #2B5C94 - deeper than appPrimary, for the primary button fill
+    static let appPrimaryBold = Color(hex: 0x2B5C94)
 
-    /// #C8DFDB
-    static let appSubtle = Color(hex: 0xC8DFDB)
+    /// #85B5CC
+    static let appSecondary = Color(hex: 0x85B5CC)
 
-    /// #F2EFE7
-    static let appBackground = Color(hex: 0xF2EFE7)
+    /// #DBEAE8
+    static let appSubtle = Color(hex: 0xDBEAE8)
+
+    /// #F8F7F3
+    static let appBackground = Color(hex: 0xF8F7F3)
 
 
     // MARK: - Text
 
-    /// #1F2933
-    static let appTextPrimary = Color(hex: 0x1F2933)
+    /// #1C1C1E
+    static let appTextPrimary = Color(hex: 0x1C1C1E)
 
-    /// #52606D
-    static let appTextSecondary = Color(hex: 0x52606D)
+    /// #48484A
+    static let appTextSecondary = Color(hex: 0x48484A)
 
-    /// #7B8794
-    static let appTextTertiary = Color(hex: 0x7B8794)
+    /// #636366
+    static let appTextTertiary = Color(hex: 0x636366)
 
-    /// #9AA5B1
-    static let appTextPlaceholder = Color(hex: 0x9AA5B1)
+    /// #8E8E93
+    static let appTextPlaceholder = Color(hex: 0x8E8E93)
 
     /// #FFFFFF
     static let appTextOnPrimary = Color(hex: 0xFFFFFF)
@@ -46,50 +49,50 @@ public extension Color {
     /// #FFFFFF
     static let appSurfacePrimary = Color(hex: 0xFFFFFF)
 
-    /// #F2EFE7
-    static let appSurfaceSecondary = Color(hex: 0xF2EFE7)
+    /// #F8F7F3
+    static let appSurfaceSecondary = Color(hex: 0xF8F7F3)
 
-    /// #C8DFDB
-    static let appSurfaceBrand = Color(hex: 0xC8DFDB)
+    /// #DBEAE8
+    static let appSurfaceBrand = Color(hex: 0xDBEAE8)
 
 
     // MARK: - Border
 
-    /// #D9DEE3
-    static let appBorderDefault = Color(hex: 0xD9DEE3)
+    /// #E4E8EB
+    static let appBorderDefault = Color(hex: 0xE4E8EB)
 
-    /// #C4CBD2
-    static let appBorderStrong = Color(hex: 0xC4CBD2)
+    /// #D6DBE0
+    static let appBorderStrong = Color(hex: 0xD6DBE0)
 
-    /// #3368A0
-    static let appBorderFocus = Color(hex: 0x3368A0)
+    /// #4B7AAB
+    static let appBorderFocus = Color(hex: 0x4B7AAB)
 
 
     // MARK: - Semantic
 
-    /// #4F9D82
-    static let appSuccess = Color(hex: 0x4F9D82)
+    /// #64A991
+    static let appSuccess = Color(hex: 0x64A991)
 
-    /// #E5F2ED
-    static let appSuccessBackground = Color(hex: 0xE5F2ED)
+    /// #EFF7F4
+    static let appSuccessBackground = Color(hex: 0xEFF7F4)
 
-    /// #D49A4A
-    static let appWarning = Color(hex: 0xD49A4A)
+    /// #D9A660
+    static let appWarning = Color(hex: 0xD9A660)
 
-    /// #FBF0DD
-    static let appWarningBackground = Color(hex: 0xFBF0DD)
+    /// #FDF6EB
+    static let appWarningBackground = Color(hex: 0xFDF6EB)
 
-    /// #C96B6B
-    static let appError = Color(hex: 0xC96B6B)
+    /// #CF7D7D
+    static let appError = Color(hex: 0xCF7D7D)
 
-    /// #F8E7E7
-    static let appErrorBackground = Color(hex: 0xF8E7E7)
+    /// #FBF1F1
+    static let appErrorBackground = Color(hex: 0xFBF1F1)
 
-    /// #5D8FB8
-    static let appInfo = Color(hex: 0x5D8FB8)
+    /// #75A0C3
+    static let appInfo = Color(hex: 0x75A0C3)
 
-    /// #E7F0F7
-    static let appInfoBackground = Color(hex: 0xE7F0F7)
+    /// #F1F6FA
+    static let appInfoBackground = Color(hex: 0xF1F6FA)
 
     // MARK: - Compatibility aliases
     // Bridges older component code (built against a prior token set) onto
@@ -106,8 +109,8 @@ public extension Color {
     static let appInfoContainer = appInfoBackground
     /// -> appSurfaceSecondary
     static let appIconBadge = appSurfaceSecondary
-    /// #D1D3D9 - custom numeric keypad tray background, no equivalent yet.
-    static let appKeypadTray = Color(hex: 0xD1D3D9)
+    /// #E3E5E8 - custom numeric keypad tray background, no equivalent yet.
+    static let appKeypadTray = Color(hex: 0xE3E5E8)
 }
 
 

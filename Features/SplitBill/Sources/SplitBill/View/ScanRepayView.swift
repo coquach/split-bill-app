@@ -26,7 +26,7 @@ public struct ScanRepayView: View {
 
     public var body: some View {
         ZStack {
-            QRScannerView { payload in
+            QRScannerView(isFailed: viewModel.errorMessage != nil) { payload in
                 Task {
                     if let scanned = await viewModel.decode(payload) {
                         onDecoded(scanned)
@@ -34,6 +34,8 @@ public struct ScanRepayView: View {
                 }
             }
             .ignoresSafeArea()
+
+            scanFrame
 
             VStack {
                 Spacer()
@@ -86,5 +88,31 @@ public struct ScanRepayView: View {
                 }
             }
         }
+    }
+
+    // Dims everything outside the square, then outlines the square that is actually scanned
+    private var scanFrame: some View {
+        let side = QRScannerView.scanAreaSize
+        let shape = RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+
+        return ZStack {
+            Color.black.opacity(0.5)
+                .mask {
+                    // destinationOut punches a hole where the square is
+                    Rectangle()
+                        .overlay {
+                            shape
+                                .frame(width: side, height: side)
+                                .blendMode(.destinationOut)
+                        }
+                        .compositingGroup()
+                }
+
+            shape
+                .strokeBorder(Color.white, lineWidth: 3)
+                .frame(width: side, height: side)
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
     }
 }

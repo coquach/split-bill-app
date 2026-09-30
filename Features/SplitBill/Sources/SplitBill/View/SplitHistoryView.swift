@@ -84,6 +84,9 @@ public struct SplitHistoryView: View {
         .padding(AppSpacing.xxs)
         .background(Color.appSurfaceSecondary)
         .clipShape(Capsule())
+        .overlay {
+            Capsule().strokeBorder(Color.appPrimary, lineWidth: 1)
+        }
         .animation(.easeInOut(duration: 0.25), value: viewModel.selectedCategory)
     }
 

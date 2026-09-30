@@ -55,13 +55,6 @@ public struct AppNavBar: View {
         .padding(.horizontal, AppSpacing.xs)
         .frame(height: 44)
         .background(Color.appBackground)
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(Color.black.opacity(0.05))
-                .frame(height: 1)
-                .blur(radius: 2)
-                .offset(y: 2)
-        }
     }
 
     private var slot: some View {

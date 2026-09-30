@@ -134,7 +134,7 @@ public struct SplitSetupView: View {
                 .foregroundStyle(Color.appTextPrimary)
         }
         .padding(AppSpacing.md)
-        .background(Color.appSurfaceSecondary)
+        .background(Color.appSurfacePrimary)
         .clipShape(
             RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
         )

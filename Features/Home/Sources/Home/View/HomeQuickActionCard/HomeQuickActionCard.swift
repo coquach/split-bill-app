@@ -14,19 +14,19 @@ struct HomeQuickActions: View {
     let onSplit: () -> Void
 
     var body: some View {
-        HStack(spacing: AppSpacing.md) {
+        HStack(spacing: 0) {
 
             HomeQuickActionCard(
                 icon: "arrow.up.right",
                 title: "Transfer",
-                tint: Color.appInfoBackground,
+                tint: Color.appPrimary,
                 action: onTransfer
             )
 
             HomeQuickActionCard(
                 icon: "qrcode",
                 title: "Split",
-                tint: Color.appInfoBackground,
+                tint: Color.appPrimary,
                 action: onSplit
             )
         }
@@ -50,7 +50,7 @@ private struct HomeQuickActionCard: View {
                             weight: .semibold
                         )
                     )
-                    .foregroundStyle(Color.appPrimary)
+                    .foregroundStyle(Color.appBackground)
                     .frame(
                         width: 48,
                         height: 48
@@ -66,16 +66,6 @@ private struct HomeQuickActionCard: View {
             }
             .frame(maxWidth: .infinity)
             .padding(AppSpacing.md)
-            .overlay {
-                RoundedRectangle(
-                    cornerRadius: AppRadius.xl,
-                    style: .continuous
-                )
-                .stroke(
-                    Color.appBorderDefault,
-                    lineWidth: 1
-                )
-            }
         }
         .buttonStyle(.plain)
     }

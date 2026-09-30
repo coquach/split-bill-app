@@ -196,7 +196,7 @@ public struct SplitDetailsView: View {
         if case .loaded(let loaded) = viewModel.state {
             BottomActionBar(
                 primary: .init(
-                    title: "Download QR",
+                    title: "Get QR",
                     style: .primary,
                     icon: "arrow.down.circle"
                 ) {

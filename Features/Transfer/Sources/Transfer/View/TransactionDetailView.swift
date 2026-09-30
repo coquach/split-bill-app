@@ -61,10 +61,7 @@ public struct TransactionDetailView: View {
 
     private func loadedContent(_ detail: TransferDetail) -> some View {
         VStack(spacing: AppSpacing.lg) {
-            StatusBadge(
-                text: statusText(detail.status),
-                style: statusStyle(detail.status)
-            )
+            statusIndicator(detail.status)
 
             Text(viewModel.formattedOutgoingAmount(detail.amount))
                 .font(AppTypography.display)
@@ -190,6 +187,28 @@ public struct TransactionDetailView: View {
             date: detail.createdAt,
             totalAmount: Amount(Double(detail.amount))
         )
+    }
+
+    // A completed transfer shows just the green check; pending and failed keep their text badge
+    @ViewBuilder
+    private func statusIndicator(_ status: TransferStatus) -> some View {
+        if status == .success {
+            ZStack {
+                Circle()
+                    .fill(Color.appSuccess)
+                    .frame(width: 72, height: 72)
+                Image(systemName: "checkmark")
+                    .font(.system(size: 30, weight: .bold))
+                    .foregroundStyle(Color.white)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Completed")
+        } else {
+            StatusBadge(
+                text: statusText(status),
+                style: statusStyle(status)
+            )
+        }
     }
 
     private func statusText(_ status: TransferStatus) -> String {
