@@ -15,10 +15,6 @@ public struct ProfileView: View {
     public var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: AppSpacing.xl) {
-                Text("Profile")
-                    .font(AppTypography.title)
-                    .foregroundStyle(Color.appTextPrimary)
-
                 profileHeader
 
                 contactCard
