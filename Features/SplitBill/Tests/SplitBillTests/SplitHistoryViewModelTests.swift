@@ -13,8 +13,16 @@ import Testing
 struct SplitHistoryViewModelTests {
     private let repository = MockSplitBillRepository()
 
+    // An isolated center keeps the notification-driven reload testable without
+    // cross-talk: the VM otherwise listens on the app-wide default center,
+    // where a post from any parallel test would trigger an extra load.
+    private let notificationCenter = NotificationCenter()
+
     private func makeViewModel() -> SplitHistoryViewModel {
-        SplitHistoryViewModel(splitBillRepository: repository)
+        SplitHistoryViewModel(
+            splitBillRepository: repository,
+            notificationCenter: notificationCenter
+        )
     }
 
     @Test
@@ -68,6 +76,29 @@ struct SplitHistoryViewModelTests {
         #expect(viewModel.selectedFilter == .closed)
         #expect(viewModel.visibleBills == [closed])
         #expect(repository.getSplitBillsCalls == 2)
+    }
+
+    @Test
+    func aTransactionsDidChangePostReloadsWithoutClearingTheLists() async throws {
+        let bill = makeListItem(title: "Mine", status: .active)
+        repository.pageResult = SplitBillPage(items: [bill], totalCount: 1, page: 1, pageSize: 50)
+        let viewModel = makeViewModel()
+        await viewModel.load()
+        #expect(repository.getSplitBillsCalls == 2)
+
+        // Paying into a split changes its paid slots — the post must refetch
+        // both roles while keeping the loaded lists on screen (no spinner).
+        // The observer hops to the main queue and then into a Task, so the
+        // reload lands a few hops after the post returns.
+        notificationCenter.post(name: .transactionsDidChange, object: nil)
+        for _ in 0..<100 where repository.getSplitBillsCalls < 4 {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(repository.getSplitBillsCalls == 4)
+        guard case .loaded = viewModel.state else {
+            Issue.record("expected .loaded after the reload, got \(viewModel.state)")
+            return
+        }
     }
 
     @Test

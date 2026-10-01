@@ -110,6 +110,7 @@ struct LoginView: View {
                     await viewModel.signIn()
                 }
             }
+            .disabled(!viewModel.canSubmit)
 
         }
     }

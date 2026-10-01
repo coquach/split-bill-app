@@ -74,7 +74,14 @@ public struct AppSecureField: View {
                 .foregroundStyle(Color.appTextPrimary)
                 .tint(Color.appPrimary)
                 .textInputAutocapitalization(.never)
-                .textContentType(.password)
+                // Under the -UITest launch argument, drop the password
+                // content type: strong-password autofill swallows synthesized
+                // keystrokes in XCUITest and the mock backend never sees it.
+                .textContentType(
+                    ProcessInfo.processInfo.arguments.contains("-UITest")
+                        ? nil
+                        : .password
+                )
                 .accessibilityID(accessibilityID)
 
                 Button {

@@ -67,6 +67,9 @@ public enum UITestID {
     public static let profilePinCard = "profile.pinCard"
     public static let profileLogout = "profile.logout"
     public static let profilePinField = "profile.pinField"
+    public static let profilePinBack = "profile.pinBack"
+    public static let profilePinSuccess = "profile.pinSuccess"
+    public static let profilePinSuccessDone = "profile.pinSuccessDone"
     public static let profilePinSubmit = "profile.pinSubmit"
 
     // MARK: - Errors

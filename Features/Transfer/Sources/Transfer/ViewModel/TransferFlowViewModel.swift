@@ -5,6 +5,7 @@
 //  Created by Dinh Long on 30/9/26.
 //
 
+import Combine
 import Domains
 import Foundation
 import Observation
@@ -25,9 +26,15 @@ public final class TransferFlowViewModel {
     // MARK: - Input step
 
     /// How long to wait after the last keystroke before looking the account
-    /// number up. Exposed so tests can wait on it instead of hardcoding
-    /// 400 ms and silently drifting when the value changes.
-    public static let accountLookupDebounce: Duration = .milliseconds(400)
+    /// number up. Single source of truth for the debounce: the public
+    /// Duration (tests wait on it) and the Dispatch stride Combine's
+    /// `.debounce` uses both derive from it — there is no public
+    /// Duration → Stride conversion to go the other way.
+    private static let accountLookupDebounceMs = 400
+
+    public static let accountLookupDebounce: Duration = .milliseconds(accountLookupDebounceMs)
+
+    private static let accountLookupDebounceStride: DispatchQueue.SchedulerTimeType.Stride = .milliseconds(accountLookupDebounceMs)
 
     public var accountNumber: String = "" {
         didSet { scheduleAccountLookup() }
@@ -49,6 +56,10 @@ public final class TransferFlowViewModel {
     private var lookupTask: Task<Void, Never>?
     private var idempotencyKey = UUID().uuidString
 
+    private let accountNumberSubject = PassthroughSubject<String, Never>()
+    private var isLookupCancelled = false
+    private var cancellables = Set<AnyCancellable>()
+
     public init(
         walletRepository: IWalletRepository,
         sessionStore: SessionStore,
@@ -57,6 +68,15 @@ public final class TransferFlowViewModel {
         self.walletRepository = walletRepository
         self.sessionStore = sessionStore
         self.transferRepository = transferRepository
+
+        accountNumberSubject
+            .debounce(for: Self.accountLookupDebounceStride, scheduler: DispatchQueue.main)
+            .sink { [weak self] query in
+                Task { @MainActor in
+                    self?.performLookup(query)
+                }
+            }
+            .store(in: &cancellables)
     }
 
     public var amount: Amount {
@@ -88,6 +108,7 @@ public final class TransferFlowViewModel {
     // Called on view disappear so a stale lookup doesn't resolve after
     // the user has already navigated away.
     public func cancelPendingLookup() {
+        isLookupCancelled = true
         lookupTask?.cancel()
     }
 
@@ -112,12 +133,8 @@ public final class TransferFlowViewModel {
     }
 
     private func scheduleAccountLookup() {
+        isLookupCancelled = false
         lookupTask?.cancel()
-
-        // Normalise before it leaves the app: wallet numbers are stored
-        // uppercase, and the lookup may well be a plain equality check.
-        // Trim first so a trailing space from paste or autocomplete doesn't
-        // turn into a "not found".
         let query = accountNumber
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .uppercased()
@@ -127,11 +144,14 @@ public final class TransferFlowViewModel {
         }
 
         lookupState = .loading
+        accountNumberSubject.send(query)
+    }
+
+    // Runs once the Combine debounce settles on a query.
+    private func performLookup(_ query: String) {
+        guard !isLookupCancelled else { return }
 
         lookupTask = Task { [walletRepository] in
-            try? await Task.sleep(for: Self.accountLookupDebounce)
-            guard !Task.isCancelled else { return }
-
             do {
                 let recipient = try await walletRepository.resolveWallet(walletNumber: query)
                 guard !Task.isCancelled else { return }
