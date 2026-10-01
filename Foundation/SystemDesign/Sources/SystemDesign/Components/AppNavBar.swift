@@ -19,12 +19,21 @@ import SwiftUI
 public struct AppNavBar: View {
     private let title: String
     private let onBack: (() -> Void)?
+    private let accessibilityID: String?
 
     /// Pass `onBack: nil` for a screen with no way back — the leading slot
     /// still reserves its width so the title stays centred.
-    public init(title: String, onBack: (() -> Void)? = nil) {
+    ///
+    /// - Parameter accessibilityID: optional identifier XCUITest selects on
+    ///   the back chevron, which otherwise has no label at all.
+    public init(
+        title: String,
+        onBack: (() -> Void)? = nil,
+        accessibilityID: String? = nil
+    ) {
         self.title = title
         self.onBack = onBack
+        self.accessibilityID = accessibilityID
     }
 
     public var body: some View {
@@ -36,6 +45,7 @@ public struct AppNavBar: View {
                         .frame(width: 44, height: 44)
                 }
                 .buttonStyle(.plain)
+                .accessibilityID(accessibilityID)
             } else {
                 slot
             }

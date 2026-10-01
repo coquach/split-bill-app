@@ -1,9 +1,9 @@
 //
 //  AppAlertTests.swift
-//  CommonUiTests
+//  SystemDesignTests
 //
 
-@testable import CommonUi
+@testable import SystemDesign
 import Testing
 
 @Suite("AppAlert")

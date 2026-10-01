@@ -5,6 +5,7 @@
 //  Created by Dinh Long on 29/9/26.
 //
 
+import Combine
 import Domains
 import Foundation
 import Observation
@@ -33,6 +34,8 @@ public final class TransactionHistoryViewModel {
     // clock (midnight boundaries, timezone drift). Defaults to .current.
     private let calendar: Calendar
 
+    private var cancellables = Set<AnyCancellable>()
+
     public init(
         transferRepository: ITransferRepository,
         calendar: Calendar = .current
@@ -40,16 +43,14 @@ public final class TransactionHistoryViewModel {
         self.transferRepository = transferRepository
         self.calendar = calendar
 
-        // Reload as soon as a transfer or repayment finishes; weak self, so it does nothing once this view model is gone
-        NotificationCenter.default.addObserver(
-            forName: .transactionsDidChange,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            Task { @MainActor in
-                await self?.load(showsSpinner: false)
+        NotificationCenter.default.publisher(for: .transactionsDidChange)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    await self?.load(showsSpinner: false)
+                }
             }
-        }
+            .store(in: &cancellables)
     }
 
     // showsSpinner: false keeps the current list on screen while the new one loads, so the reload isn't visible as a flash

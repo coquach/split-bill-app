@@ -26,8 +26,11 @@ final class ProfileTests: UITestCase {
         // The seeded profile has a PIN, so the card opens the change sheet.
         tap(UITestID.profilePinCard)
 
-        XCTAssertTrue(app.navigationBars["Change PIN"].waitForExistence(timeout: 5))
-        app.buttons["Cancel"].tap()
+        // The sheet hides the system navigation bar and draws its own
+        // AppNavBar, so the title is a plain static text.
+        XCTAssertTrue(app.staticTexts["Change PIN"].waitForExistence(timeout: 5))
+        // The sheet's nav bar has a plain chevron back button, not "Cancel".
+        tap(UITestID.profilePinBack)
 
         wait(UITestID.profilePinCard)
     }
@@ -35,24 +38,32 @@ final class ProfileTests: UITestCase {
     func testChangePinSucceeds() {
         tap(UITestID.profilePinCard)
 
-        let fields = app.descendants(matching: .secureTextField).matching(identifier: UITestID.profilePinField)
-        XCTAssertTrue(fields.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Change PIN"].waitForExistence(timeout: 5))
 
-        fields.element(boundBy: 0).tap()
-        fields.element(boundBy: 0).typeText("123456")
-        fields.element(boundBy: 1).tap()
-        fields.element(boundBy: 1).typeText("654321")
-        fields.element(boundBy: 2).tap()
-        fields.element(boundBy: 2).typeText("654321")
+        // The PIN flow walks one step per screen — current, new, confirm —
+        // each a single hidden code field behind the visible boxes.
+        type(UITestID.profilePinField, "123456")
+        app.buttons["Continue"].tap()
 
-        tap(UITestID.profilePinSubmit)
+        type(UITestID.profilePinField, "654321")
+        app.buttons["Continue"].tap()
 
-        // Success dismisses the sheet back to the profile.
+        type(UITestID.profilePinField, "654321")
+        app.buttons["Confirm"].tap()
+
+        // Success shows an acknowledgement popup first; Done closes it and
+        // the sheet back to the profile.
+        wait(UITestID.profilePinSuccess)
+        tap(UITestID.profilePinSuccessDone)
+
         wait(UITestID.profilePinCard)
     }
 
     func testLogoutReturnsToLogin() {
         tap(UITestID.profileLogout)
+
+        // Log Out opens a confirmation modal first; Confirm actually signs out.
+        app.buttons["Confirm"].tap()
 
         wait(UITestID.loginEmail)
     }

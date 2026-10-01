@@ -27,7 +27,7 @@ SWIFT_PACKAGES=(
 )
 
 XCODE_PACKAGES=(
-    "Core/CommonUi"
+    "Foundation/SystemDesign"
     "Features/Authentication"
     "Features/Transfer"
     "Features/SplitBill"
@@ -62,10 +62,50 @@ resolve_destination() {
 
 DESTINATION="$(resolve_destination)"
 
+# --- Simulator warm-up -------------------------------------------------------
+
+# Boot the destination up front and wait until it is fully settled. A cold
+# boot that starts *during* xcodebuild is what trips the flaky "Process spawn
+# via launchd failed" failures and the runs that stall after every test has
+# already passed (0% CPU, log frozen while finalizing the result bundle).
+ensure_simulator_ready() {
+    local udid
+    udid="$(sed -n 's/.*id=\([A-F0-9-]*\).*/\1/p' <<<"$DESTINATION")"
+    [[ -z "$udid" ]] && return 0
+
+    if ! xcrun simctl list devices booted | grep -q "$udid"; then
+        xcrun simctl boot "$udid" 2>/dev/null
+    fi
+    # -b: block until the boot completes; exits quickly when already booted.
+    xcrun simctl bootstatus "$udid" -b >/dev/null 2>&1
+}
+
 # --- Per-package runner ----------------------------------------------------
 
 RESULTS=()
 FAILED=0
+
+# xcodebuild occasionally stalls after the tests have all passed, hanging the
+# whole suite. Bound each run so it fails loudly instead of hanging forever.
+# Exit code 124 follows GNU timeout's convention. (perl's alarm can't be used
+# here — the timer is dropped the moment the command is exec'd.)
+XCODEBUILD_TIMEOUT=900
+run_with_timeout() {
+    local seconds="$1"; shift
+    "$@" &
+    local pid=$!
+    local waited=0
+    while kill -0 "$pid" 2>/dev/null && (( waited < seconds )); do
+        sleep 1
+        waited=$((waited + 1))
+    done
+    if kill -0 "$pid" 2>/dev/null; then
+        kill -9 "$pid" 2>/dev/null
+        pkill -9 -f xctest 2>/dev/null   # orphaned test-runner children
+        return 124
+    fi
+    wait "$pid"
+}
 
 run_swift_package() {
     local pkg="$1" name log
@@ -89,8 +129,9 @@ run_xcode_package() {
     log="$LOG_DIR/$name.log"
 
     local start=$SECONDS
+    ensure_simulator_ready
     # xcodebuild takes the package as the working directory, not a path arg.
-    if (cd "$pkg" && xcodebuild test \
+    if (cd "$pkg" && run_with_timeout "$XCODEBUILD_TIMEOUT" xcodebuild test \
         -scheme "$name" \
         -destination "$DESTINATION" \
         >"$log" 2>&1); then

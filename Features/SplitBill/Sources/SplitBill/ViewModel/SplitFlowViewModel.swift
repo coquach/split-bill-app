@@ -5,6 +5,7 @@
 //  Created by Dinh Long on 30/9/26.
 //
 
+import Combine
 import Domains
 import Foundation
 import Observation
@@ -24,7 +25,9 @@ public final class SplitFlowViewModel {
 
     public let source: SplitSource
     public let editingSplitBillId: UUID?
-    public var participantCount: Int
+    public var participantCount: Int {
+        didSet { participantCountSubject.send(participantCount) }
+    }
 
     public private(set) var state: State = .idle
     public var isShowingCancelConfirmation = false
@@ -38,6 +41,11 @@ public final class SplitFlowViewModel {
 
     private let idempotencyKey = UUID().uuidString
 
+    private let participantCountSubject: CurrentValueSubject<Int, Never>
+    private var cancellables = Set<AnyCancellable>()
+    public private(set) var amountPerPersonText: String = ""
+    public private(set) var requesterAmountText: String = ""
+
     public init(
         source: SplitSource,
         splitBillRepository: ISplitBillRepository,
@@ -50,6 +58,21 @@ public final class SplitFlowViewModel {
         self.splitQRRepository = splitQRRepository
         self.editingSplitBillId = editingSplitBillId
         self.participantCount = participantCount
+        self.participantCountSubject = CurrentValueSubject(participantCount)
+
+        participantCountSubject
+            .map { SplitCalculator.equalSplit(totalAmount: source.totalAmount, participantCount: $0) }
+            .sink { [weak self] split in
+                MainActor.assumeIsolated {
+                    self?.amountPerPersonText = split.perPersonAmount.formatted(
+                        maximumFractionDigits: SplitCalculator.fractionDigits
+                    )
+                    self?.requesterAmountText = split.requesterAmount.formatted(
+                        maximumFractionDigits: SplitCalculator.fractionDigits
+                    )
+                }
+            }
+            .store(in: &cancellables)
     }
 
     // MARK: - Setup step
@@ -79,18 +102,6 @@ public final class SplitFlowViewModel {
 
     public var splitsEvenly: Bool {
         split.splitsEvenly
-    }
-
-    public var amountPerPersonText: String {
-        split.perPersonAmount.formatted(
-            maximumFractionDigits: SplitCalculator.fractionDigits
-        )
-    }
-
-    public var requesterAmountText: String {
-        split.requesterAmount.formatted(
-            maximumFractionDigits: SplitCalculator.fractionDigits
-        )
     }
 
     public var errorMessage: String? {

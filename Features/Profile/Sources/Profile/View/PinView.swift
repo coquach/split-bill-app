@@ -55,6 +55,7 @@ private struct PinFlowView: View {
     @State private var currentPin = ""
     @State private var newPin = ""
     @State private var isWorking = false
+    @State private var isShowingSuccess = false
     @State private var errorMessage: String?
 
     private let pinLength = 6
@@ -84,7 +85,7 @@ private struct PinFlowView: View {
                     .multilineTextAlignment(.center)
             }
 
-            OTPCodeInput(length: pinLength, code: $entry)
+            OTPCodeInput(length: pinLength, code: $entry, accessibilityID: UITestID.profilePinField)
                 .frame(maxWidth: 340)
                 .frame(maxWidth: .infinity)
 
@@ -100,7 +101,11 @@ private struct PinFlowView: View {
         .background(Color.appBackground.ignoresSafeArea())
         .safeAreaInset(edge: .top, spacing: 0) {
             // A sheet has no top safe area, so add space to keep the bar off the edge
-            AppNavBar(title: navTitle, onBack: goBack)
+            AppNavBar(
+                title: navTitle,
+                onBack: goBack,
+                accessibilityID: UITestID.profilePinBack
+            )
                 .padding(.top, AppSpacing.lg)
                 .background(Color.appBackground)
         }
@@ -117,6 +122,35 @@ private struct PinFlowView: View {
             )
         }
         .navigationBarHidden(true)
+        // Success confirms the save before the sheet closes — a money-movement
+        // credential change deserves its own acknowledgement.
+        .modalOverlay(isPresented: isShowingSuccess) {
+            AppModal(
+                icon: Image(systemName: "checkmark.circle.fill"),
+                style: .success,
+                title: successTitle,
+                message: successMessage,
+                accessibilityID: UITestID.profilePinSuccess
+            ) {
+                AppButton(
+                    title: "Done",
+                    style: .primary,
+                    accessibilityID: UITestID.profilePinSuccessDone
+                ) {
+                    dismiss()
+                }
+            }
+        }
+    }
+
+    private var successTitle: String {
+        requiresCurrentPin ? "PIN Updated" : "PIN Created"
+    }
+
+    private var successMessage: String {
+        requiresCurrentPin
+            ? "Your transaction PIN has been changed successfully."
+            : "Your transaction PIN is ready to use."
     }
 
     private var iconBadge: some View {
@@ -209,7 +243,7 @@ private struct PinFlowView: View {
             isWorking = false
 
             if didSucceed {
-                dismiss()
+                isShowingSuccess = true
             } else {
                 errorMessage = "Unable to save your PIN. Please try again."
                 entry = ""

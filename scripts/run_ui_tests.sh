@@ -23,7 +23,7 @@ cd "$ROOT"
 SCHEME="SplitPay"
 BUNDLE_ID="com.dlong.SplitPayUITests"
 
-FILTER="${1:-}"
+FILTERS=("$@")
 
 # --- Simulator destination -------------------------------------------------
 
@@ -50,15 +50,18 @@ DESTINATION="$(resolve_destination)" || exit 1
 # --- Run -------------------------------------------------------------------
 
 # -only-testing filters are passed straight through to xcodebuild; a bare
-# class name is expanded to the bundle-qualified form.
+# class name is expanded to the bundle-qualified form. Several filters can be
+# given at once — they union.
 ARGS=(test -scheme "$SCHEME" -destination "$DESTINATION")
-if [[ -n "$FILTER" ]]; then
-    if [[ "$FILTER" == -only-testing:* ]]; then
-        ARGS+=("$FILTER")
+# ${arr[@]+…} guards the empty case: bash 3.2 treats an empty array as unset
+# under `set -u`.
+for filter in ${FILTERS[@]+"${FILTERS[@]}"}; do
+    if [[ "$filter" == -only-testing:* ]]; then
+        ARGS+=("$filter")
     else
-        ARGS+=("-only-testing:$BUNDLE_ID/$FILTER")
+        ARGS+=("-only-testing:$BUNDLE_ID/$filter")
     fi
-fi
+done
 
 echo "Running UI tests: xcodebuild ${ARGS[*]}"
 

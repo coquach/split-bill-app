@@ -1,3 +1,4 @@
+import Combine
 import Domains
 //
 //  HomeViewModel.swift
@@ -22,6 +23,8 @@ public final class HomeViewModel {
     private let walletRepository: IWalletRepository
     private let transferRepository: ITransferRepository
 
+    private var cancellables = Set<AnyCancellable>()
+
     public init(
         profileRepository: IProfileRepository,
         walletRepository: IWalletRepository,
@@ -32,16 +35,14 @@ public final class HomeViewModel {
         self.transferRepository = transferRepository
         self.profile = nil
 
-        // Reload as soon as a transfer or repayment finishes; the observer holds self weakly, so it does nothing once this view model is gone
-        NotificationCenter.default.addObserver(
-            forName: .transactionsDidChange,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            Task { @MainActor in
-                await self?.load()
+        NotificationCenter.default.publisher(for: .transactionsDidChange)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    await self?.load()
+                }
             }
-        }
+            .store(in: &cancellables)
     }
 
     var displayName: String {

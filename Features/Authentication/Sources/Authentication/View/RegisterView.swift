@@ -158,6 +158,7 @@ struct RegisterView: View {
                     await viewModel.signUp()
                 }
             }
+            .disabled(!viewModel.canSubmit)
         }
     }
 
