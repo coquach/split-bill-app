@@ -1,0 +1,60 @@
+//
+//  StatusBadge.swift
+//  SystemDesign
+//
+//  Created by Dinh Long on 26/9/26.
+//
+
+
+import SwiftUI
+
+public struct StatusBadge: View {
+
+    public enum Style {
+        case success   // "Paid", "Settled"
+        case neutral   // "Active", "Split active" - in progress, not a warning
+        case pending   // "Pending", "Awaiting payment"
+        case failed    // "Failed", "Declined"
+
+        var background: Color {
+            switch self {
+            case .success: return Color.appSuccessBackground
+            case .neutral: return Color.appSurfaceSecondary
+            case .pending: return Color.appPrimaryContainer
+            case .failed: return Color.appErrorBackground
+            }
+        }
+
+        var foreground: Color {
+            switch self {
+            case .success: return Color.appSuccess
+            case .neutral: return Color.appTextPrimary
+            case .pending: return Color.appOnSurface
+            case .failed: return Color.appError
+            }
+        }
+    }
+
+    private let text: String
+    private let style: Style
+
+    public init(text: String, style: Style) {
+        self.text = text
+        self.style = style
+    }
+
+    public var body: some View {
+        Text(text)
+            .font(AppTypography.caption)
+            .foregroundStyle(style.foreground)
+            .padding(.horizontal, AppSpacing.sm)
+            .padding(.vertical, AppSpacing.xxs)
+            .background(style.background)
+            .clipShape(Capsule())
+            // Same-hue border makes the badge pop off the card behind it,
+            // mirroring how the filter chips carry a colored stroke.
+            .overlay {
+                Capsule().strokeBorder(style.foreground.opacity(0.4), lineWidth: 1)
+            }
+    }
+}

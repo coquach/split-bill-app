@@ -1,0 +1,19 @@
+--swiftversion 6.0
+
+--indent 4
+--tabwidth 4
+--maxwidth 120
+
+--commas inline
+--semicolons never
+--trimwhitespace always
+--trailingCommas always
+
+--wraparguments before-first
+--wrapcollections before-first
+--wrapparameters before-first
+
+--disable redundantSelf
+--disable redundantType
+--disable hoistTry
+
