@@ -177,18 +177,12 @@ public struct TransactionDetailView: View {
         }
     }
 
-    /// Everything the Split module needs about the transaction being split.
-    /// The receiver name comes from the receipt this screen was opened with,
-    /// since `get_transfer_detail` doesn't return the counterparty.
     private func splitSource(for detail: TransferDetail) -> SplitSource {
         let description = detail.description?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 
         return SplitSource(
             transferId: detail.id,
-            // `create_split_bill` requires a title, and a transfer's
-            // description is optional — fall back to who it was paid to
-            // rather than sending an empty string.
             title: description.isEmpty
                 ? viewModel.receiverHolderName
                 : description,
