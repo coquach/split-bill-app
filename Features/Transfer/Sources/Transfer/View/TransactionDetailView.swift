@@ -64,9 +64,9 @@ public struct TransactionDetailView: View {
         VStack(spacing: AppSpacing.lg) {
             statusIndicator(detail.status)
 
-            Text(viewModel.formattedOutgoingAmount(detail.amount))
+            Text(viewModel.formattedAmount(detail.amount))
                 .font(AppTypography.display)
-                .foregroundStyle(Color.appError)
+                .foregroundStyle(viewModel.isOutgoing ? Color.appError : Color.appSuccess)
 
             InfoCard {
                 VStack(spacing: AppSpacing.md) {
@@ -107,8 +107,10 @@ public struct TransactionDetailView: View {
             EmptyView()
 
         case .loaded(let detail):
-            // Linked to a split, either one you created or one you paid into: open it instead of creating another
-            if let splitBillId = detail.splitBillId {
+            // Only a repayment transfer links back to its split here. A plain
+            // transfer's `splitBillId` belongs to the sender's split bill, so
+            // showing it on a received transfer would leak someone else's bill.
+            if detail.isSplitBillRepayment, let splitBillId = detail.splitBillId {
                 BottomActionBar(
                     primary: .init(title: "View Split", style: .primary) {
                         onViewSplit(splitBillId)

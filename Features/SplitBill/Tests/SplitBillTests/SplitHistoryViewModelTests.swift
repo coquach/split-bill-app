@@ -18,21 +18,60 @@ struct SplitHistoryViewModelTests {
     }
 
     @Test
-    func loadFetchesTheFirstCreatedPageWithTheAllFilter() async {
+    func loadFetchesBothRolesWithTheAllStatusFilter() async {
         repository.pageResult = SplitBillPage(items: [], totalCount: 0, page: 1, pageSize: 50)
         let viewModel = makeViewModel()
 
         await viewModel.load()
 
-        #expect(repository.getSplitBillsCalls == 1)
-        #expect(repository.lastRole == .created)
+        // Created and transferred load in parallel — one call per role.
+        #expect(repository.getSplitBillsCalls == 2)
+        #expect(repository.rolesRequested == [.created, .repaid])
         #expect(repository.lastStatusFilter == .all)
         #expect(repository.lastPage == 1)
         #expect(repository.lastPageSize == 50)
     }
 
     @Test
-    func activeAndNonActiveBillsLandInSeparateLists() async {
+    func eachRolePageLandsInItsOwnList() async {
+        let createdBill = makeListItem(title: "Mine", status: .active)
+        let transferredBill = makeListItem(title: "Theirs", status: .closed)
+        repository.pageResultsByRole = [
+            .created: SplitBillPage(items: [createdBill], totalCount: 1, page: 1, pageSize: 50),
+            .repaid: SplitBillPage(items: [transferredBill], totalCount: 1, page: 1, pageSize: 50),
+        ]
+        let viewModel = makeViewModel()
+
+        await viewModel.load()
+
+        guard case let .loaded(created, transferred) = viewModel.state else {
+            Issue.record("expected .loaded, got \(viewModel.state)")
+            return
+        }
+        #expect(created == [createdBill])
+        #expect(transferred == [transferredBill])
+    }
+
+    @Test
+    func switchingFilterIsALocalPickWithoutARefetch() async {
+        let active = makeListItem(title: "Active one", status: .active)
+        let closed = makeListItem(title: "Closed one", status: .closed)
+        repository.pageResult = SplitBillPage(items: [active, closed], totalCount: 2, page: 1, pageSize: 50)
+        let viewModel = makeViewModel()
+        await viewModel.load()
+
+        // All is the default filter — everything the pages returned shows up.
+        #expect(viewModel.visibleBills == [active, closed])
+
+        viewModel.select(.closed)
+
+        #expect(viewModel.selectedFilter == .closed)
+        #expect(viewModel.visibleBills == [closed])
+        #expect(repository.getSplitBillsCalls == 2)
+    }
+
+    @Test
+    func statusFiltersPickExactStatuses() async {
         let active = makeListItem(title: "Active one", status: .active)
         let closed = makeListItem(title: "Closed one", status: .closed)
         let expired = makeListItem(title: "Expired one", status: .expired)
@@ -44,32 +83,31 @@ struct SplitHistoryViewModelTests {
             pageSize: 50
         )
         let viewModel = makeViewModel()
-
         await viewModel.load()
 
-        guard case let .loaded(activeList, settledList) = viewModel.state else {
-            Issue.record("expected .loaded, got \(viewModel.state)")
-            return
-        }
-        #expect(activeList == [active])
-        #expect(settledList == [closed, expired, cancelled])
+        // The declared filter has no cancelled case, so cancelled bills only
+        // ever show up under All.
+        viewModel.select(.active)
+        #expect(viewModel.visibleBills == [active])
+
+        viewModel.select(.closed)
+        #expect(viewModel.visibleBills == [closed])
+
+        viewModel.select(.expired)
+        #expect(viewModel.visibleBills == [expired])
+
+        viewModel.select(.all)
+        #expect(viewModel.visibleBills == [active, closed, expired, cancelled])
     }
 
     @Test
-    func switchingCategoryIsALocalPickWithoutARefetch() async {
-        let active = makeListItem(title: "Active one", status: .active)
-        let closed = makeListItem(title: "Closed one", status: .closed)
-        repository.pageResult = SplitBillPage(items: [active, closed], totalCount: 2, page: 1, pageSize: 50)
+    func chipLabelsMatchTheBadgeWording() {
         let viewModel = makeViewModel()
-        await viewModel.load()
 
-        #expect(viewModel.visibleBills == [active])
-
-        viewModel.select(.inactive)
-
-        #expect(viewModel.selectedCategory == .inactive)
-        #expect(viewModel.visibleBills == [closed])
-        #expect(repository.getSplitBillsCalls == 1)
+        #expect(viewModel.label(for: .all) == "All")
+        #expect(viewModel.label(for: .active) == "Active")
+        #expect(viewModel.label(for: .closed) == "Settled")
+        #expect(viewModel.label(for: .expired) == "Expired")
     }
 
     @Test

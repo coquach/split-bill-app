@@ -29,9 +29,16 @@ public final class TransactionHistoryViewModel {
     public private(set) var selectedFilter: TransactionTypeFilter = .all
 
     private let transferRepository: ITransferRepository
+    // Injected so tests can pin the calendar instead of racing the real
+    // clock (midnight boundaries, timezone drift). Defaults to .current.
+    private let calendar: Calendar
 
-    public init(transferRepository: ITransferRepository) {
+    public init(
+        transferRepository: ITransferRepository,
+        calendar: Calendar = .current
+    ) {
         self.transferRepository = transferRepository
+        self.calendar = calendar
 
         // Reload as soon as a transfer or repayment finishes; weak self, so it does nothing once this view model is gone
         NotificationCenter.default.addObserver(
@@ -84,7 +91,6 @@ public final class TransactionHistoryViewModel {
 
     // Groups by calendar day, newest first, preserving the server's ordering.
     private func group(_ items: [TransferHistory]) -> [Section] {
-        let calendar = Calendar.current
         var order: [Date] = []
         var buckets: [Date: [TransferHistory]] = [:]
 
@@ -101,7 +107,6 @@ public final class TransactionHistoryViewModel {
     }
 
     private func title(for day: Date) -> String {
-        let calendar = Calendar.current
         if calendar.isDateInToday(day) { return "Today" }
         if calendar.isDateInYesterday(day) { return "Yesterday" }
         return Self.dayFormatter.string(from: day)

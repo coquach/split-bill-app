@@ -22,6 +22,10 @@ public final class TransactionDetailViewModel {
     public private(set) var state: State = .loading
 
     public let receiverHolderName: String
+    /// Whether the viewer sent this transaction — the amount renders with a
+    /// minus and error styling when true, plus/success when false. Mirrors
+    /// the sign and colour the history list shows for the same transfer.
+    public let isOutgoing: Bool
 
     private let transactionId: UUID
     private let transferRepository: ITransferRepository
@@ -29,10 +33,12 @@ public final class TransactionDetailViewModel {
     public init(
         transactionId: UUID,
         receiverHolderName: String,
+        isOutgoing: Bool,
         transferRepository: ITransferRepository
     ) {
         self.transactionId = transactionId
         self.receiverHolderName = receiverHolderName
+        self.isOutgoing = isOutgoing
         self.transferRepository = transferRepository
     }
 
@@ -73,7 +79,8 @@ public final class TransactionDetailViewModel {
         return "\(day) · \(time)"
     }
 
-    public func formattedOutgoingAmount(_ amount: Int64) -> String {
-        "-\(Amount(Double(amount)).formatted) VND"
+    public func formattedAmount(_ amount: Int64) -> String {
+        let sign = isOutgoing ? "-" : "+"
+        return "\(sign)\(Amount(Double(amount)).formatted) VND"
     }
 }

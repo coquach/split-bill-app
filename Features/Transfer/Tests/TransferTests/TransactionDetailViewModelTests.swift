@@ -13,10 +13,11 @@ import Testing
 struct TransactionDetailViewModelTests {
     private let repository = MockTransferRepository()
 
-    private func makeViewModel() -> TransactionDetailViewModel {
+    private func makeViewModel(isOutgoing: Bool = true) -> TransactionDetailViewModel {
         TransactionDetailViewModel(
             transactionId: UUID(),
             receiverHolderName: "Binh Tran",
+            isOutgoing: isOutgoing,
             transferRepository: repository
         )
     }
@@ -59,11 +60,21 @@ struct TransactionDetailViewModelTests {
     }
 
     @Test
-    func outgoingAmountAlwaysCarriesAMinusAndVND() {
-        let viewModel = makeViewModel()
-        let text = viewModel.formattedOutgoingAmount(500_000)
+    func outgoingAmountCarriesAMinusAndVND() {
+        let viewModel = makeViewModel(isOutgoing: true)
+        let text = viewModel.formattedAmount(500_000)
 
         #expect(text.hasPrefix("-"))
+        #expect(text.hasSuffix("VND"))
+        #expect(text.contains("500"))
+    }
+
+    @Test
+    func incomingAmountCarriesAPlusMatchingTheHistoryListSign() {
+        let viewModel = makeViewModel(isOutgoing: false)
+        let text = viewModel.formattedAmount(500_000)
+
+        #expect(text.hasPrefix("+"))
         #expect(text.hasSuffix("VND"))
         #expect(text.contains("500"))
     }

@@ -54,7 +54,7 @@ public struct RepaymentSuccessView: View {
         )
         .safeAreaInset(edge: .bottom, spacing: 0) {
             BottomActionBar(
-                primary: .init(title: "Done", style: .primary, handler: onDone),
+                primary: .init(title: "Done", style: .primary, accessibilityID: UITestID.repaySuccessDone, handler: onDone),
                 background: .clear
             )
         }

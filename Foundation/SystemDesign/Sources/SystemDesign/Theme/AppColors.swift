@@ -94,6 +94,11 @@ public extension Color {
     /// #D7E8F6
     static let appInfoBackground = Color(hex: 0xD7E8F6)
 
+    /// appTextPrimary at 30% — scrim behind modal overlays. The warm-tinted
+    /// near-black of the text palette replaces a pure-black dim so overlays
+    /// sit in the app's palette instead of fighting it.
+    static let appScrim = appTextPrimary.opacity(0.3)
+
     // MARK: - Compatibility aliases
     // Bridges older component code (built against a prior token set) onto
     // this palette. Remove a given alias once every call site using it has

@@ -134,4 +134,14 @@ class UITestCase: XCTestCase {
     func waitErrorModal(timeout: TimeInterval = UITestCase.timeout) -> XCUIElement {
         wait(UITestID.errorModalTitle, timeout: timeout)
     }
+
+    /// Asserts the error modal's body text carries the given fragment —
+    /// lets scenario tests pin the exact DomainError message the user sees.
+    func assertErrorModalMessage(contains fragment: String) {
+        let message = wait(UITestID.errorModalMessage)
+        XCTAssertTrue(
+            message.label.contains(fragment),
+            "Error modal message '\(message.label)' does not contain '\(fragment)'"
+        )
+    }
 }

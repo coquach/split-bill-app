@@ -12,12 +12,12 @@ import SystemDesign
 public struct SplitHistoryView: View {
     @State private var viewModel: SplitHistoryViewModel
     @Namespace private var categoryNamespace
-    private let onBack: () -> Void
+    private let onBack: (() -> Void)?
     private let onSelect: (SplitBillListItem) -> Void
 
     public init(
         viewModel: SplitHistoryViewModel,
-        onBack: @escaping () -> Void,
+        onBack: (() -> Void)? = nil,
         onSelect: @escaping (SplitBillListItem) -> Void
     ) {
         _viewModel = State(initialValue: viewModel)
@@ -94,16 +94,17 @@ public struct SplitHistoryView: View {
         .animation(.easeInOut(duration: 0.25), value: viewModel.selectedKind)
     }
 
-    // Small chips under the tabs to show only Active or Inactive splits.
+    // Small chips under the tabs to filter the list by split status — the
+    // same status filter the repository contract declares.
     private var filterChips: some View {
         HStack(spacing: AppSpacing.xs) {
-            ForEach(SplitHistoryViewModel.Filter.allCases, id: \.self) { filter in
+            ForEach(SplitBillStatusFilter.allCases, id: \.self) { filter in
                 let isSelected = viewModel.selectedFilter == filter
 
                 Button {
                     viewModel.select(filter)
                 } label: {
-                    Text(filter.rawValue)
+                    Text(viewModel.label(for: filter))
                         .font(AppTypography.label)
                         .foregroundStyle(
                             isSelected ? Color.appTextOnPrimary : Color.appTextSecondary
@@ -161,28 +162,51 @@ public struct SplitHistoryView: View {
     }
 
     private var emptyTitle: String {
-        let isActive = viewModel.selectedFilter == .active
-
         switch viewModel.selectedKind {
         case .yourSplit:
-            return isActive ? "No active splits" : "No inactive splits"
+            return statusTitle(item: "splits")
         case .splitTransfer:
-            return isActive ? "No active split transfers" : "No inactive split transfers"
+            return statusTitle(item: "split transfers")
+        }
+    }
+
+    private func statusTitle(item: String) -> String {
+        switch viewModel.selectedFilter {
+        case .all:
+            return "No \(item) yet"
+        case .active:
+            return "No active \(item)"
+        case .closed:
+            return "No settled \(item)"
+        case .expired:
+            return "No expired \(item)"
         }
     }
 
     private var emptyMessage: String {
-        let isActive = viewModel.selectedFilter == .active
-
         switch viewModel.selectedKind {
         case .yourSplit:
-            return isActive
-                ? "Split a completed transaction to start collecting from the people you paid for."
-                : "Splits that are settled, expired, or cancelled will show up here."
+            switch viewModel.selectedFilter {
+            case .all:
+                return "Split a completed transaction to start collecting from the people you paid for."
+            case .active:
+                return "Splits you create will show up here while they're open."
+            case .closed:
+                return "Splits you created that are fully paid will show up here."
+            case .expired:
+                return "Splits that passed their deadline unpaid will show up here."
+            }
         case .splitTransfer:
-            return isActive
-                ? "Splits you pay by scanning a QR code will show up here while they're open."
-                : "Splits you paid that are settled, expired, or cancelled will show up here."
+            switch viewModel.selectedFilter {
+            case .all:
+                return "Splits you pay by scanning a QR code will show up here."
+            case .active:
+                return "Splits you can pay by scanning a QR code will show up here while they're open."
+            case .closed:
+                return "Splits you paid that are fully settled will show up here."
+            case .expired:
+                return "Splits you paid that expired will show up here."
+            }
         }
     }
 

@@ -115,11 +115,11 @@ public struct SplitBillCoordinator: View {
             )
 
         case .history:
+            // Tab root — no back chevron; navigation is via the tab bar.
             SplitHistoryView(
                 viewModel: SplitHistoryViewModel(
                     splitBillRepository: dependencies.splitBillRepository
                 ),
-                onBack: onFinish,
                 onSelect: { bill in
                     router.navigate(to: SplitBillDestination.details(bill.id))
                 }

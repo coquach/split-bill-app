@@ -72,5 +72,6 @@ public enum UITestID {
     // MARK: - Errors
 
     public static let errorModalTitle = "error.modal.title"
+    public static let errorModalMessage = "error.modal.message"
     public static let errorModalRetry = "error.modal.retry"
 }

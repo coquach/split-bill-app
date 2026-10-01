@@ -51,6 +51,70 @@ final class ErrorTests: UITestCase {
         wait(UITestID.transferOtpInput)
     }
 
+    /// PIN_LOCKED — the server locks the PIN after 5 failed attempts; the
+    /// modal must show the 10-minute lockout message.
+    func testTransferPinLockedShowsLockoutMessage() {
+        launch(scenario: "pin-locked")
+        wait(UITestID.homeBalance)
+
+        tap(UITestID.homeTransferAction)
+        type(UITestID.transferReceiverField, UITestMagicValues.recipientAccountNumber)
+        tap("transfer.chip.500K")
+        tap(UITestID.transferContinue)
+        wait(UITestID.transferConfirm)
+        tap(UITestID.transferConfirm)
+
+        wait(UITestID.transferOtpInput)
+        type(UITestID.transferOtpInput, "123456")
+        app.buttons["Verify"].tap()
+
+        waitErrorModal()
+        assertErrorModalMessage(contains: "locked for 10 minutes")
+
+        tap(UITestID.errorModalRetry)
+        wait(UITestID.transferOtpInput)
+    }
+
+    /// PIN_NOT_SET — the server rejects money movement until a PIN exists;
+    /// the modal must point the user at the Profile screen.
+    func testTransferPinNotSetShowsSetupMessage() {
+        launch(scenario: "pin-not-set")
+        wait(UITestID.homeBalance)
+
+        tap(UITestID.homeTransferAction)
+        type(UITestID.transferReceiverField, UITestMagicValues.recipientAccountNumber)
+        tap("transfer.chip.500K")
+        tap(UITestID.transferContinue)
+        wait(UITestID.transferConfirm)
+        tap(UITestID.transferConfirm)
+
+        wait(UITestID.transferOtpInput)
+        type(UITestID.transferOtpInput, "123456")
+        app.buttons["Verify"].tap()
+
+        waitErrorModal()
+        assertErrorModalMessage(contains: "set up your transaction PIN in Profile")
+
+        tap(UITestID.errorModalRetry)
+        wait(UITestID.transferOtpInput)
+    }
+
+    /// The repay flow hits the same PIN lockout through the QR repayment RPC.
+    func testRepayPinLockedShowsLockoutMessage() {
+        launch(scenario: "pin-locked")
+
+        tap(UITestID.scanQR)
+        wait(UITestID.repayReviewConfirm)
+        tap(UITestID.repayReviewConfirm)
+
+        wait(UITestID.repayPinInput)
+        type(UITestID.repayPinInput, "123456")
+        app.buttons["Verify"].tap()
+
+        waitErrorModal()
+        assertErrorModalMessage(contains: "locked for 10 minutes")
+    }
+
     func testQRDecodeFailureShowsErrorModal() {
         launch(scenario: "qr-decode-fails")
 

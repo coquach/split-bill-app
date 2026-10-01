@@ -125,20 +125,3 @@ struct CreateQRRepaymentRequest: Encodable, Sendable {
         try c.encode(idempotencyKey, forKey: .idempotencyKey)
     }
 }
-
-struct RepaymentRecordDTO: Decodable, Sendable {
-    let repayment: RepaymentDTO
-    let splitBill: SplitBillDTO?
-
-    enum CodingKeys: String, CodingKey {
-        case repayment
-        case splitBill = "split_bill"
-    }
-
-    func toDomain() -> RepaymentRecord {
-        RepaymentRecord(
-            repayment: repayment.toDomain(),
-            splitBill: splitBill?.toDomain()
-        )
-    }
-}

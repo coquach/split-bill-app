@@ -71,7 +71,7 @@ public enum DomainError:
             return "The source transfer is invalid."
 
         case .pinNotSet:
-            return "Please set up your transaction PIN first."
+            return "Please set up your transaction PIN in Profile before making transfers or payments."
 
         case .invalidPinFormat:
             return "PIN must be exactly 6 digits."
@@ -80,7 +80,7 @@ public enum DomainError:
             return "The transaction PIN is incorrect."
 
         case .pinLocked:
-            return "PIN verification is temporarily locked."
+            return "Too many incorrect attempts. Your PIN is locked for 10 minutes."
 
         case .invalidParticipantCount:
             return "Participant count must be at least 2."

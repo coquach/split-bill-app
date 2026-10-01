@@ -42,7 +42,7 @@ struct HomeViewModelTests {
     }
 
     @Test
-    func recentTransfersKeepOnlyTheFirstFour() async {
+    func recentTransfersKeepOnlyTheFirstThree() async {
         profileRepository.profile = makeProfile()
         walletRepository.wallet = makeWallet()
         transferRepository.transfers = (1 ... 6).map { _ in makeHistory() }
@@ -50,9 +50,9 @@ struct HomeViewModelTests {
 
         await viewModel.load()
 
-        #expect(viewModel.recentTransfers.count == 4)
+        #expect(viewModel.recentTransfers.count == 3)
         #expect(viewModel.recentTransfers[0].id == transferRepository.transfers[0].id)
-        #expect(viewModel.recentTransfers[3].id == transferRepository.transfers[3].id)
+        #expect(viewModel.recentTransfers[2].id == transferRepository.transfers[2].id)
     }
 
     @Test

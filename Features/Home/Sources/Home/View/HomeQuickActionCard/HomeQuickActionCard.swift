@@ -21,6 +21,7 @@ struct HomeQuickActions: View {
                 icon: "arrow.up.right",
                 title: "Transfer",
                 tint: Color.appPrimary,
+                accessibilityID: UITestID.homeTransferAction,
                 action: onTransfer
             )
 
@@ -28,6 +29,7 @@ struct HomeQuickActions: View {
                 icon: "person.2.fill",
                 title: "Split",
                 tint: Color.appPrimary,
+                accessibilityID: UITestID.homeSplitAction,
                 action: onSplit
             )
         }
@@ -40,6 +42,7 @@ private struct HomeQuickActionCard: View {
     let icon: String
     let title: String
     let tint: Color
+    var accessibilityID: String? = nil
     let action: () -> Void
 
     var body: some View {
@@ -74,5 +77,6 @@ private struct HomeQuickActionCard: View {
             .padding(AppSpacing.lg)
         }
         .buttonStyle(.plain)
+        .accessibilityID(accessibilityID)
     }
 }

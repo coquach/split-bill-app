@@ -9,7 +9,6 @@ import Foundation
 final class MockRepaymentRepository: IRepaymentRepository, @unchecked Sendable {
     var receipt: QRRepaymentReceipt?
     var repayments: [Repayment] = []
-    var records: [RepaymentRecord] = []
     var error: Error?
 
     // Gates the repayment call so a test can hold it mid-flight and probe
@@ -43,10 +42,5 @@ final class MockRepaymentRepository: IRepaymentRepository, @unchecked Sendable {
         lastRepaymentsSplitBillId = splitBillId
         if let error { throw error }
         return repayments
-    }
-
-    func getMyRepaymentRecords() async throws -> [RepaymentRecord] {
-        if let error { throw error }
-        return records
     }
 }
