@@ -34,12 +34,20 @@ public final class SplitHistoryViewModel {
     public var selectedFilter: SplitBillStatusFilter = .all
 
     private let splitBillRepository: ISplitBillRepository
+    private let notificationCenter: NotificationCenter
+    // nonisolated(unsafe): written once in init, read only in deinit (which
+    // runs outside the MainActor) — no concurrent access is possible.
+    nonisolated(unsafe) private var transactionsObserver: NSObjectProtocol?
 
-    public init(splitBillRepository: ISplitBillRepository) {
+    public init(
+        splitBillRepository: ISplitBillRepository,
+        notificationCenter: NotificationCenter = .default
+    ) {
         self.splitBillRepository = splitBillRepository
+        self.notificationCenter = notificationCenter
 
         // Paying into a split changes its paid slots, so reload when a repayment finishes
-        NotificationCenter.default.addObserver(
+        transactionsObserver = notificationCenter.addObserver(
             forName: .transactionsDidChange,
             object: nil,
             queue: .main
@@ -47,6 +55,12 @@ public final class SplitHistoryViewModel {
             Task { @MainActor in
                 await self?.load(showsSpinner: false)
             }
+        }
+    }
+
+    deinit {
+        if let transactionsObserver {
+            notificationCenter.removeObserver(transactionsObserver)
         }
     }
 

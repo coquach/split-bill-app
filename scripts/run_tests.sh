@@ -27,7 +27,7 @@ SWIFT_PACKAGES=(
 )
 
 XCODE_PACKAGES=(
-    "Core/CommonUi"
+    "Foundation/SystemDesign"
     "Features/Authentication"
     "Features/Transfer"
     "Features/SplitBill"
