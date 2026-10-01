@@ -13,7 +13,7 @@ public enum SplitBillRoleFilter: String, Codable, Sendable, Equatable {
     case repaid = "REPAID"
 }
 
-public enum SplitBillStatusFilter: String, Codable, Sendable, Equatable {
+public enum SplitBillStatusFilter: String, Codable, Sendable, Equatable, CaseIterable {
     case all = "ALL"
     case active = "ACTIVE"
     case closed = "CLOSED"

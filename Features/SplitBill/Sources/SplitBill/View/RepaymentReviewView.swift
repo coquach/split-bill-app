@@ -70,7 +70,7 @@ public struct RepaymentReviewView: View {
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             BottomActionBar(
-                primary: .init(title: "Confirm & Pay", style: .primary, handler: onContinue),
+                primary: .init(title: "Confirm & Pay", style: .primary, accessibilityID: UITestID.repayReviewConfirm, handler: onContinue),
                 secondary: .init(title: "Cancel", style: .secondary, handler: onBack)
             )
         }

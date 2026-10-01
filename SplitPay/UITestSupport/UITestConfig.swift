@@ -19,6 +19,12 @@
         /// Transfer OTP submit and repay PIN verification fail — exercises the
         /// error modals on both money-movement flows.
         case otpFails = "otp-fails"
+        /// Money-movement RPCs raise PIN_LOCKED — exercises the lockout
+        /// message ("locked for 10 minutes") on the error modal.
+        case pinLocked = "pin-locked"
+        /// Money-movement RPCs raise PIN_NOT_SET — exercises the
+        /// "set up your transaction PIN in Profile" message.
+        case pinNotSet = "pin-not-set"
         /// `decodeQR` throws — exercises the scan-flow error modal.
         case qrDecodeFails = "qr-decode-fails"
         /// `validateSession` returns false — drops the app back to Login on the

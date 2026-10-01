@@ -15,9 +15,6 @@ public struct ProfileView: View {
     public var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: AppSpacing.xl) {
-                Text("Profile")
-                    .font(AppTypography.title)
-                    .foregroundStyle(Color.appTextPrimary)
 
                 profileHeader
 
@@ -37,6 +34,7 @@ public struct ProfileView: View {
         .modalOverlay(isPresented: isShowingLogoutConfirmation) {
             AppModal(
                 icon: Image(systemName: "rectangle.portrait.and.arrow.right"),
+                style: .warning,
                 title: "Log Out?",
                 message: "Are you sure you want to log out?"
             ) {
@@ -149,7 +147,7 @@ public struct ProfileView: View {
     private var logoutButton: some View {
         AppButton(
             title: "Log Out",
-            style: .destructiveSecondary,
+            style: .destructive,
             icon: "rectangle.portrait.and.arrow.right",
             isLoading: viewModel.isSigningOut
         ) {

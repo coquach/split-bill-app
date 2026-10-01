@@ -157,7 +157,7 @@ struct SplitDetailsViewModelTests {
     func statusTextCoversEverySplitBillStatus() {
         let viewModel = makeViewModel()
 
-        #expect(viewModel.statusText(makeLoaded(requiredSlots: 2, statuses: [])) == "Split active")
+        #expect(viewModel.statusText(makeLoaded(requiredSlots: 2, statuses: [])) == "Active")
 
         let settled = viewModel.statusText(
             SplitDetailsViewModel.Loaded(

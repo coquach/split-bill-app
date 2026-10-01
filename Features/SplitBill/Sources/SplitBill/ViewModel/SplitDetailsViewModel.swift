@@ -94,7 +94,7 @@ public final class SplitDetailsViewModel {
 
     public func statusText(_ loaded: Loaded) -> String {
         switch loaded.detail.splitBill.status {
-        case .active: return "Split active"
+        case .active: return "Active"
         case .closed: return "Settled"
         case .expired: return "Expired"
         case .cancelled: return "Cancelled"

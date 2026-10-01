@@ -55,7 +55,7 @@ private extension AuthHeader {
     var logo: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.appSurfacePrimary)
+                .fill(Color.appPrimary)
                 .frame(width: 64, height: 64)
                 .shadow(
                     color: .black.opacity(0.08),
@@ -70,7 +70,7 @@ private extension AuthHeader {
                         weight: .semibold
                     )
                 )
-                .foregroundStyle(Color.appPrimary)
+                .foregroundStyle(Color.appSurfacePrimary)
         }
         .padding(.bottom, 14)
     }

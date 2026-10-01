@@ -24,6 +24,12 @@
             if UITestConfig.scenario == .otpFails {
                 throw DomainError.invalidPin
             }
+            if UITestConfig.scenario == .pinLocked {
+                throw DomainError.pinLocked
+            }
+            if UITestConfig.scenario == .pinNotSet {
+                throw DomainError.pinNotSet
+            }
             guard command.amount <= store.wallet.balance else {
                 throw DomainError.insufficientBalance
             }

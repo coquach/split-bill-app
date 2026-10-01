@@ -21,6 +21,9 @@
             createRepaymentCalls += 1
             lastRepaymentCommand = command
 
+            if UITestConfig.scenario == .pinLocked {
+                throw DomainError.pinLocked
+            }
             guard command.pin != UITestSeedData.failingPin else {
                 throw DomainError.invalidPin
             }
