@@ -131,7 +131,8 @@ public struct ProfileView: View {
                 icon: viewModel.hasPin ? "key.fill" : "lock.fill",
                 title: viewModel.hasPin
                     ? "Change Transaction PIN"
-                    : "Set Up Transaction PIN"
+                    : "Set Up Transaction PIN",
+                accessibilityID: UITestID.profilePinCard
             ) {
                 if viewModel.hasPin {
                     isShowingChangePin = true
@@ -148,7 +149,8 @@ public struct ProfileView: View {
             title: "Log Out",
             style: .destructive,
             icon: "rectangle.portrait.and.arrow.right",
-            isLoading: viewModel.isSigningOut
+            isLoading: viewModel.isSigningOut,
+            accessibilityID: UITestID.profileLogout
         ) {
             isShowingLogoutConfirmation = true
         }

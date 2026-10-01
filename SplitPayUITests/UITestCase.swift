@@ -88,7 +88,21 @@ class UITestCase: XCTestCase {
             app.swipeUp()
         }
         field.tap()
+        dismissStrongPasswordOverlay()
         typeUntilComplete(field, text)
+    }
+
+    /// iOS 26 can put up a "Use Strong Password" overlay over the keyboard
+    /// when a password field gains focus — it swallows every synthesized
+    /// keystroke after the first. Choosing our own password dismisses it.
+    private func dismissStrongPasswordOverlay() {
+        for label in ["Choose My Own Password", "Use Strong Password"] {
+            let button = app.buttons[label]
+            if button.waitForExistence(timeout: 1) {
+                button.tap()
+                return
+            }
+        }
     }
 
     /// Types and verifies the field actually received the full text. Fields
@@ -97,6 +111,14 @@ class UITestCase: XCTestCase {
     /// partial value — retype, then fall back to pasting from the clipboard.
     private func typeUntilComplete(_ field: XCUIElement, _ text: String) {
         for attempt in 0 ..< 3 {
+            if attempt > 0 {
+                // The strong-password overlay can pop up *mid-typing* — after
+                // the first keystroke, not at focus — so re-check for it and
+                // re-tap the field before trying again.
+                dismissStrongPasswordOverlay()
+                field.tap()
+            }
+
             field.typeText(text)
 
             let value = field.value as? String ?? ""
@@ -110,6 +132,9 @@ class UITestCase: XCTestCase {
                 pasteInto(field, text)
                 let final = field.value as? String ?? ""
                 if final.count < text.count {
+                    // Dump the hierarchy so the log shows what actually
+                    // intercepted the keystrokes.
+                    print("PASSWORD FIELD DEBUG DUMP:\n\(app.debugDescription)")
                     XCTFail("Could not fill field with '\(text)' — kept receiving '\(final)'")
                 }
             }

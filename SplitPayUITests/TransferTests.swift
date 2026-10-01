@@ -54,7 +54,12 @@ final class TransferTests: UITestCase {
         // The seeded first row is the sent "Team lunch" transfer, so the
         // detail screen offers the Split Bill action.
         wait(UITestID.detailSplitBill)
-        XCTAssertTrue(app.staticTexts["Completed"].exists)
+        // The status pill exposes "Completed" as its accessibility label,
+        // not as a text node, so query any element carrying that label.
+        let completed = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == %@", "Completed"))
+            .firstMatch
+        XCTAssertTrue(completed.waitForExistence(timeout: 5))
     }
 
     func testTransactionDetailSplitBillOpensSetup() {

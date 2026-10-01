@@ -47,12 +47,12 @@ public struct Avatar: View {
 
     public var body: some View {
         Circle()
-            .fill(Color.appOnSurface)
+            .fill(Color.appPrimary)
             .frame(width: size.diameter, height: size.diameter)
             .overlay {
                 Text(initials)
                     .font(size.font)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color.appSurfacePrimary)
             }
     }
 

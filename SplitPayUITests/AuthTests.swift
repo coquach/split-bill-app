@@ -21,14 +21,21 @@ final class AuthTests: UITestCase {
         wait(UITestID.loginSignUpLink)
     }
 
-    func testLoginEmptyFieldsShowsValidation() {
-        tap(UITestID.loginSubmit)
+    func testLoginShowsErrorsLiveAndKeepsSubmitDisabledWhileInvalid() {
+        // The fresh form opens clean — no "…is required." noise — and the
+        // disabled submit keeps a tap on the empty form from doing anything.
+        let submit = wait(UITestID.loginSubmit)
+        XCTAssertFalse(submit.isEnabled)
 
-        // Validation errors render inline under each field — no request is
-        // made, so we must still be on Login.
-        XCTAssertTrue(app.staticTexts["Email is required."].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Password is required."].exists)
-        wait(UITestID.loginSubmit)
+        // Editing a field surfaces its error live, no submit tap needed.
+        type(UITestID.loginEmail, "not-an-email")
+        XCTAssertTrue(
+            app.staticTexts["Please enter a valid email address."]
+                .waitForExistence(timeout: 5)
+        )
+
+        // The untouched password field stays quiet.
+        XCTAssertFalse(app.staticTexts["Password is required."].exists)
     }
 
     func testLoginInvalidCredentialsShowsAlert() {
@@ -60,6 +67,28 @@ final class AuthTests: UITestCase {
         wait(UITestID.registerFullName)
         wait(UITestID.registerEmail)
         wait(UITestID.registerSubmit)
+    }
+
+    func testRegisterShowsErrorsLiveAndKeepsSubmitDisabledWhileInvalid() {
+        tap(UITestID.loginSignUpLink)
+
+        // The fresh form opens clean — no "…is required." noise — and the
+        // disabled submit keeps a tap on the empty form from doing anything.
+        let submit = wait(UITestID.registerSubmit)
+        XCTAssertFalse(submit.isEnabled)
+
+        // Editing a field surfaces its error live, no submit tap needed.
+        type(UITestID.registerEmail, "not-an-email")
+        XCTAssertTrue(
+            app.staticTexts["Please enter a valid email address."]
+                .waitForExistence(timeout: 5)
+        )
+
+        // The untouched fields stay quiet.
+        XCTAssertFalse(app.staticTexts["Full name is required."].exists)
+
+        // The submit is still disabled while the form is invalid.
+        XCTAssertFalse(submit.isEnabled)
     }
 
     func testRegisterCreatesAccountAndReachesHome() {

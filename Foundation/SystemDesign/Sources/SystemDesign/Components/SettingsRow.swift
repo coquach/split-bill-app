@@ -12,17 +12,22 @@ public struct SettingsRow: View {
     private let icon: String
     private let title: String
     private let showsTopDivider: Bool
+    private let accessibilityID: String?
     private let action: () -> Void
 
+    /// - Parameter accessibilityID: optional identifier XCUITest selects on,
+    ///   e.g. the PIN row on Profile.
     public init(
         icon: String,
         title: String,
         showsTopDivider: Bool = false,
+        accessibilityID: String? = nil,
         action: @escaping () -> Void
     ) {
         self.icon = icon
         self.title = title
         self.showsTopDivider = showsTopDivider
+        self.accessibilityID = accessibilityID
         self.action = action
     }
 
@@ -59,6 +64,7 @@ public struct SettingsRow: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityID(accessibilityID)
         }
     }
 }

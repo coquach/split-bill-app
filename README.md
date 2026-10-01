@@ -46,7 +46,7 @@ injection, and both unit and UI test suites.
 | **Architecture** | Feature-modular MVVM + Coordinator, one local Swift Package per feature and per shared layer |
 | **Backend** | Supabase: Postgres functions (RPC) over PostgREST, Supabase Auth |
 | **Third-party code** | Only two libraries: `supabase-swift` (auth) and `Swinject` (dependency injection) |
-| **Size** | 1 app target + 10 local packages, about 200 unit tests, 34 UI tests |
+| **Size** | 1 app target + 10 local packages, about 200 unit tests, 38 UI tests |
 | **Timeline** | First commit 2026-09-07, latest 2026-09-30 (about 100 commits) |
 
 ### Status by area
@@ -150,7 +150,8 @@ flowchart LR
   **Log Out** (with a confirmation pop-up).
 - PIN flow reuses the PIN-entry look: new PIN then confirm it; when a PIN
   already exists, the current PIN is verified first, then the new one is
-  entered and confirmed.
+  entered and confirmed. Saving shows a success pop-up (**PIN Created** for a
+  first-time setup, **PIN Updated** for a change) that closes the sheet.
 
 ---
 
@@ -161,7 +162,7 @@ flowchart LR
 | Language | Swift | Toolchain **6.2.3** (`.swift-version`); packages use tools version 6.2; the app target compiles in Swift 5 language mode with `MainActor` default isolation |
 | UI | **SwiftUI** | No UIKit screens. One `UIViewControllerRepresentable` wraps the camera scanner |
 | State | **Observation** (`@Observable`, `@MainActor`) | View models are plain observable classes; views hold them in `@State` |
-| Concurrency | Swift concurrency (`async/await`, `Task`, `AsyncStream`) | Combine is not used |
+| Concurrency | Swift concurrency (`async/await`, `Task`, `AsyncStream`), plus Combine in a few view models | See note below |
 | Architecture | **MVVM + Coordinator** | See [section 4](#4-architecture) |
 | Navigation | `NavigationStack` + a small `Router` package (`NavigationPath`) | |
 | Dependency injection | **Swinject 2.10.0** | Used only in the composition root (`SplitPay/DI`) |
@@ -179,6 +180,18 @@ Third-party dependencies are deliberately minimal: two direct packages, plus
 their transitive dependencies (`swift-crypto`, `swift-http-types`,
 `swift-asn1`, `swift-clocks`, `swift-concurrency-extras`,
 `xctest-dynamic-overlay`).
+
+Combine ships with Foundation, so it isn't a third-party dependency; it
+shows up in four places: a `.debounce()` pipeline for the account lookup in
+`TransferFlowViewModel`, a `NotificationCenter.publisher` bridge for the
+live-refresh listener in `HomeViewModel` and `TransactionHistoryViewModel`,
+a `combineLatest` pipeline for live sign-in and sign-up validation in
+`LoginViewModel` and `RegisterViewModel` (each field's error shows once that
+field has been edited, so the untouched form opens clean, and the submit
+button only enables once the whole form is valid), and a `.map`
+pipeline for the per-person preview text
+in `SplitFlowViewModel`. Everywhere else, `@Observable` and Swift
+concurrency handle the app's reactive needs.
 
 ---
 
@@ -617,9 +630,15 @@ over the network, and SwiftUI views (the UI tests cover those).
 ```bash
 ./scripts/run_ui_tests.sh                 # whole suite (about 8 minutes)
 ./scripts/run_ui_tests.sh TransferTests   # one class
+./scripts/run_ui_tests.sh \
+  -only-testing:SplitPayUITests/AuthTests/testNavigateToRegister \
+  -only-testing:SplitPayUITests/ProfileTests   # several filters union
 ```
 
-Run the unit and UI scripts **one at a time**; they share a simulator.
+Run the unit and UI scripts **one at a time**; they share a simulator. Both
+scripts pre-boot the simulator first; the unit script also runs each package
+under a 15-minute watchdog, so a hung xcodebuild teardown fails loudly instead
+of stalling forever.
 
 How it works:
 
@@ -649,17 +668,21 @@ flowchart LR
   chosen calls throw, to test error states and retries.
 - **Scanner seam:** under `-UITest` the camera is replaced by a canned payload
   that still goes through the real decode path.
+- **Keyboard resilience:** iOS 26 can raise a "Use Strong Password" overlay
+  that swallows synthesized keystrokes; `UITestCase.type` dismisses it (the
+  app also drops `.textContentType(.password)` under `-UITest`), re-checks it
+  on every retry, and falls back to pasting.
 - **Stable selectors:** every queried element has an identifier from
   `UITestID`; no text or coordinate queries.
 
 | UI suite | Tests | Covers |
 |---|---|---|
-| `AuthTests` | 6 | Login validation and errors, login to Home, register |
+| `AuthTests` | 7 | Login validation and errors, login to Home, register |
 | `HomeTests` | 4 | Seeded balance and profile, quick actions, See All |
 | `TransferTests` | 8 | History, detail, lookup, amount chips, full transfer, over-balance guard |
 | `SplitTests` | 7 | Active/inactive, detail, stepper, create to QR, repay, wrong PIN |
 | `ProfileTests` | 4 | Seeded fields, PIN sheet, change PIN, log out |
-| `ErrorTests` | 4 | Fetch failure and retry, empty data, PIN failure, QR decode failure |
+| `ErrorTests` | 7 | Fetch failure and retry, empty data, PIN failure, QR decode failure |
 | `SmokeTests` | 1 | App launches |
 
 A detailed write-up of the test suite is in `docs/test-suite-confluence.md`.
