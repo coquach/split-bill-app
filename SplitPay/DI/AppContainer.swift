@@ -14,9 +14,7 @@ final class AppContainer: @unchecked Sendable {
         Assembler(
             [
                 SupabaseAssembly(),
-                RestAssembly(),
                 DomainDataAssembly(),
-                SessionAssembly(),
             ],
             container: container
         )

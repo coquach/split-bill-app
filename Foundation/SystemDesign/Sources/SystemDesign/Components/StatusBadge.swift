@@ -51,5 +51,10 @@ public struct StatusBadge: View {
             .padding(.vertical, AppSpacing.xxs)
             .background(style.background)
             .clipShape(Capsule())
+            // Same-hue border makes the badge pop off the card behind it,
+            // mirroring how the filter chips carry a colored stroke.
+            .overlay {
+                Capsule().strokeBorder(style.foreground.opacity(0.4), lineWidth: 1)
+            }
     }
 }

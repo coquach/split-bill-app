@@ -36,7 +36,7 @@ public struct SplitDetailsView: View {
         }
         .background(Color.appBackground.ignoresSafeArea())
         .safeAreaInset(edge: .top, spacing: 0) {
-            AppNavBar(title: "Transaction Detail", onBack: onBack)
+            AppNavBar(title: "Split Detail", onBack: onBack)
         }
         .safeAreaInset(edge: .bottom, spacing: 0) { bottomActions }
         .navigationBarHidden(true)

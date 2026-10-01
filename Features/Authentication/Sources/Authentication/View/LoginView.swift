@@ -30,6 +30,8 @@ struct LoginView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
+                
+                Spacer(minLength: 24)
                 AuthHeader(
                     icon: "arrow.left.arrow.right",
                     title: "Welcome back",

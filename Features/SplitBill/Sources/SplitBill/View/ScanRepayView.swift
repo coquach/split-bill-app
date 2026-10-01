@@ -13,7 +13,9 @@ public struct ScanRepayView: View {
     @State private var viewModel: ScanRepayViewModel
     private let onBack: () -> Void
     private let onDecoded: (ScannedRepayment) -> Void
-    // UI-test seam: when non-nil the camera is skipped and this payload goes through the same decode path a real scan would (see SplitBillCoordinator.Dependencies)
+    // UI-test seam: when non-nil the camera is skipped entirely and this
+    // payload is fed through the same decode path a real scan would take
+    // (see SplitBillCoordinator.Dependencies).
     private let mockScanPayload: String?
 
     public init(
@@ -84,6 +86,7 @@ public struct ScanRepayView: View {
                             .background(.black.opacity(0.6))
                             .clipShape(Circle())
                     }
+                    .accessibilityIdentifier(UITestID.scanClose)
                     .padding(AppSpacing.lg)
 
                     Spacer()
@@ -97,9 +100,10 @@ public struct ScanRepayView: View {
             AppModal(
                 icon: Image(systemName: "exclamationmark.triangle.fill"),
                 title: "Couldn't Read QR Code",
-                message: viewModel.errorMessage ?? "Something went wrong."
+                message: viewModel.errorMessage ?? "Something went wrong.",
+                accessibilityID: UITestID.errorModalTitle
             ) {
-                AppButton(title: "Try Again", style: .primary) {
+                AppButton(title: "Try Again", style: .primary, accessibilityID: UITestID.errorModalRetry) {
                     viewModel.retry()
                 }
             }

@@ -25,15 +25,13 @@ public final class SplitHistoryViewModel {
         case splitTransfer = "Split Transfer"
     }
 
-    // The filter under the tabs. Inactive = settled, expired or cancelled.
-    public enum Filter: String, CaseIterable, Hashable {
-        case active = "Active"
-        case inactive = "Inactive"
-    }
-
+    // The filter under the tabs reuses the status filter declared on the
+    // repository contract (SplitBillStatusFilter): All / Active / Settled /
+    // Expired. Cancelled bills only show up under All — the declared filter
+    // has no separate case for them.
     public private(set) var state: State = .loading
     public var selectedKind: Kind = .yourSplit
-    public var selectedFilter: Filter = .active
+    public var selectedFilter: SplitBillStatusFilter = .all
 
     private let splitBillRepository: ISplitBillRepository
 
@@ -94,10 +92,14 @@ public final class SplitHistoryViewModel {
         let bills = selectedKind == .yourSplit ? created : transferred
 
         switch selectedFilter {
+        case .all:
+            return bills
         case .active:
             return bills.filter { $0.status == .active }
-        case .inactive:
-            return bills.filter { $0.status != .active }
+        case .closed:
+            return bills.filter { $0.status == .closed }
+        case .expired:
+            return bills.filter { $0.status == .expired }
         }
     }
 
@@ -105,8 +107,19 @@ public final class SplitHistoryViewModel {
         selectedKind = kind
     }
 
-    public func select(_ filter: Filter) {
+    public func select(_ filter: SplitBillStatusFilter) {
         selectedFilter = filter
+    }
+
+    // Chip label for a filter — "Settled" matches the badge wording for
+    // closed bills (see statusText(for:)).
+    public func label(for filter: SplitBillStatusFilter) -> String {
+        switch filter {
+        case .all: return "All"
+        case .active: return "Active"
+        case .closed: return "Settled"
+        case .expired: return "Expired"
+        }
     }
 
     public func subtitle(for bill: SplitBillListItem) -> String {

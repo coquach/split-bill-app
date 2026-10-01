@@ -86,6 +86,7 @@ public struct SplitSetupView: View {
         .modalOverlay(isPresented: viewModel.isShowingCancelConfirmation) {
             AppModal(
                 icon: Image(systemName: "exclamationmark.triangle.fill"),
+                style: .warning,
                 title: "Cancel This Split?",
                 message: "The split will become inactive and no one will be able to pay it through the QR code anymore.",
                 accessibilityID: UITestID.errorModalTitle

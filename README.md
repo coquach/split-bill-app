@@ -301,10 +301,8 @@ project. No feature depends on another feature.
 
 | Assembly | Registers |
 |---|---|
-| `SupabaseAssembly` | `SupabaseClient` (auth), with URL and key from the bundle |
-| `RestAssembly` | `SupabaseRestClient` and an `AccessTokenProviding` bridge |
-| `DomainDataAssembly` | The 8 `I*Repository` protocols mapped to their Supabase implementations |
-| `SessionAssembly` | `SessionStore` |
+| `SupabaseAssembly` | `SupabaseClient` (auth) with URL and key from the bundle, the `SupabaseRestClient`, and its `AccessTokenProviding` bridge |
+| `DomainDataAssembly` | The 8 `I*Repository` protocols mapped to their Supabase implementations, plus `SessionStore` |
 | `MockAppAssembly` (debug only) | The same protocols backed by in-memory mocks, used by UI tests |
 
 `SplitPayApp` resolves each repository once and hands them to `AppCoordinator`.
@@ -485,7 +483,8 @@ tests).
 |---|---|
 | Accounts are internal SplitPay **wallet numbers**; there is no external bank concept | Domain model |
 | The transaction **PIN is exactly 6 digits**; it is checked on the server | PIN screens, backend |
-| A transfer, a split and a repayment each carry an **idempotency key**, so a retried request cannot create a duplicate | Flow view models |
+| **PIN lockout:** 5 consecutive wrong PINs lock verification for **10 minutes**; a successful verification (or a PIN change) resets the counter. Server raises `PIN_LOCKED` / `PIN_NOT_SET`, which the client maps to readable messages | `verify_pin`, `change_pin` (backend), `RepositoryErrorMapper` |
+| A transfer, a split and a repayment each carry an **idempotency key**, so a retried request cannot create a duplicate. The database enforces this with unique indexes (`transfer_transactions`, `repayments`, `split_bills`) | Flow view models, backend |
 | The client's cached balance is **never trusted**; the server re-checks balance at submit | `SessionStore`, backend |
 | A split needs **2 to 10 participants** | `SplitFlowViewModel.participantRange` |
 | The **requester is one of the participants** and pays no slot: with N participants there are N-1 paying slots | `SplitCalculator` |

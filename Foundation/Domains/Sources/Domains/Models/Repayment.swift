@@ -52,13 +52,3 @@ public struct Repayment: Identifiable, Sendable, Equatable {
         self.createdAt = createdAt
     }
 }
-
-public struct RepaymentRecord: Sendable, Equatable {
-    public let repayment: Repayment
-    public let splitBill: SplitBill?
-
-    public init(repayment: Repayment, splitBill: SplitBill?) {
-        self.repayment = repayment
-        self.splitBill = splitBill
-    }
-}

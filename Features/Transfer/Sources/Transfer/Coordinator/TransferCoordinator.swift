@@ -19,7 +19,10 @@ public enum TransferDestination: Hashable {
     case confirm
     case otp
     case success
-    case detail(transactionId: UUID, receiverName: String)
+    // isOutgoing drives the amount sign/colour on the detail screen — the
+    // detail RPC returns both parties, not who is viewing, so the navigation
+    // site (which knows the direction) carries it along.
+    case detail(transactionId: UUID, receiverName: String, isOutgoing: Bool)
 }
 
 public struct TransferCoordinator: View {
@@ -91,7 +94,8 @@ public struct TransferCoordinator: View {
                                 router.navigate(
                                     to: TransferDestination.detail(
                                         transactionId: receipt.id,
-                                        receiverName: receipt.receiverHolderName
+                                        receiverName: receipt.receiverHolderName,
+                                        isOutgoing: true
                                     )
                                 )
                             },
@@ -99,11 +103,12 @@ public struct TransferCoordinator: View {
                         )
                     }
 
-                case .detail(let transactionId, let receiverName):
+                case .detail(let transactionId, let receiverName, let isOutgoing):
                     TransactionDetailView(
                         viewModel: TransactionDetailViewModel(
                             transactionId: transactionId,
                             receiverHolderName: receiverName,
+                            isOutgoing: isOutgoing,
                             transferRepository: dependencies.transferRepository
                         ),
                         onBack: { router.navigateBack() },
@@ -144,7 +149,8 @@ extension TransferCoordinator {
                             transactionId: item.id,
                             receiverName: item.counterpartyName
                                 ?? item.counterpartyWalletNumber
-                                ?? "Unknown"
+                                ?? "Unknown",
+                            isOutgoing: item.direction == .sent
                         )
                     )
                 }

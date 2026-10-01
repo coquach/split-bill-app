@@ -12,6 +12,9 @@ final class MockSplitBillRepository: ISplitBillRepository, @unchecked Sendable {
     var closedBill: SplitBill?
     var detail: SplitBillDetail?
     var pageResult: SplitBillPage?
+    // Per-role override — history loads both roles in parallel, so a test
+    // can hand each one its own page.
+    var pageResultsByRole: [SplitBillRoleFilter: SplitBillPage] = [:]
     var error: Error?
 
     // Gates the create call so a test can hold it mid-flight and probe
@@ -33,6 +36,7 @@ final class MockSplitBillRepository: ISplitBillRepository, @unchecked Sendable {
     private(set) var getSplitBillDetailCalls = 0
     private(set) var lastDetailId: UUID?
     private(set) var getSplitBillsCalls = 0
+    private(set) var rolesRequested: [SplitBillRoleFilter] = []
     private(set) var lastRole: SplitBillRoleFilter?
     private(set) var lastStatusFilter: SplitBillStatusFilter?
     private(set) var lastPage: Int?
@@ -56,11 +60,15 @@ final class MockSplitBillRepository: ISplitBillRepository, @unchecked Sendable {
         pageSize: Int
     ) async throws -> SplitBillPage {
         getSplitBillsCalls += 1
+        rolesRequested.append(role)
         lastRole = role
         lastStatusFilter = status
         lastPage = page
         lastPageSize = pageSize
         if let error { throw error }
+        if let rolePage = pageResultsByRole[role] {
+            return rolePage
+        }
         guard let pageResult else { throw DomainError.notFound }
         return pageResult
     }

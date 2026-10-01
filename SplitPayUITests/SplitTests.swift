@@ -24,11 +24,11 @@ final class SplitTests: UITestCase {
         XCTAssertTrue(app.staticTexts["Team Lunch"].exists)
     }
 
-    func testSplitHistoryInactiveFilter() {
+    func testSplitHistorySettledFilter() {
         tapTab(identifier: UITestID.tabSplit, label: "Split")
         wait("\(UITestID.splitHistoryRowPrefix).0")
 
-        app.buttons["Inactive"].tap()
+        app.buttons["Settled"].tap()
 
         // Movie Night is closed; Team Lunch (active) drops out.
         XCTAssertTrue(app.staticTexts["Movie Night"].waitForExistence(timeout: 5))
@@ -39,7 +39,7 @@ final class SplitTests: UITestCase {
         tapTab(identifier: UITestID.tabSplit, label: "Split")
         tap("\(UITestID.splitHistoryRowPrefix).0")
 
-        XCTAssertTrue(app.buttons["Download QR"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Get QR"].waitForExistence(timeout: 5))
         // 1 of 3 slots paid on the seeded Team Lunch bill.
         XCTAssertTrue(app.staticTexts["Paid 1 of 3"].waitForExistence(timeout: 5))
     }
