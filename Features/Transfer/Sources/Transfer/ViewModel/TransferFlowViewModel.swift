@@ -22,11 +22,6 @@ public final class TransferFlowViewModel {
         case failed(DomainError)
     }
 
-    // MARK: - Input step
-
-    /// How long to wait after the last keystroke before looking the account
-    /// number up. Exposed so tests can wait on it instead of hardcoding
-    /// 400 ms and silently drifting when the value changes.
     public static let accountLookupDebounce: Duration = .milliseconds(400)
 
     public var accountNumber: String = "" {
@@ -85,21 +80,15 @@ public final class TransferFlowViewModel {
         amountText = String(value)
     }
 
-    // Called on view disappear so a stale lookup doesn't resolve after
-    // the user has already navigated away.
     public func cancelPendingLookup() {
         lookupTask?.cancel()
     }
-
-    // Builds the draft from the current input and stores it on the VM, so
-    // Confirm and OTP read it from here instead of receiving their own copy.
+    
     @discardableResult
     public func confirmInput() -> Bool {
         guard case .found(let recipient) = lookupState else { return false }
 
         draft = TransferDraft(
-            // The wallet id from the lookup, not the number the user typed —
-            // it's what `create_transfer` actually takes.
             receiverWalletId: recipient.walletId,
             receiverAccountNumber: recipient.walletNumber,
             receiverHolderName: recipient.holderName,
@@ -114,10 +103,6 @@ public final class TransferFlowViewModel {
     private func scheduleAccountLookup() {
         lookupTask?.cancel()
 
-        // Normalise before it leaves the app: wallet numbers are stored
-        // uppercase, and the lookup may well be a plain equality check.
-        // Trim first so a trailing space from paste or autocomplete doesn't
-        // turn into a "not found".
         let query = accountNumber
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .uppercased()
