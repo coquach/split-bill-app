@@ -122,3 +122,7 @@ Carthage
 .deriverdData_measurement
 
 report.xml
+
+# CI: Swift packages cloned by xcodebuild, and release build output
+.spm/
+build/

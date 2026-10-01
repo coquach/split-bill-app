@@ -1,0 +1,130 @@
+# CD: send a new build to TestFlight.
+#
+# How to release:
+#     git tag v1.0.0
+#     git push origin v1.0.0
+#
+# The version number comes from the tag (v1.0.0 -> 1.0.0). The build number is the run number
+# of this workflow, so it goes up on every release.
+#
+# One-time setup (secrets and signing) is described in docs/ci-cd.md.
+
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: read
+
+env:
+  # Apple Developer team that signs the app (same as DEVELOPMENT_TEAM in the Xcode project).
+  TEAM_ID: U62LXS4PHV
+
+jobs:
+  # Never ship code that did not pass the checks.
+  checks:
+    name: Checks
+    uses: ./.github/workflows/ci.yml
+
+  testflight:
+    name: Upload to TestFlight
+    needs: checks
+    runs-on: macos-26
+    timeout-minutes: 60
+    # Create a GitHub environment called "testflight" and add required reviewers
+    # if you want a person to approve every release before it is uploaded.
+    environment: testflight
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s "$(printf '%s\n' /Applications/Xcode_26*.app | sort -V | tail -n 1)"
+          xcodebuild -version
+
+      # The real server address and key, from repository secrets (never committed).
+      - name: Create Secrets.xcconfig
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+        run: |
+          # xcconfig treats // as a comment, so https://x is written as https:/$()/x
+          # shellcheck disable=SC2016,SC2001
+          fix() { echo "$1" | sed 's#://#:/$()/#'; }
+          {
+            echo "SUPABASE_URL = $(fix "$SUPABASE_URL")"
+            echo "SUPABASE_KEY = $SUPABASE_KEY"
+            echo "API_BASE_URL = $(fix "${API_BASE_URL:-https://unused.example.com}")"
+          } > SplitPay/Config/Secrets.xcconfig
+
+      # The App Store Connect API key lets Xcode create and download signing certificates
+      # by itself, so no certificate or provisioning profile files are stored in the repo.
+      - name: Save the App Store Connect API key
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/keys"
+          echo "$ASC_KEY_P8" > "$RUNNER_TEMP/keys/AuthKey.p8"
+
+      - name: Work out the version
+        run: |
+          echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          echo "BUILD_NUMBER=${{ github.run_number }}" >> "$GITHUB_ENV"
+
+      - name: Archive
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          xcodebuild archive \
+            -project SplitPay.xcodeproj \
+            -scheme SplitPay \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/SplitPay.xcarchive \
+            -clonedSourcePackagesDirPath .spm \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            MARKETING_VERSION="$VERSION" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+
+      # "destination = upload" makes the export step send the build straight to App Store Connect.
+      - name: Export and upload
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          cat > build/ExportOptions.plist <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key><string>app-store-connect</string>
+              <key>destination</key><string>upload</string>
+              <key>teamID</key><string>${TEAM_ID}</string>
+              <key>signingStyle</key><string>automatic</string>
+              <key>uploadSymbols</key><true/>
+          </dict>
+          </plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath build/SplitPay.xcarchive \
+            -exportOptionsPlist build/ExportOptions.plist \
+            -exportPath build/export \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+
+      # Keep the debug symbols so crash reports from this build can be read later.
+      - name: Save debug symbols
+        uses: actions/upload-artifact@v4
+        with:
+          name: dSYMs-${{ github.ref_name }}
+          path: build/SplitPay.xcarchive/dSYMs

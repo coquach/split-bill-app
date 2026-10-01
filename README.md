@@ -61,7 +61,7 @@ injection, and both unit and UI test suites.
 | Repay by scanning QR | Working | Needs a real device camera (simulator uses a test seam) |
 | Profile and PIN | Working | Set up PIN, change PIN (verifies current PIN), sign out |
 | Automated tests | Working | Unit tests per package, XCUITest suite on a mock backend |
-| CI pipeline | Not present | Tests run locally through scripts |
+| CI/CD | Working | GitHub Actions: lint, build and tests on every change; TestFlight release when you push a version tag ([docs/ci-cd.md](docs/ci-cd.md)) |
 | Backend SQL in repo | Not present | Database functions live only in Supabase (see [section 13](#13-known-issues-and-open-decisions)) |
 
 ---
@@ -445,8 +445,9 @@ split-bill-app/
 │   ├── Utils/                 Date formatting helpers
 │   └── Loggers/               Placeholder, not used yet
 ├── SplitPayUITests/           XCUITest suite
+├── .github/workflows/         CI (ci.yml) and TestFlight release (release.yml)
 ├── scripts/                   run_tests.sh, run_ui_tests.sh
-├── docs/                      Test-suite report
+├── docs/                      CI/CD guide, test-suite report
 ├── design/                    Logo and brand assets
 ├── swiftgen.yml               Asset constants generation config
 └── README.md                  This file
@@ -691,6 +692,7 @@ A detailed write-up of the test suite is in `docs/test-suite-confluence.md`.
 
 ## 11. Code quality and tooling
 
+- **CI/CD** with GitHub Actions: every pull request is linted, built and unit-tested; pushes to `develop`/`main` also run the UI tests; pushing a tag such as `v1.0.0` uploads a build to TestFlight. See [docs/ci-cd.md](docs/ci-cd.md).
 - **SwiftLint** (strict) and **SwiftFormat**; configuration in `.swiftlint.yml`
   and `.swiftformat`. Build folders and the test-support code are excluded.
 - **SwiftGen** config (`swiftgen.yml`) for generated asset constants.
@@ -734,7 +736,7 @@ These are listed so nothing is a surprise. None block day-to-day use.
 3. **Duplicate phone number on sign-up.** The sign-up trigger fails on a unique
    constraint and the user only sees "Something went wrong". The server should
    return a specific error the app can map.
-4. **No CI pipeline** in the repository; tests run through local scripts.
+4. **CI is set up, but two manual steps remain.** SwiftLint only reports (the existing code still has style warnings), and the checks are not yet *required* by branch protection. Releases also need the one-time secrets described in [docs/ci-cd.md](docs/ci-cd.md).
 
 **Cleanup items**
 5. `Core/CommonUi` was merged into `SystemDesign`, but a stray
@@ -759,7 +761,7 @@ These are listed so nothing is a surprise. None block day-to-day use.
 - Move database functions into versioned SQL migrations in the repo
 - Resolve the split rounding rule with product
 - Clean up the items in section 13
-- Add a CI workflow to run the unit and UI suites on every pull request
+- Require the CI checks with branch protection, and fix the SwiftLint warnings so lint can block a merge
 - Return specific sign-up errors (duplicate phone or email) from the server
 - Refresh Split lists live when a split is created or edited (currently only
   transfers and repayments trigger a live refresh)
