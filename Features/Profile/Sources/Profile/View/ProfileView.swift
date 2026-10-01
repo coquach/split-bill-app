@@ -15,7 +15,6 @@ public struct ProfileView: View {
     public var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: AppSpacing.xl) {
-
                 profileHeader
 
                 contactCard
